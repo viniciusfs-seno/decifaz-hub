@@ -30,3 +30,5 @@ O build padrão abre a demonstração local. O modo compartilhado começa vazio 
 Use a triagem guiada e conclua os sete critérios para ver a prioridade. Registre uma reunião realizada com diagnóstico e marque as opções de avanço e acompanhamento para conferir os reflexos no funil e nas atividades.
 
 Na Vercel, configure as três variáveis para o ambiente desejado e gere um novo deploy. Para o domínio de produção, cadastre `https://decifaz-hub.vercel.app/` em Redirect URLs no Supabase Auth e use esse endereço como Site URL se ele for o destino padrão do projeto. O app envia a origem da implantação atual como destino do login.
+
+Em domínios `.vercel.app`, o Hub exige o modo compartilhado. Se faltarem a URL ou a chave publicável do Supabase, a página informa o erro de configuração. Fora desses domínios, use `VITE_HUB_MODE=shared` para ativar o acesso compartilhado.

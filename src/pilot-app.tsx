@@ -36,7 +36,7 @@ export default function PilotApp(){
   if(error)setError('Não foi possível solicitar o link. Confira o endereço e tente novamente.')
   setBusy(false)
  }
- if(!client)return <main><p role="alert">Configure a URL e a chave publicável do Supabase para abrir o piloto.</p></main>
+ if(!client)return <main className="pilot-login"><h1>Decifaz Hub</h1><p role="alert">O acesso compartilhado está indisponível. Configure VITE_SUPABASE_URL e VITE_SUPABASE_PUBLISHABLE_KEY no ambiente deste deploy e gere um novo build.</p></main>
  if(session===undefined)return <main><p role="status">Carregando sessão…</p></main>
  if(session)return <SharedCrm key={session.user.id}/>
  return <main className="pilot-login"><img className="brand-logo" src={import.meta.env.BASE_URL+'identidade/assinatura-horizontal-escuro-selo.svg'} alt="Decifaz"/><h1>Decifaz Hub</h1><p>Entre com o e-mail autorizado para acessar o CRM compartilhado.</p>
