@@ -129,7 +129,7 @@ function SharedCrm(){
   setShowForm(true)
   setSelected(lead?.id??'')
   setDraft(lead?{name:lead.name,segment:lead.segment,city:lead.city,notes:lead.notes}:empty)
-  setLoadedLead('')
+  if(lead?.id!==selected)setLoadedLead('')
   setNote('')
   setTask('')
   setDue('')
