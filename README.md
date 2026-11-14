@@ -42,3 +42,5 @@ A demonstração local mantém os módulos legados e os dados fictícios. O fina
 No projeto compartilhado, confirme os três itens do checklist e registre a data e a evidência para marcar a entrega como aceita. A opção de pós-venda cria uma atividade vinculada ao projeto e ao estabelecimento na mesma operação. A entrega também aparece no histórico do CRM. O financeiro exporta o relatório CSV e exibe o histórico recente de alterações.
 
 O projeto também exibe as atividades de pós-venda vinculadas, com responsável, prazo e situação. O CI roda o teste de navegador do modo compartilhado com sessão e API simuladas.
+
+Abra chamados pela ficha do projeto com título, responsável e prazo. A ficha mantém o histórico e permite mudar a situação. A Agenda operacional reúne as atividades de projeto ainda pendentes ou em andamento e destaca as vencidas.

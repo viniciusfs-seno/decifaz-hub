@@ -6,7 +6,8 @@ import {CRM,MeetingEditor,TriageEditor} from './commercial'
 import {ProposalEditor,Proposals} from './proposals'
 import {financeMetrics} from './shared-finance-metrics'
 import {loadFinance,SharedFinance} from './pilot-finance'
-import {loadProjects,ProjectActivities,SharedProjects,SharedProjectEditor,type SharedProject} from './pilot-projects'
+import {ProjectSupport,activityStatuses as statuses} from './project-support'
+import {loadProjects,SharedProjects,SharedProjectEditor,type SharedProject} from './pilot-projects'
 import {fullLead,fullTriage,leadColumns,loadMeetings,loadMetrics,loadProposals,saveProposal,saveMeeting,saveTriage,type PilotLead,type PilotMetrics,type TriageRow} from './pilot-journey'
 
 const url=import.meta.env.VITE_SUPABASE_URL
@@ -18,7 +19,6 @@ type Lead=PilotLead
 type Interaction={id:string;body:string;created_at:string}
 type Task={id:string;title:string;status:string;due_on:string|null;owner:string}
 const empty={name:'',segment:'',city:'',notes:''}
-const statuses=['Pendente','Em andamento','Concluída','Cancelada']
 
 export default function PilotApp(){
  const [session,setSession]=useState<Session|null>()
@@ -49,7 +49,7 @@ export default function PilotApp(){
  </main>
 }
 
-const sections=[['dashboard','Dashboard',LayoutDashboard],['crm','Captação e CRM',Users],['triagem','Triagem comercial',ClipboardList],['propostas','Propostas comerciais',FileCheck2],['projetos','Projetos e entregas',FolderKanban],['financeiro','Financeiro',Wallet]] as const
+const sections=[['dashboard','Dashboard',LayoutDashboard],['agenda','Agenda operacional',CalendarDays],['crm','Captação e CRM',Users],['triagem','Triagem comercial',ClipboardList],['propostas','Propostas comerciais',FileCheck2],['projetos','Projetos e entregas',FolderKanban],['financeiro','Financeiro',Wallet]] as const
 type Section=typeof sections[number][0]
 
 function SharedCrm(){
@@ -205,6 +205,7 @@ function SharedCrm(){
    {spaces.length>1&&<label>Espaço de trabalho<select disabled={busy} value={workspace} onChange={e=>{setReady(false);setError('');setLeads([]);setProjectId('');setWorkspace(e.target.value);select()}}>{spaces.map(space=><option key={space.id} value={space.id}>{space.name}</option>)}</select></label>}
    {page==='dashboard'&&metrics&&<PilotDashboard metrics={metrics} finance={finance}/>}
    {page==='financeiro'&&finance&&<SharedFinance key={workspace} client={client!} workspace={workspace} projects={projects} forecasts={finance[0].data??[]} receipts={finance[1].data??[]} expenses={finance[2].data??[]} audit={finance[3].data??[]} busy={busy} write={write}/>}
+   {page==='agenda'&&<ProjectSupport key={workspace} client={client!} workspace={workspace} revision={revision} busy={busy} write={write} projectName={id=>projects.find(item=>item.proposal_id===id)?.approved.title??'Projeto'}/>}
    {page==='projetos'&&<SharedProjects projects={projects} leads={commercialData.leads} open={setProjectId}/>}
    {page==='propostas'&&<Proposals data={commercialData} add={()=>setProposalModal({})} open={id=>setProposalModal({id})}/>}
    {(page==='crm'||page==='triagem')&&<CRM key={page} data={commercialData} triage={page==='triagem'} open={id=>select(leads.find(item=>item.id===id))} add={()=>select()}
@@ -263,7 +264,7 @@ function SharedCrm(){
      w:workspace,p:activeProject.proposal_id,c:values.checks,d:values.date,e:values.reference,t:values.title,o:values.owner,due:values.due,
     }))} save={values=>write(()=>client!.from('hub_projects').update(values)
      .eq('workspace_id',workspace).eq('proposal_id',activeProject.proposal_id).select('proposal_id').single())}>
-    <ProjectActivities client={client!} workspace={workspace} project={activeProject.proposal_id} revision={revision}/>
+    <ProjectSupport client={client!} workspace={workspace} project={activeProject.proposal_id} revision={revision} busy={busy} write={write} projectName={()=>activeProject.approved.title}/>
    </SharedProjectEditor>}
   </>}
  </main></div></div>
