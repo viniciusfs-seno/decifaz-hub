@@ -2,7 +2,7 @@ import {test,expect} from '@playwright/test'
 import {createClient} from '@supabase/supabase-js'
 import {randomUUID} from 'node:crypto'
 
-test('membros compartilham chamados e contas externas ficam isoladas',async({page,browser})=>{
+test('membros compartilham chamados e lançamentos financeiros com isolamento',async({page,browser})=>{
  test.skip(process.env.HUB_REAL_E2E!=='1','Requer a pilha local do Supabase.')
  const endpoint='http://127.0.0.1:54321'
  if(process.env.VITE_SUPABASE_URL!==endpoint)throw new Error('Use exclusivamente o Supabase local.')
@@ -57,6 +57,29 @@ test('membros compartilham chamados e contas externas ficam isoladas',async({pag
   expect(rows).toEqual([{status:'Concluída'}])
   expect(await checked(outsider.client.from('hub_activities').select('id').eq('workspace_id',workspace))).toEqual([])
  }finally{await other.close()}
+ const forecast=page.getByRole('button',{name:'Registrar previsão'})
+ await page.getByRole('button',{name:'Cancelar',exact:true}).click()
+ await page.getByRole('button',{name:'Financeiro',exact:true}).click()
+ await page.getByRole('button',{name:'Todos os meses'}).click()
+ await page.getByLabel('Projeto',{exact:true}).selectOption(proposal)
+ await forecast.click()
+ const receipt=page.getByLabel('Previsão',{exact:true})
+ await receipt.selectOption({index:1})
+ await page.getByLabel('Valor recebido (R$)').fill('40')
+ await page.getByRole('button',{name:'Salvar recebimento'}).click()
+ const received=page.locator('article').filter({has:page.getByRole('heading',{name:'Recebido',exact:true})})
+ await expect(received).toContainText(/40,00/)
+ await page.getByRole('button',{name:'Estornar',exact:true}).click()
+ await page.getByLabel('Motivo do estorno').fill('Duplicidade de teste')
+ await page.getByRole('button',{name:'Confirmar estorno'}).click()
+ await expect(received).toContainText(/0,00/)
+ await expect(page.getByText(/Estornado em.*Duplicidade de teste/)).toBeVisible()
+ const ledger=await checked(second.client.from('hub_receipts').select('amount,reversed_at').eq('workspace_id',workspace))
+ expect(ledger).toHaveLength(1)
+ expect(ledger[0].amount).toBe(40)
+ expect(ledger[0].reversed_at).toBeTruthy()
+ expect(await checked(outsider.client.from('hub_receipts').select('id').eq('workspace_id',workspace))).toEqual([])
+
 })
 
 test('link mágico do e-mail local abre o Hub e mantém a sessão após recarregar',async({page})=>{

@@ -48,3 +48,5 @@ Abra chamados pela ficha do projeto com título, responsável e prazo. A ficha m
 ### Teste de integração com Supabase local
 
 O workflow **Supabase local e navegador** sobe uma pilha descartável com Docker, aplica as migrações e cria três contas fictícias. Dois membros autenticados compartilham um chamado entre contextos independentes do navegador. A terceira conta confirma o isolamento dos registros. O teste usa sessões reais obtidas por senha de fixture. Um segundo teste solicita um link mágico pela interface, lê o e-mail capturado pelo Mailpit local e verifica o retorno ao portal e a sessão após recarregar.
+
+O teste com Supabase local também exercita a previsão de receita, o recebimento parcial e o estorno pela interface. Ele confirma que o recebimento original fica no banco, que o estorno altera o total exibido e que uma conta externa ao espaço não consulta o lançamento.
