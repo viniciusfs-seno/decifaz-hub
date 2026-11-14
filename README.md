@@ -28,7 +28,7 @@ A execução local padrão usa registros fictícios salvos no navegador. Para te
 
 O CRM, a triagem, as reuniões, as atividades vinculadas e os indicadores consultam o Supabase. Propostas registram versões e andamento. O aceite explícito permite abrir um projeto com uma cópia do escopo, serviços, valores e condições aprovados. O projeto permite acompanhar responsável, prazo, situação e entregáveis.
 
-A demonstração local mantém os módulos legados e os dados fictícios. Financeiro, pagamentos e emissão de contratos ainda ficam fora do fluxo compartilhado.
+A demonstração local mantém os módulos legados e os dados fictícios. O financeiro compartilhado registra previsões de receita e recebimentos manuais. Despesas, integração de pagamentos e emissão de contratos ainda ficam fora desse fluxo. Veja [financeiro compartilhado](docs/financeiro-compartilhado.md).
 
 ## Organização
 

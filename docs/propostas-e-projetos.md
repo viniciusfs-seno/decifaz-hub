@@ -6,4 +6,4 @@
 4. Na versão aceita, selecione **Abrir projeto a partir do aceite**. O projeto aparece em **Projetos e entregas** com uma cópia da versão aprovada. Abrir novamente reutiliza o mesmo projeto.
 5. No projeto, atualize responsável, prazo, situação e entregáveis operacionais.
 
-A cópia aprovada é preservada no banco. Alterar os entregáveis do projeto não altera o escopo aceito. O acesso aos registros depende do vínculo com o espaço de trabalho. Valores previstos e recebidos, homologação detalhada e cobranças ainda precisam ser integrados ao modo compartilhado.
+A cópia aprovada é preservada no banco. Alterar os entregáveis do projeto não altera o escopo aceito. O acesso aos registros depende do vínculo com o espaço de trabalho. Use o [financeiro compartilhado](financeiro-compartilhado.md) para registrar previsões e recebimentos do projeto. Homologação detalhada e cobranças automáticas ainda precisam ser integradas.

@@ -1,9 +1,10 @@
 import {useEffect,useState,type FormEvent} from 'react'
 import {createClient,type Session} from '@supabase/supabase-js'
-import {CalendarDays, ClipboardList, FileCheck2, FolderKanban, LayoutDashboard, ListTodo, Menu, Moon, Sun, Users} from 'lucide-react'
+import {CalendarDays, ClipboardList, FileCheck2, FolderKanban, LayoutDashboard, ListTodo, Menu, Moon, Sun, Users, Wallet} from 'lucide-react'
 import {dateLabel,stages,type Data,type Meeting,type Proposal} from './domain'
 import {CRM,MeetingEditor,TriageEditor} from './commercial'
 import {ProposalEditor,Proposals} from './proposals'
+import {loadFinance,SharedFinance} from './pilot-finance'
 import {loadProjects,SharedProjects,SharedProjectEditor,type SharedProject} from './pilot-projects'
 import {fullLead,fullTriage,leadColumns,loadMeetings,loadMetrics,loadProposals,saveProposal,saveMeeting,saveTriage,type PilotLead,type PilotMetrics,type TriageRow} from './pilot-journey'
 
@@ -47,7 +48,7 @@ export default function PilotApp(){
  </main>
 }
 
-const sections=[['dashboard','Dashboard',LayoutDashboard],['crm','Captação e CRM',Users],['triagem','Triagem comercial',ClipboardList],['propostas','Propostas comerciais',FileCheck2],['projetos','Projetos e entregas',FolderKanban]] as const
+const sections=[['dashboard','Dashboard',LayoutDashboard],['crm','Captação e CRM',Users],['triagem','Triagem comercial',ClipboardList],['propostas','Propostas comerciais',FileCheck2],['projetos','Projetos e entregas',FolderKanban],['financeiro','Financeiro',Wallet]] as const
 type Section=typeof sections[number][0]
 
 function SharedCrm(){
@@ -71,6 +72,7 @@ function SharedCrm(){
  const [leads,setLeads]=useState<Lead[]>([])
  const [selected,setSelected]=useState('')
  const [triages,setTriages]=useState<TriageRow[]>([])
+ const [finance,setFinance]=useState<Awaited<ReturnType<typeof loadFinance>>>()
  const [projects,setProjects]=useState<SharedProject[]>([])
  const [projectId,setProjectId]=useState('')
  const [proposals,setProposals]=useState<Proposal[]>([])
@@ -108,14 +110,15 @@ function SharedCrm(){
   let current=true
   const leadsQuery=client!.from('hub_leads').select(leadColumns).eq('workspace_id',workspace).order('name').returns<Lead[]>()
   const triagesQuery=client!.from('hub_triages').select('lead_id,record,scores,completed').eq('workspace_id',workspace).returns<TriageRow[]>()
-  void Promise.all([leadsQuery,triagesQuery,loadMetrics(client!,workspace),loadProposals(client!,workspace),loadMeetings(client!,workspace),loadProjects(client!,workspace)]).then(([leads,triages,dashboard,quotes,diagnoses,delivery])=>{
+  void Promise.all([leadsQuery,triagesQuery,loadMetrics(client!,workspace),loadProposals(client!,workspace),loadMeetings(client!,workspace),loadProjects(client!,workspace),loadFinance(client!,workspace)]).then(([leads,triages,dashboard,quotes,diagnoses,delivery,financial])=>{
    if(!current)return
-   if(leads.error||triages.error||dashboard.error||!dashboard.data||quotes.error||!quotes.data||diagnoses.error||!diagnoses.data||delivery.error||!delivery.data){setReady(false);setError('Não foi possível carregar a jornada comercial. Confira seu acesso e atualize.');return}
+   if(leads.error||triages.error||dashboard.error||!dashboard.data||quotes.error||!quotes.data||diagnoses.error||!diagnoses.data||delivery.error||!delivery.data||financial.some(result=>result.error||!result.data)){setReady(false);setError('Não foi possível carregar a jornada comercial. Confira seu acesso e atualize.');return}
    setLeads(leads.data)
    setTriages(triages.data)
    setMetrics(dashboard.data)
    setProposals(quotes.data)
    setProjects(delivery.data)
+   setFinance(financial)
    setProposalMeetings(diagnoses.data)
    setReady(true)
   })
@@ -200,6 +203,7 @@ function SharedCrm(){
   {ready&&<>
    {spaces.length>1&&<label>Espaço de trabalho<select disabled={busy} value={workspace} onChange={e=>{setReady(false);setError('');setLeads([]);setProjectId('');setWorkspace(e.target.value);select()}}>{spaces.map(space=><option key={space.id} value={space.id}>{space.name}</option>)}</select></label>}
    {page==='dashboard'&&metrics&&<PilotDashboard metrics={metrics}/>}
+   {page==='financeiro'&&finance&&<SharedFinance key={workspace} client={client!} workspace={workspace} projects={projects} forecasts={finance[0].data??[]} receipts={finance[1].data??[]} busy={busy} write={write}/>}
    {page==='projetos'&&<SharedProjects projects={projects} leads={commercialData.leads} open={setProjectId}/>}
    {page==='propostas'&&<Proposals data={commercialData} add={()=>setProposalModal({})} open={id=>setProposalModal({id})}/>}
    {(page==='crm'||page==='triagem')&&<CRM key={page} data={commercialData} triage={page==='triagem'} open={id=>select(leads.find(item=>item.id===id))} add={()=>select()}
