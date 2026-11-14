@@ -2,27 +2,23 @@ import {useState} from 'react'
 import type {SupabaseClient} from '@supabase/supabase-js'
 import {dateLabel,day,money,uid} from './domain'
 import type {SharedProject} from './pilot-projects'
+import {chargeKey as key,cents,financeMetrics,type Forecast,type Receipt,type Expense} from './shared-finance-metrics'
 import {Empty,Field,Page} from './ui'
 
-type Charge={proposal_id:string;kind:string;period:string;amount:number}
-type Forecast=Charge&{due_on:string}
-type Receipt=Charge&{id:string;received_on:string}
 type Write=(op:()=>PromiseLike<{error:unknown;data:unknown}>,success?:()=>void)=>Promise<boolean>
 const kinds=['Implantação','Mensalidade']
-const key=(item:Charge)=>[item.proposal_id,item.kind,item.period].join('/')
-const cents=(value:number)=>Math.round(value*100)
-
 export function loadFinance(client:SupabaseClient,workspace:string){
  return Promise.all([
   client.from('hub_receivables').select('proposal_id,kind,period,amount,due_on').eq('workspace_id',workspace)
    .order('due_on').order('proposal_id').order('kind').returns<Forecast[]>(),
-  client.from('hub_receipts').select('proposal_id,kind,period,amount,id,received_on').eq('workspace_id',workspace)
+  client.from('hub_receipts').select('proposal_id,kind,period,amount,id,received_on,reversed_at,reversal_reason').eq('workspace_id',workspace)
    .order('received_on',{ascending:false}).order('id').returns<Receipt[]>(),
+  client.from('hub_expenses').select('id,title,due_on,amount,paid_on,paid_amount').eq('workspace_id',workspace).order('due_on').order('id').returns<Expense[]>(),
  ])
 }
 
-export function SharedFinance({client,workspace,projects,forecasts,receipts,busy,write}:{
- client:SupabaseClient;workspace:string;projects:SharedProject[];forecasts:Forecast[];receipts:Receipt[];busy:boolean;write:Write
+export function SharedFinance({client,workspace,projects,forecasts,receipts,expenses,busy,write}:{
+ client:SupabaseClient;workspace:string;projects:SharedProject[];forecasts:Forecast[];receipts:Receipt[];expenses:Expense[];busy:boolean;write:Write
 }){
  const [project,setProject]=useState('')
  const [kind,setKind]=useState(kinds[0])
@@ -31,18 +27,24 @@ export function SharedFinance({client,workspace,projects,forecasts,receipts,busy
  const [received,setReceived]=useState(day())
  const [amount,setAmount]=useState('')
  const [receiptId,setReceiptId]=useState(uid)
- const paid=new Map<string,number>()
- for(const receipt of receipts)paid.set(key(receipt),(paid.get(key(receipt))??0)+cents(receipt.amount))
- const total=(entries:Charge[])=>entries.reduce((sum,item)=>sum+cents(item.amount),0)
- const outstanding=(item:Forecast)=>cents(item.amount)-(paid.get(key(item))??0)
+ const [month,setMonth]=useState(day().slice(0,7))
+ const [overdueOnly,setOverdueOnly]=useState(false)
+ const [reverseId,setReverseId]=useState('')
+ const [reason,setReason]=useState('')
+ const summary=financeMetrics(forecasts,receipts,expenses,day(),month)
+ const {outstanding}=summary
+ const inMonth=(date:string)=>!month||date.slice(0,7)===month
+ const shownForecasts=forecasts.filter(item=>inMonth(item.due_on)&&(!overdueOnly||(item.due_on<day()&&outstanding(item)>0)))
+ const shownReceipts=receipts.filter(item=>inMonth(item.received_on))
  const current=forecasts.find(item=>key(item)===charge)
  const selected=projects.find(item=>item.proposal_id===project)
  const value=kind==='Implantação'?selected?.approved.setup:selected?.approved.monthly
  const label=(id:string)=>projects.find(item=>item.proposal_id===id)?.approved.title??'Projeto vinculado'
 
  return <Page title="Financeiro" description="Acompanhe previsões e registre os valores que a Decifaz já recebeu.">
+  <div className="toolbar"><Field label="Mês de referência" type="month" value={month} on={setMonth}/><button className="button" onClick={()=>setMonth('')}>Todos os meses</button><label><input type="checkbox" checked={overdueOnly} onChange={e=>setOverdueOnly(e.target.checked)}/> Só previsões atrasadas</label></div>
   <div className="kpis">
-   {[['Total previsto',total(forecasts)],['Recebido',total(receipts)],['Saldo a receber',Math.max(0,total(forecasts)-total(receipts))]].map(([name,value])=>
+   {[['Receita prevista',summary.forecast],['Recebido',summary.received],['Saldo a receber',summary.balance],['Saldo atrasado',summary.overdue],['Despesas previstas',summary.expenses],['Despesas pagas',summary.paidExpenses]].map(([name,value])=>
     <article className="metric card" key={name}><h2>{name}</h2><strong>{money(Number(value)/100)}</strong></article>)}
   </div>
   <div className="dashboard-grid">
@@ -81,15 +83,63 @@ export function SharedFinance({client,workspace,projects,forecasts,receipts,busy
     </form>:<Empty title="Nenhuma previsão em aberto"/>}
    </section>
   </div>
-  <section className="card panel"><h2>Previsões</h2>{forecasts.length?<div className="table-wrap"><table>
+  <section className="card panel"><h2>Previsões</h2>{shownForecasts.length?<div className="table-wrap"><table>
    <thead><tr><th>Projeto</th><th>Tipo</th><th>Vencimento</th><th>Previsto</th><th>Saldo</th></tr></thead>
-   <tbody>{forecasts.map(item=><tr key={key(item)}><td>{label(item.proposal_id)}</td><td>{item.kind}</td>
+   <tbody>{shownForecasts.map(item=><tr key={key(item)}><td>{label(item.proposal_id)}</td><td>{item.kind}</td>
     <td>{dateLabel(item.due_on)}</td><td>{money(item.amount)}</td><td>{money(outstanding(item)/100)}</td></tr>)}</tbody>
   </table></div>:<Empty title="Nenhuma previsão registrada"/>}</section>
-  <section className="card panel"><h2>Recebimentos</h2>{receipts.length?<div className="table-wrap"><table>
-   <thead><tr><th>Projeto</th><th>Tipo</th><th>Data efetiva</th><th>Recebido</th></tr></thead>
-   <tbody>{receipts.map(item=><tr key={key(item)+item.id}><td>{label(item.proposal_id)}</td><td>{item.kind}</td>
-    <td>{dateLabel(item.received_on)}</td><td>{money(item.amount)}</td></tr>)}</tbody>
+  <section className="card panel"><h2>Recebimentos</h2>{shownReceipts.length?<div className="table-wrap"><table>
+   <thead><tr><th>Projeto</th><th>Tipo</th><th>Data efetiva</th><th>Valor original</th><th>Estorno</th></tr></thead>
+   <tbody>{shownReceipts.map(item=><tr key={key(item)+item.id}><td>{label(item.proposal_id)}</td><td>{item.kind}</td>
+    <td>{dateLabel(item.received_on)}</td><td>{money(item.amount)}</td><td>{item.reversed_at?
+    <span>Estornado em {dateLabel(item.reversed_at)} · {item.reversal_reason}</span>:reverseId===item.id?
+    <form onSubmit={e=>{e.preventDefault();if(reason.trim()&&!busy)void write(()=>client.rpc('hub_reverse_receipt',{
+     w:workspace,p:item.proposal_id,k:item.kind,m:item.period,i:item.id,reason:reason.trim()
+    }),()=>{setReverseId('');setReason('')})}}>
+     <Field label="Motivo do estorno" value={reason} on={setReason} required/>
+     <button className="button" disabled={busy||!reason.trim()}>Confirmar estorno</button>
+     <button className="button" type="button" onClick={()=>setReverseId('')}>Cancelar</button>
+    </form>:<button className="button" disabled={busy} onClick={()=>{setReason('');setReverseId(item.id)}}>Estornar</button>}</td></tr>)}</tbody>
   </table></div>:<Empty title="Nenhum recebimento registrado"/>}</section>
+  <ExpensePanel client={client} workspace={workspace} expenses={expenses} month={month} busy={busy} write={write}/>
  </Page>
+}
+
+function ExpensePanel({client,workspace,expenses,month,busy,write}:{
+ client:SupabaseClient;workspace:string;expenses:Expense[];month:string;busy:boolean;write:Write
+}){
+ const [title,setTitle]=useState('')
+ const [due,setDue]=useState(day())
+ const [value,setValue]=useState('')
+ const [selected,setSelected]=useState('')
+ const [paidOn,setPaidOn]=useState(day())
+ const [paidAmount,setPaidAmount]=useState('')
+ const shown=expenses.filter(item=>!month||item.due_on.slice(0,7)===month||item.paid_on?.slice(0,7)===month)
+ return <section className="card panel"><h2>Despesas</h2>
+  <form className="fields" onSubmit={e=>{
+   e.preventDefault()
+   if(!title.trim()||Number(value)<=0||busy)return
+   void write(()=>client.from('hub_expenses').insert({workspace_id:workspace,id:uid(),title:title.trim(),due_on:due,amount:Number(value)}).select('id').single(),()=>{setTitle('');setValue('')})
+  }}>
+   <Field label="Descrição" value={title} on={setTitle} required/>
+   <Field label="Vencimento da despesa" type="date" value={due} on={setDue} required/>
+   <Field label="Valor previsto (R$)" type="number" min={0.01} step="0.01" value={value} on={setValue} required/>
+   <button className="button primary" disabled={busy}>Registrar despesa prevista</button>
+  </form>
+  {shown.length?<div className="table-wrap"><table><thead><tr><th>Despesa</th><th>Vencimento</th><th>Previsto</th><th>Pagamento</th></tr></thead><tbody>
+   {shown.map(item=><tr key={item.id}><td>{item.title}</td><td>{dateLabel(item.due_on)}</td><td>{money(item.amount)}</td><td>{item.paid_on?
+    dateLabel(item.paid_on)+' · '+money(item.paid_amount??0):selected===item.id?
+    <form onSubmit={e=>{
+     e.preventDefault()
+     if(busy||paidOn>day()||Number(paidAmount)<=0)return
+     void write(()=>client.from('hub_expenses').update({paid_on:paidOn,paid_amount:Number(paidAmount)}).eq('workspace_id',workspace).eq('id',item.id).select('id').single(),()=>setSelected(''))
+    }}>
+     <Field label="Data efetiva" type="date" value={paidOn} on={setPaidOn} required/>
+     <Field label="Valor pago (R$)" type="number" min={0.01} step="0.01" value={paidAmount} on={setPaidAmount} required/>
+     {paidOn>day()&&<p role="alert">Informe hoje ou uma data anterior.</p>}
+     <button className="button" disabled={busy||paidOn>day()}>Registrar pagamento</button>
+     <button className="button" type="button" onClick={()=>setSelected('')}>Cancelar</button>
+    </form>:<button className="button" onClick={()=>{setSelected(item.id);setPaidOn(day());setPaidAmount(String(item.amount))}}>Dar baixa</button>}</td></tr>)}
+  </tbody></table></div>:<Empty title="Nenhuma despesa no período"/>}
+ </section>
 }

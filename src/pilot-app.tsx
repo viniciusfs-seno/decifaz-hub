@@ -1,9 +1,10 @@
 import {useEffect,useState,type FormEvent} from 'react'
 import {createClient,type Session} from '@supabase/supabase-js'
 import {CalendarDays, ClipboardList, FileCheck2, FolderKanban, LayoutDashboard, ListTodo, Menu, Moon, Sun, Users, Wallet} from 'lucide-react'
-import {dateLabel,stages,type Data,type Meeting,type Proposal} from './domain'
+import {dateLabel,day,money,stages,type Data,type Meeting,type Proposal} from './domain'
 import {CRM,MeetingEditor,TriageEditor} from './commercial'
 import {ProposalEditor,Proposals} from './proposals'
+import {financeMetrics} from './shared-finance-metrics'
 import {loadFinance,SharedFinance} from './pilot-finance'
 import {loadProjects,SharedProjects,SharedProjectEditor,type SharedProject} from './pilot-projects'
 import {fullLead,fullTriage,leadColumns,loadMeetings,loadMetrics,loadProposals,saveProposal,saveMeeting,saveTriage,type PilotLead,type PilotMetrics,type TriageRow} from './pilot-journey'
@@ -202,8 +203,8 @@ function SharedCrm(){
   {!ready&&!error&&<p role="status">Carregando o CRM…</p>}
   {ready&&<>
    {spaces.length>1&&<label>Espaço de trabalho<select disabled={busy} value={workspace} onChange={e=>{setReady(false);setError('');setLeads([]);setProjectId('');setWorkspace(e.target.value);select()}}>{spaces.map(space=><option key={space.id} value={space.id}>{space.name}</option>)}</select></label>}
-   {page==='dashboard'&&metrics&&<PilotDashboard metrics={metrics}/>}
-   {page==='financeiro'&&finance&&<SharedFinance key={workspace} client={client!} workspace={workspace} projects={projects} forecasts={finance[0].data??[]} receipts={finance[1].data??[]} busy={busy} write={write}/>}
+   {page==='dashboard'&&metrics&&<PilotDashboard metrics={metrics} finance={finance}/>}
+   {page==='financeiro'&&finance&&<SharedFinance key={workspace} client={client!} workspace={workspace} projects={projects} forecasts={finance[0].data??[]} receipts={finance[1].data??[]} expenses={finance[2].data??[]} busy={busy} write={write}/>}
    {page==='projetos'&&<SharedProjects projects={projects} leads={commercialData.leads} open={setProjectId}/>}
    {page==='propostas'&&<Proposals data={commercialData} add={()=>setProposalModal({})} open={id=>setProposalModal({id})}/>}
    {(page==='crm'||page==='triagem')&&<CRM key={page} data={commercialData} triage={page==='triagem'} open={id=>select(leads.find(item=>item.id===id))} add={()=>select()}
@@ -264,7 +265,10 @@ function SharedCrm(){
  </main></div></div>
 }
 
-function PilotDashboard({metrics}: {metrics:PilotMetrics}) {
+function PilotDashboard({metrics,finance}: {metrics:PilotMetrics;finance?:Awaited<ReturnType<typeof loadFinance>>}) {
+ const today=day()
+ const billing=finance&&financeMetrics(finance[0].data??[],finance[1].data??[],finance[2].data??[],today,today.slice(0,7))
+ const overdue=finance&&financeMetrics(finance[0].data??[],finance[1].data??[],[],today).overdue
  const total=Object.values(metrics.funnel).reduce((sum,count)=>sum+count,0)
  const indicators=[[Users,'Estabelecimentos',total],[CalendarDays,'Reuniões agendadas',metrics.scheduled],
   [ClipboardList,'Diagnósticos realizados',metrics.diagnosed],[ListTodo,'Atividades pendentes',metrics.pending],
@@ -274,6 +278,12 @@ function PilotDashboard({metrics}: {metrics:PilotMetrics}) {
   <div className="kpis">{indicators.map(([Icon,label,value])=><article className="metric card" key={label}>
    <div className="metric-top"><span className="tile"><Icon size={19}/></span></div><h2>{label}</h2><strong>{value}</strong>
   </article>)}</div>
+  {billing&&<section className="card panel"><h2>Financeiro do mês</h2><dl className="dashboard-grid">
+   <div><dt>Receita prevista</dt><dd>{money(billing.forecast/100)}</dd></div>
+   <div><dt>Receita recebida</dt><dd>{money(billing.received/100)}</dd></div>
+   <div><dt>Despesas pagas</dt><dd>{money(billing.paidExpenses/100)}</dd></div>
+   <div><dt>Saldo atrasado de todos os meses</dt><dd>{money((overdue??0)/100)}</dd></div>
+  </dl></section>}
   <div className="dashboard-grid">
    <div className="card panel"><h3>Prioridades</h3><p>A · {metrics.priorities.A??0}　B · {metrics.priorities.B??0}　C · {metrics.priorities.C??0}</p></div>
    <div className="card panel"><h3>Funil comercial</h3>{total===0?<p>Nenhuma oportunidade cadastrada.</p>:
