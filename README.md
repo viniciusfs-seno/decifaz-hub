@@ -2,7 +2,7 @@
 
 Portal interno de demonstração em React, TypeScript e Vite. Use dados fictícios nesta versão.
 
-## Executar no VS Code
+## Executar localmente no VS Code
 
 1. Abra esta pasta com Node.js 22.12+ ou 24.
 2. Execute `npm ci` e `npm run dev`.
