@@ -52,3 +52,5 @@ O workflow **Supabase local e navegador** sobe uma pilha descartável com Docker
 O teste com Supabase local também exercita a previsão de receita, o recebimento parcial e o estorno pela interface. Ele confirma que o recebimento original fica no banco, que o estorno altera o total exibido e que uma conta externa ao espaço não consulta o lançamento.
 
 A regressão do Chromium com Supabase local percorre o cadastro do estabelecimento, rascunho, envio e aceite da proposta pela interface. Também cobre a criação do projeto, a baixa de despesa e o CSV filtrado por mês, com verificação dos registros de auditoria.
+
+O cenário comercial também valida a prioridade após a triagem, a evolução do funil ao registrar o diagnóstico e a persistência da atividade de acompanhamento. A proposta do teste é aberta pela reunião realizada.
