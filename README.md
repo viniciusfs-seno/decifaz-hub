@@ -44,3 +44,7 @@ No projeto compartilhado, confirme os três itens do checklist e registre a data
 O projeto também exibe as atividades de pós-venda vinculadas, com responsável, prazo e situação. O CI roda o teste de navegador do modo compartilhado com sessão e API simuladas.
 
 Abra chamados pela ficha do projeto com título, responsável e prazo. A ficha mantém o histórico e permite mudar a situação. A Agenda operacional reúne as atividades de projeto ainda pendentes ou em andamento e destaca as vencidas.
+
+### Teste de integração com Supabase local
+
+O workflow **Supabase local e navegador** sobe uma pilha descartável com Docker, aplica as migrações e cria três contas fictícias. Dois membros autenticados compartilham um chamado entre contextos independentes do navegador. A terceira conta confirma o isolamento dos registros. O teste usa sessões reais obtidas por senha de fixture. A entrega do link mágico continua fora da cobertura.
