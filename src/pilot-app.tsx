@@ -30,7 +30,7 @@ export default function PilotApp(){
   event.preventDefault()
   setBusy(true)
   setError('')
-  const {error}=await client!.auth.signInWithOtp({email:email.trim(),options:{shouldCreateUser:false,emailRedirectTo:location.origin+location.pathname}})
+  const {error}=await client!.auth.signInWithOtp({email:email.trim(),options:{shouldCreateUser:false,emailRedirectTo:location.origin+location.pathname+(import.meta.env.VITE_HUB_MODE==='preview'?'?piloto=1':'')}})
   setSent(!error)
   if(error)setError('Não foi possível solicitar o link. Confira o endereço e tente novamente.')
   setBusy(false)

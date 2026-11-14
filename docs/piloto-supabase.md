@@ -28,3 +28,5 @@ A função Edge recebe a sessão do usuário e lista os espaços que ele pode ac
 O build padrão abre a demonstração local. O modo compartilhado começa vazio e não importa o histórico local. A visão geral compartilhada consulta totais do banco para funil, prioridades concluídas, reuniões, diagnósticos e atividades. Propostas, projetos e financeiro seguem na demonstração. As listas do piloto ainda não possuem paginação.
 
 Use a triagem guiada e conclua os sete critérios para ver a prioridade. Registre uma reunião realizada com diagnóstico e marque as opções de avanço e acompanhamento para conferir os reflexos no funil e nas atividades.
+
+Na hospedagem privada, o build com `VITE_HUB_MODE=preview` abre o piloto por `?piloto=1` e mantém a demonstração no endereço principal. Inclua o endereço da prévia com essa query na lista de redirecionamentos do Supabase Auth.
