@@ -103,7 +103,7 @@ test('link mágico do e-mail local abre o Hub e mantém a sessão após recarreg
  }
  await page.goto(verification.href)
  await expect(page.getByText('Decifaz Link Mágico',{exact:true})).toBeVisible()
- await expect(page).toHaveURL(origin+'/')
+ await expect(page).toHaveURL(url=>url.origin===origin&&url.pathname==='/'&&!url.search&&!url.hash)
  await page.reload()
  await expect(page.getByText('Decifaz Link Mágico',{exact:true})).toBeVisible()
 })
