@@ -14,6 +14,17 @@ test('financeiro compartilhado exporta o mês e exclui estornos do total recebid
    activity=[{id:'a',title:t,owner:o,due_on:due,status:'Pendente'}]
    return route.fulfill({json:true})
   }
+  if(path==='/rest/v1/rpc/hub_open_support'){
+   const {p,t,o,d}=route.request().postDataJSON()
+   activity.push({id:'s',title:t,owner:o,due_on:d,status:'Pendente',support:true,project_proposal_id:p})
+   return route.fulfill({json:true})
+  }
+  if(path==='/rest/v1/hub_activities'&&route.request().method()==='PATCH'){
+   const id=new URL(route.request().url()).searchParams.get('id').slice(3)
+   const item=activity.find(row=>row.id===id)
+   item.status=route.request().postDataJSON().status
+   return route.fulfill({json:{id}})
+  }
   const fixtures={
    '/functions/v1/hub-workspaces':{workspaces:[{id:'w',name:'Homologação automatizada'}]},
    '/rest/v1/rpc/hub_dashboard':{funnel:{},priorities:{},scheduled:0,diagnosed:0,pending:0,overdue:0},
@@ -40,7 +51,15 @@ test('financeiro compartilhado exporta o mês e exclui estornos do total recebid
  await expect(page.getByText('Entregue',{exact:true})).toBeVisible()
  await page.getByRole('button',{name:'Projeto teste',exact:true}).click()
  await expect(page.getByText('Acompanhamento pós-venda',{exact:true})).toBeVisible()
+ await page.getByLabel('Título do chamado').fill('Ajustar cadastro')
+ await page.getByLabel('Responsável pelo chamado').fill('Equipe')
+ await page.getByRole('button',{name:'Abrir chamado'}).click()
+ await expect(page.getByText('Ajustar cadastro',{exact:true})).toBeVisible()
  await page.getByRole('button',{name:'Cancelar',exact:true}).click()
+ await page.getByRole('button',{name:'Agenda operacional',exact:true}).click()
+ const status=page.getByLabel('Situação de Ajustar cadastro')
+ await status.selectOption('Em andamento')
+ await expect(status).toHaveValue('Em andamento')
  await page.getByRole('button',{name:'Financeiro',exact:true}).click()
  await page.getByRole('button',{name:'Todos os meses'}).click()
  await expect(page.locator('article').filter({has:page.getByRole('heading',{name:'Recebido',exact:true})})).toContainText(/0,00/)

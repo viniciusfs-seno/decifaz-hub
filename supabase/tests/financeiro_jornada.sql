@@ -24,9 +24,13 @@ begin
  if not public.hub_accept_delivery(w,p,'["tests","scope","pending"]',dt,'Aceite de teste','Pós-venda','Equipe',dt+1) then raise exception 'delivery'; end if;
  if public.hub_accept_delivery(w,p,'["tests","scope","pending"]',dt,'Aceite de teste','Pós-venda','Equipe',dt+1) then raise exception 'duplicate delivery'; end if;
  if (select count(*) from public.hub_activities where workspace_id=w and project_proposal_id=p)<>1 then raise exception 'post-sale'; end if;
+ if not public.hub_open_support(w,p,'Chamado de teste','Equipe',dt) then raise exception 'support open'; end if;
+ update public.hub_activities set status='Concluída' where workspace_id=w and project_proposal_id=p and support;
+ if not exists(select 1 from public.hub_activities where workspace_id=w and project_proposal_id=p and support and status='Concluída') then raise exception 'support completion'; end if;
  if (select count(*) from public.hub_finance_audit where workspace_id=w and actor_id=auth.uid())<>6 then raise exception 'audit'; end if;
  perform set_config('request.jwt.claim.sub','00000000-0000-4000-8000-000000000062',true);
  if exists(select 1 from public.hub_finance_audit where workspace_id=w) then raise exception 'audit isolation'; end if;
+ if public.hub_open_support(w,p,'Intruso','Intruso',dt) then raise exception 'support isolation'; end if;
  if exists(select 1 from public.hub_expenses where workspace_id=w) or public.hub_reverse_receipt(w,p,'Implantação',m,j,'Intruso') then raise exception 'isolation'; end if;
 end $$;
 rollback;
