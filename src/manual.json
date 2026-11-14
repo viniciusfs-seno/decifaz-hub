@@ -1,0 +1,576 @@
+[
+  {
+    "title": "Apresentação do manual",
+    "blocks": [
+      {
+        "kind": "paragraph",
+        "text": "MODELO OPERACIONAL  •  VERSÃO INICIAL"
+      },
+      {
+        "kind": "heading",
+        "text": "Triagem, vendas e entrega\nde soluções digitais"
+      },
+      {
+        "kind": "paragraph",
+        "text": "Um processo comercial leve, replicável e rastreável para os primeiros clientes da Decifaz."
+      },
+      {
+        "kind": "paragraph",
+        "text": "BASE: conversas do grupo entre 08 e 13 de novembro de 2026.\nSTATUS: proposta de operação interna — validar papéis, preços e prazos com a equipe."
+      }
+    ]
+  },
+  {
+    "title": "O que já está claro",
+    "blocks": [
+      {
+        "kind": "bullet",
+        "text": "A equipe considera mais eficiente priorizar visitas presenciais a pequenos estabelecimentos, sem descartar ligações, WhatsApp e e-mail."
+      },
+      {
+        "kind": "bullet",
+        "text": "O MVP do cardápio digital pode ser a porta de entrada para restaurantes, cafeterias e sorveterias; NFC e gestão de pedidos entram conforme a necessidade."
+      },
+      {
+        "kind": "bullet",
+        "text": "Há demanda interna por acompanhamento de triagens, reuniões, propostas, contratos e faturamento."
+      },
+      {
+        "kind": "bullet",
+        "text": "A equipe tem ideias para presença digital, automações, agendamentos, sistemas sob medida e bots; nem todas devem virar produto agora."
+      }
+    ]
+  },
+  {
+    "title": "Decisões propostas para os primeiros 30 dias",
+    "blocks": [
+      {
+        "kind": "table",
+        "rows": [
+          [
+            "Manter como padrão",
+            "Evitar por enquanto"
+          ],
+          [
+            "Nicho principal: alimentação e pequenos comércios",
+            "Criar um MVP exclusivo para cada lead"
+          ],
+          [
+            "Diagnóstico antes de proposta; uma próxima ação por lead",
+            "Oferecer pacote sem saber a dor real"
+          ],
+          [
+            "Proposta modular: implantação + recorrência + extras",
+            "Misturar hardware, suporte e software em preço único"
+          ],
+          [
+            "Demonstrar apenas capacidades verdadeiras do protótipo",
+            "Vender automação ou backend ainda não validado"
+          ]
+        ]
+      },
+      {
+        "kind": "paragraph",
+        "text": "Regra-base: falta de site ou software é um sinal para investigar — não é prova de problema, orçamento disponível ou interesse de compra."
+      }
+    ]
+  },
+  {
+    "title": "1. Funil comercial: etapas e portões",
+    "blocks": [
+      {
+        "kind": "table",
+        "rows": [
+          [
+            "Etapa",
+            "Entregável mínimo para avançar"
+          ],
+          [
+            "01 · Novo",
+            "Empresa identificada, fonte e responsável registrados."
+          ],
+          [
+            "02 · Pesquisa",
+            "Presença digital checada, hipótese de dor e oferta provável anotadas."
+          ],
+          [
+            "03 · Visita a agendar",
+            "Plano de abordagem e decisor provável; ainda sem agenda confirmada."
+          ],
+          [
+            "04 · Visita agendada",
+            "Data, horário e canal combinados com o estabelecimento."
+          ],
+          [
+            "05 · Diagnóstico",
+            "Problema, impacto, decisor, momento e limites de orçamento investigados."
+          ],
+          [
+            "06 · Proposta enviada",
+            "Escopo, preço, condições, validade e data de retorno documentados."
+          ],
+          [
+            "07 · Negociação",
+            "Objeções e revisões registradas; decisão pendente."
+          ],
+          [
+            "08 · Ganho / Perdido / Nutrição",
+            "Aceite e contrato, motivo de perda ou retorno futuro programado."
+          ]
+        ]
+      }
+    ]
+  },
+  {
+    "title": "Papéis operacionais (sugestão a confirmar)",
+    "blocks": [
+      {
+        "kind": "table",
+        "rows": [
+          [
+            "Papel",
+            "Responsabilidades"
+          ],
+          [
+            "Dono do lead",
+            "Pesquisa, abordagem, próxima ação, histórico e relação com decisor."
+          ],
+          [
+            "Comercial / proposta",
+            "Revisão de diagnóstico, preço, negociação e documentação do aceite."
+          ],
+          [
+            "Responsável técnico",
+            "Viabilidade, estimativa, segurança, execução, testes e publicação."
+          ],
+          [
+            "Design / conteúdo",
+            "Identidade visual, demonstração, materiais e revisão de apresentação."
+          ],
+          [
+            "Financeiro / operações",
+            "Contrato, cobrança, recebimentos, custos, renovações e pós-venda."
+          ]
+        ]
+      },
+      {
+        "kind": "paragraph",
+        "text": "Uma pessoa pode acumular papéis, mas cada lead e projeto deve ter um único responsável principal. A divisão entre Vinícius, JG, Gabriel e Charles deve ser acordada em reunião, não presumida pelo histórico."
+      }
+    ]
+  },
+  {
+    "title": "Critérios de priorização",
+    "blocks": [
+      {
+        "kind": "paragraph",
+        "text": "Pontuação de 0 a 15: fit (0–3), dor (0–3), acesso ao decisor (0–2), urgência (0–2), potencial de receita (0–2), reutilização (0–2) e logística (0–1)."
+      },
+      {
+        "kind": "paragraph",
+        "text": "A = 11–15 (abordar primeiro); B = 7–10 (pesquisar e selecionar); C = 0–6 (nutrir); incompleta = faltam critérios. A avaliação só deve ser fechada quando houver evidências para preencher os sete campos."
+      }
+    ]
+  },
+  {
+    "title": "2. Ficha rápida de triagem — antes de visitar",
+    "blocks": [
+      {
+        "kind": "paragraph",
+        "text": "Tempo-alvo: 5–10 minutos por empresa. Use uma linha na aba LEADS. Preencha “não verificado” quando necessário."
+      },
+      {
+        "kind": "table",
+        "rows": [
+          [
+            "Campo",
+            "Registrar"
+          ],
+          [
+            "Identificação",
+            "Nome, bairro/cidade, segmento, fonte, link Google/Instagram/site."
+          ],
+          [
+            "Contato",
+            "Telefone público, melhor canal, potencial decisor (se conhecido)."
+          ],
+          [
+            "Presença digital",
+            "Tem site? catálogo? cardápio digital? Google Perfil da Empresa? WhatsApp Business?"
+          ],
+          [
+            "Operação observável",
+            "Pedidos, cardápio, agenda, espera, caixa, TV, QR/NFC, processos manuais."
+          ],
+          [
+            "Problema hipotético",
+            "Uma frase verificável: “Equipe talvez perca tempo respondendo pedidos repetidos”."
+          ],
+          [
+            "Produto provável",
+            "Cardápio, pedidos, site, agendamento, automação, tela promocional etc."
+          ],
+          [
+            "Confiança da evidência",
+            "Observado pessoalmente, informado por cliente, relato de terceiro ou hipótese."
+          ],
+          [
+            "Acesso / logística",
+            "Como chegar, horários a confirmar, disponibilidade da equipe."
+          ],
+          [
+            "Abordagem recomendada",
+            "Visita, indicação, ligação ou mensagem; por quê?"
+          ],
+          [
+            "Próxima ação + data",
+            "Uma ação concreta, com responsável único e prazo."
+          ]
+        ]
+      },
+      {
+        "kind": "heading",
+        "text": "Antes da visita: checagem em 90 segundos"
+      },
+      {
+        "kind": "bullet",
+        "text": "O local faz sentido para o produto que já existe?"
+      },
+      {
+        "kind": "bullet",
+        "text": "Há uma pergunta específica a validar, em vez de uma apresentação genérica?"
+      },
+      {
+        "kind": "bullet",
+        "text": "Sabemos quem vai abordar e como registrar o retorno?"
+      },
+      {
+        "kind": "bullet",
+        "text": "Há protótipo reutilizável e apresentação curta, sem funções fictícias?"
+      },
+      {
+        "kind": "bullet",
+        "text": "Não há coleta desnecessária de dados pessoais ou uso indevido de imagens de terceiros?"
+      },
+      {
+        "kind": "heading",
+        "text": "Exemplo de evidência bem escrita"
+      },
+      {
+        "kind": "paragraph",
+        "text": "“Charles relatou ter visto um cardápio físico no Varsóvia Restobar; ainda não se sabe se isso atrasa pedidos, dificulta atualizações ou incomoda a gestão.”"
+      },
+      {
+        "kind": "paragraph",
+        "text": "Evitar: “Eles precisam de cardápio digital” ou “esse cliente vai fechar”."
+      }
+    ]
+  },
+  {
+    "title": "3. Visita, diagnóstico e fechamento",
+    "blocks": [
+      {
+        "kind": "heading",
+        "text": "Roteiro presencial (15–25 minutos após observar o local)"
+      },
+      {
+        "kind": "bullet",
+        "text": "1. Observar e, se fizer sentido, consumir. Não atrapalhar horários de pico e não registrar pessoas ou bastidores sem permissão."
+      },
+      {
+        "kind": "bullet",
+        "text": "2. Abrir conversa com interesse genuíno: negócio, tempo de operação, rotina e desafios."
+      },
+      {
+        "kind": "bullet",
+        "text": "3. Entender o processo atual: como o cliente faz pedidos/agendamentos? Quem atualiza preços? Onde há retrabalho?"
+      },
+      {
+        "kind": "bullet",
+        "text": "4. Quantificar de forma aproximada: frequência, minutos gastos, erros, perda de atendimento ou custo — sem inventar números."
+      },
+      {
+        "kind": "bullet",
+        "text": "5. Identificar decisor, urgência, restrições e faixa de investimento; perguntar antes de demonstrar."
+      },
+      {
+        "kind": "bullet",
+        "text": "6. Mostrar apenas a parte do MVP ligada à dor descrita. Confirmar se seria útil e por quê."
+      },
+      {
+        "kind": "bullet",
+        "text": "7. Encerrar com próximo passo claro: proposta com data, nova reunião ou motivo de não prosseguir."
+      },
+      {
+        "kind": "heading",
+        "text": "Perguntas que mudam a venda"
+      },
+      {
+        "kind": "bullet",
+        "text": "“Como vocês resolvem isso hoje? O que dá mais trabalho?”"
+      },
+      {
+        "kind": "bullet",
+        "text": "“Com que frequência esse problema acontece e quem é afetado?”"
+      },
+      {
+        "kind": "bullet",
+        "text": "“O que vocês já usam? O que funciona e não valeria trocar?”"
+      },
+      {
+        "kind": "bullet",
+        "text": "“Se fosse resolver uma coisa neste mês, qual seria?”"
+      },
+      {
+        "kind": "bullet",
+        "text": "“Quem avaliaria uma solução com você e quando faria sentido implementar?”"
+      },
+      {
+        "kind": "bullet",
+        "text": "“Vocês preferem uma compra pontual, suporte mensal, ou ambos?”"
+      },
+      {
+        "kind": "heading",
+        "text": "Registro de saída obrigatório"
+      },
+      {
+        "kind": "table",
+        "rows": [
+          [
+            "Resultado",
+            "Próximo passo"
+          ],
+          [
+            "Interessou / quer orçamento",
+            "Validar escopo, faixa de investimento e enviar proposta com prazo."
+          ],
+          [
+            "Interessou / sem decisão",
+            "Agendar uma segunda conversa ou retorno com data."
+          ],
+          [
+            "Não agora",
+            "Registrar objeção real e combinar se pode haver novo contato."
+          ],
+          [
+            "Não encaixa",
+            "Marcar perdido ou nutrição; não insistir sem motivo."
+          ],
+          [
+            "Não foi possível falar",
+            "Registrar tentativas e propor nova abordagem proporcional."
+          ]
+        ]
+      },
+      {
+        "kind": "paragraph",
+        "text": "Mensagem de confirmação útil: “Obrigado pela conversa. Pelo que entendi, o maior desafio é [problema]. Vou organizar uma proposta para [resultado], com [limites], e retorno em [data]. Está correto?”"
+      }
+    ]
+  },
+  {
+    "title": "4. Proposta, contrato e entrega",
+    "blocks": [
+      {
+        "kind": "heading",
+        "text": "Estrutura mínima da proposta"
+      },
+      {
+        "kind": "bullet",
+        "text": "Contexto em 3 linhas: situação atual relatada pelo cliente, evidência e objetivo."
+      },
+      {
+        "kind": "bullet",
+        "text": "Solução e módulos: o que está incluído, o que NÃO está, integrações e pré-requisitos."
+      },
+      {
+        "kind": "bullet",
+        "text": "Entrega: telas/fluxos, quantidade de revisões, testes, treinamento e critérios de aceite."
+      },
+      {
+        "kind": "bullet",
+        "text": "Cronograma condicionado à entrega de conteúdos, acessos, pagamentos e aprovações."
+      },
+      {
+        "kind": "bullet",
+        "text": "Preço separado: implantação, mensalidade (se houver), materiais NFC, domínio, hospedagem, APIs e suporte."
+      },
+      {
+        "kind": "bullet",
+        "text": "Termos: forma de pagamento, validade, propriedade intelectual/licença, mudança de escopo, cancelamento, privacidade e tratamento de dados."
+      },
+      {
+        "kind": "heading",
+        "text": "Política de preço: decisões que faltam"
+      },
+      {
+        "kind": "table",
+        "rows": [
+          [
+            "Tema",
+            "Decisão a formalizar"
+          ],
+          [
+            "Implantação",
+            "Preço base por módulo; entrada/sinal; parcelas e marco de entrega."
+          ],
+          [
+            "Recorrência",
+            "O que cobre (infra, monitoramento, suporte, alterações) e o que é extra."
+          ],
+          [
+            "NFC e hardware",
+            "Aquisição, reposição, personalização, configuração e responsabilidade por danos."
+          ],
+          [
+            "Desconto de portfólio",
+            "Só com contrapartida expressa e autorizada (depoimento, foto, estudo de caso)."
+          ],
+          [
+            "Trabalho sob medida",
+            "Estimativa e aprovação antes de começar; change request para extras."
+          ]
+        ]
+      },
+      {
+        "kind": "heading",
+        "text": "Passagem comercial → técnico (handoff)"
+      },
+      {
+        "kind": "paragraph",
+        "text": "O projeto só entra em desenvolvimento depois de: proposta aceita, contrato/aceite documentado, escopo versionado, responsável técnico, material inicial, condição de pagamento acordada e regras de acesso definidas."
+      },
+      {
+        "kind": "heading",
+        "text": "Etapas de execução"
+      },
+      {
+        "kind": "paragraph",
+        "text": "Descoberta curta → protótipo/identidade → revisão do cliente → implementação → testes → homologação/aceite → publicação → treinamento → suporte. Cada etapa tem responsável, prazo, evidência de conclusão e registro de pendências."
+      },
+      {
+        "kind": "heading",
+        "text": "Qualidade e segurança"
+      },
+      {
+        "kind": "paragraph",
+        "text": "Não reutilizar imagens, marcas ou dados internos sem autorização. Prototipar com informações fictícias quando houver dados sensíveis. Para saúde, jurídico e bots documentais, definir finalidade, permissões, retenção, sigilo, segurança e revisão de respostas antes de integrar informação real."
+      }
+    ]
+  },
+  {
+    "title": "5. Gestão semanal e implantação em 14 dias",
+    "blocks": [
+      {
+        "kind": "heading",
+        "text": "Reunião operacional — 30 minutos toda semana"
+      },
+      {
+        "kind": "table",
+        "rows": [
+          [
+            "Min.",
+            "Pergunta / resultado"
+          ],
+          [
+            "0–5",
+            "Leads novos, conversas e propostas na semana; dados incompletos."
+          ],
+          [
+            "5–12",
+            "Top 5 prioridades e ações que vencem nos próximos 7 dias."
+          ],
+          [
+            "12–20",
+            "Propostas sem retorno, bloqueios técnicos, decisões e objeções."
+          ],
+          [
+            "20–25",
+            "Projetos ativos, pagamentos, custos e riscos."
+          ],
+          [
+            "25–30",
+            "Cada um assume 1–3 ações, com prazo e registro no CRM."
+          ]
+        ]
+      },
+      {
+        "kind": "heading",
+        "text": "Indicadores para acompanhar"
+      },
+      {
+        "kind": "bullet",
+        "text": "Volume: leads pesquisados, leads qualificados, visitas agendadas/realizadas."
+      },
+      {
+        "kind": "bullet",
+        "text": "Conversão: diagnósticos → propostas, propostas → aceites. Não calcular com amostra insignificante sem explicar o tamanho."
+      },
+      {
+        "kind": "bullet",
+        "text": "Velocidade: dias entre primeira abordagem, diagnóstico, proposta e decisão."
+      },
+      {
+        "kind": "bullet",
+        "text": "Comercial: valor de propostas, motivos de perda, follow-ups vencidos."
+      },
+      {
+        "kind": "bullet",
+        "text": "Financeiro: entradas recebidas, saídas pagas, contas vencidas e margem estimada por projeto."
+      },
+      {
+        "kind": "bullet",
+        "text": "Execução: entregas no prazo, retrabalho, solicitações fora do escopo, incidentes pós-publicação."
+      },
+      {
+        "kind": "heading",
+        "text": "Plano prático de 14 dias"
+      },
+      {
+        "kind": "table",
+        "rows": [
+          [
+            "Quando",
+            "Entregável"
+          ],
+          [
+            "Dias 1–2",
+            "Reunião de definição: nicho principal, papéis, dono da planilha, regras de atualização."
+          ],
+          [
+            "Dias 3–4",
+            "Completar dados verificáveis dos leads existentes; escolher top 5 com score."
+          ],
+          [
+            "Dias 5–7",
+            "Executar 2–4 abordagens presenciais; registrar resultados e próximos passos."
+          ],
+          [
+            "Dias 8–10",
+            "Padronizar demo do cardápio e modelo de proposta com preços revisáveis."
+          ],
+          [
+            "Dias 11–12",
+            "Formalizar fluxo de contrato/aceite, cobrança, suporte e mudança de escopo."
+          ],
+          [
+            "Dias 13–14",
+            "Primeira revisão de funil e ajuste de critérios conforme dados reais."
+          ]
+        ]
+      },
+      {
+        "kind": "paragraph",
+        "text": "A Tasty Shake tem menção a uma possível visita no sábado, 14/11/2026, mas o próprio histórico diz que ainda seria confirmada. Trate como compromisso pendente, não como reunião marcada."
+      },
+      {
+        "kind": "heading",
+        "text": "Evolução da operação"
+      },
+      {
+        "kind": "paragraph",
+        "text": "Começar com a planilha; só automatizar rotinas recorrentes após identificar gargalos. Um CRM próprio, n8n e agentes de IA podem ser avaliados posteriormente, mas não devem bloquear as primeiras vendas."
+      }
+    ]
+  }
+]
