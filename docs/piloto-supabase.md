@@ -1,6 +1,6 @@
 # Piloto compartilhado do Decifaz Hub
 
-O piloto contém cadastro e edição básica de estabelecimentos, histórico de interações e atividades vinculadas. Cada registro pertence a um espaço de trabalho. Os membros do mesmo espaço podem atualizar registros. Use **Atualizar** para recarregar os dados compartilhados. Edições concorrentes do mesmo registro seguem a última gravação.
+O piloto contém cadastro e edição básica de estabelecimentos, histórico de interações, triagem, reuniões, diagnósticos e atividades vinculadas. Cada registro pertence a um espaço de trabalho. Os membros do mesmo espaço podem atualizar registros. Use **Atualizar** para recarregar os dados compartilhados. Edições concorrentes do mesmo registro seguem a última gravação.
 
 ## Configuração da prévia
 
@@ -25,4 +25,6 @@ A função Edge recebe a sessão do usuário e lista os espaços que ele pode ac
 3. Entre com uma conta sem vínculo ou de outro espaço. Verifique que os registros do primeiro espaço ficam inacessíveis.
 4. Mantenha dados reais fora do piloto até concluir essa validação.
 
-O build padrão abre a demonstração local. O modo compartilhado começa vazio e não importa o histórico local. Triagem, reuniões e dashboard executivo permanecem na demonstração até que seus fluxos sejam integrados.
+O build padrão abre a demonstração local. O modo compartilhado começa vazio e não importa o histórico local. A visão geral compartilhada consulta totais do banco para funil, prioridades concluídas, reuniões, diagnósticos e atividades. Propostas, projetos e financeiro seguem na demonstração. As listas do piloto ainda não possuem paginação.
+
+Use a triagem guiada e conclua os sete critérios para ver a prioridade. Registre uma reunião realizada com diagnóstico e marque as opções de avanço e acompanhamento para conferir os reflexos no funil e nas atividades.
