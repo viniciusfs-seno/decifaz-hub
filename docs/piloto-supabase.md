@@ -25,7 +25,7 @@ A função Edge recebe a sessão do usuário e lista os espaços que ele pode ac
 3. Entre com uma conta sem vínculo ou de outro espaço. Verifique que os registros do primeiro espaço ficam inacessíveis.
 4. Mantenha dados reais fora do piloto até concluir essa validação.
 
-O build padrão abre a demonstração local. O modo compartilhado começa vazio e não importa o histórico local. A visão geral compartilhada consulta totais do banco para funil, prioridades concluídas, reuniões, diagnósticos e atividades. Propostas, projetos e financeiro seguem na demonstração. As listas do piloto ainda não possuem paginação.
+O build padrão abre a demonstração local. O modo compartilhado começa vazio e não importa o histórico local. A visão geral compartilhada consulta totais do banco para funil, prioridades concluídas, reuniões, diagnósticos e atividades. Propostas e projetos também usam o Supabase. Previsões de receita e recebimentos usam o Supabase. Despesas seguem na demonstração. As listas do piloto ainda não possuem paginação.
 
 Use a triagem guiada e conclua os sete critérios para ver a prioridade. Registre uma reunião realizada com diagnóstico e marque as opções de avanço e acompanhamento para conferir os reflexos no funil e nas atividades.
 

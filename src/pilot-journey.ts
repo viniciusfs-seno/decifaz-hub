@@ -1,5 +1,5 @@
 import type { SupabaseClient } from '@supabase/supabase-js'
-import { day, emptyLead, type Lead, type Meeting, type Stage, type Triage } from './domain'
+import { day, emptyLead, type Lead, type Meeting, type Proposal, type Stage, type Triage } from './domain'
 
 type Profile = Partial<Pick<Lead, 'region' | 'address' | 'instagram' | 'website' | 'whatsapp' | 'other' | 'services' | 'owner' | 'next' | 'due' | 'needs'>>
 export type PilotLead = {id:string; name:string; segment:string; city:string; notes:string; stage:Stage; profile:Profile; created_at:string}
@@ -18,9 +18,10 @@ export function fullTriage(row:TriageRow):Triage {
  return {...row.record,leadId:row.lead_id,scores:row.scores,completed:row.completed}
 }
 
-export async function loadMeetings(client:SupabaseClient, workspace:string, lead:string) {
- const {data,error}=await client.from('hub_meetings').select('id,lead_id,meeting_on,state,record')
-  .eq('workspace_id',workspace).eq('lead_id',lead).order('meeting_on',{ascending:false}).returns<MeetingRow[]>()
+export async function loadMeetings(client:SupabaseClient, workspace:string, lead?:string) {
+ const query=client.from('hub_meetings').select('id,lead_id,meeting_on,state,record')
+  .eq('workspace_id',workspace)
+ const {data,error}=await (lead?query.eq('lead_id',lead):query).order('meeting_on',{ascending:false}).returns<MeetingRow[]>()
  return {data:data?.map((row):Meeting=>({...row.record,id:row.id,leadId:row.lead_id,date:row.meeting_on,state:row.state})),error}
 }
 
@@ -45,4 +46,21 @@ export function saveMeeting(client:SupabaseClient, workspace:string, meeting:Mee
   p_workspace:workspace,p_lead:leadId,p_id:id,p_date:date,p_state:state,p_record:record,
   p_follow_due:follow?record.due:null,p_advance:advance,
  })
+}
+
+type ProposalRow = {id:string; lead_id:string; series_id:string; version:number; meeting_id:string|null; status:string;
+ record:Omit<Proposal,'id'|'leadId'|'seriesId'|'version'|'meetingId'|'status'>}
+
+export async function loadProposals(client:SupabaseClient, workspace:string) {
+ const {data,error}=await client.from('hub_proposals').select('id,lead_id,series_id,version,meeting_id,status,record')
+  .eq('workspace_id',workspace).order('version',{ascending:false}).order('id').returns<ProposalRow[]>()
+ return {error,data:data?.map((row):Proposal=>({...row.record,id:row.id,leadId:row.lead_id,seriesId:row.series_id,
+  version:row.version,meetingId:row.meeting_id??undefined,status:row.status}))}
+}
+
+export function saveProposal(client:SupabaseClient, workspace:string, proposal:Proposal, decision?:{status:string;date:string;note:string}) {
+ const {id,leadId,seriesId,version,meetingId,title,scope,validity,setup,monthly,services,terms}=proposal
+ return client.rpc('hub_save_proposal',{w:workspace,l:leadId,p:id,s:seriesId??id,v:version,m:meetingId||null,
+  body:decision?null:{title,scope,validity,setup,monthly,services,terms},decision:decision?.status??null,
+  occurred:decision?.date??null,evidence:decision?.note??null})
 }

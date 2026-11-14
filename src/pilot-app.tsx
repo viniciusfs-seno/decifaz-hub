@@ -1,9 +1,13 @@
 import {useEffect,useState,type FormEvent} from 'react'
 import {createClient,type Session} from '@supabase/supabase-js'
-import {CalendarDays, ClipboardList, LayoutDashboard, ListTodo, Menu, Moon, Sun, Users} from 'lucide-react'
-import {dateLabel,stages,type Data,type Meeting} from './domain'
+import {CalendarDays, ClipboardList, FileCheck2, FolderKanban, LayoutDashboard, ListTodo, Menu, Moon, Sun, Users, Wallet} from 'lucide-react'
+import {dateLabel,day,money,stages,type Data,type Meeting,type Proposal} from './domain'
 import {CRM,MeetingEditor,TriageEditor} from './commercial'
-import {fullLead,fullTriage,leadColumns,loadMeetings,loadMetrics,saveMeeting,saveTriage,type PilotLead,type PilotMetrics,type TriageRow} from './pilot-journey'
+import {ProposalEditor,Proposals} from './proposals'
+import {financeMetrics} from './shared-finance-metrics'
+import {loadFinance,SharedFinance} from './pilot-finance'
+import {loadProjects,SharedProjects,SharedProjectEditor,type SharedProject} from './pilot-projects'
+import {fullLead,fullTriage,leadColumns,loadMeetings,loadMetrics,loadProposals,saveProposal,saveMeeting,saveTriage,type PilotLead,type PilotMetrics,type TriageRow} from './pilot-journey'
 
 const url=import.meta.env.VITE_SUPABASE_URL
 const key=import.meta.env.VITE_SUPABASE_PUBLISHABLE_KEY
@@ -45,7 +49,7 @@ export default function PilotApp(){
  </main>
 }
 
-const sections=[['dashboard','Dashboard',LayoutDashboard],['crm','Captação e CRM',Users],['triagem','Triagem comercial',ClipboardList]] as const
+const sections=[['dashboard','Dashboard',LayoutDashboard],['crm','Captação e CRM',Users],['triagem','Triagem comercial',ClipboardList],['propostas','Propostas comerciais',FileCheck2],['projetos','Projetos e entregas',FolderKanban],['financeiro','Financeiro',Wallet]] as const
 type Section=typeof sections[number][0]
 
 function SharedCrm(){
@@ -61,6 +65,7 @@ function SharedCrm(){
   setPage(next)
   setMenu(false)
   setShowForm(false)
+  setProjectId('')
   window.scrollTo(0,0)
  }
  const [spaces,setSpaces]=useState<Workspace[]>([])
@@ -68,6 +73,12 @@ function SharedCrm(){
  const [leads,setLeads]=useState<Lead[]>([])
  const [selected,setSelected]=useState('')
  const [triages,setTriages]=useState<TriageRow[]>([])
+ const [finance,setFinance]=useState<Awaited<ReturnType<typeof loadFinance>>>()
+ const [projects,setProjects]=useState<SharedProject[]>([])
+ const [projectId,setProjectId]=useState('')
+ const [proposals,setProposals]=useState<Proposal[]>([])
+ const [proposalMeetings,setProposalMeetings]=useState<Meeting[]>([])
+ const [proposalModal,setProposalModal]=useState<{id?:string;leadId?:string;meetingId?:string}>()
  const [meetings,setMeetings]=useState<Meeting[]>([])
  const [metrics,setMetrics]=useState<PilotMetrics|null>(null)
  const [editor,setEditor]=useState<'triage'|'meeting'|null>(null)
@@ -100,12 +111,16 @@ function SharedCrm(){
   let current=true
   const leadsQuery=client!.from('hub_leads').select(leadColumns).eq('workspace_id',workspace).order('name').returns<Lead[]>()
   const triagesQuery=client!.from('hub_triages').select('lead_id,record,scores,completed').eq('workspace_id',workspace).returns<TriageRow[]>()
-  void Promise.all([leadsQuery,triagesQuery,loadMetrics(client!,workspace)]).then(([leads,triages,dashboard])=>{
+  void Promise.all([leadsQuery,triagesQuery,loadMetrics(client!,workspace),loadProposals(client!,workspace),loadMeetings(client!,workspace),loadProjects(client!,workspace),loadFinance(client!,workspace)]).then(([leads,triages,dashboard,quotes,diagnoses,delivery,financial])=>{
    if(!current)return
-   if(leads.error||triages.error||dashboard.error||!dashboard.data){setReady(false);setError('Não foi possível carregar a jornada comercial. Confira seu acesso e atualize.');return}
+   if(leads.error||triages.error||dashboard.error||!dashboard.data||quotes.error||!quotes.data||diagnoses.error||!diagnoses.data||delivery.error||!delivery.data||financial.some(result=>result.error||!result.data)){setReady(false);setError('Não foi possível carregar a jornada comercial. Confira seu acesso e atualize.');return}
    setLeads(leads.data)
    setTriages(triages.data)
    setMetrics(dashboard.data)
+   setProposals(quotes.data)
+   setProjects(delivery.data)
+   setFinance(financial)
+   setProposalMeetings(diagnoses.data)
    setReady(true)
   })
   return ()=>{current=false}
@@ -166,8 +181,9 @@ function SharedCrm(){
  const currentLead=leads.find(lead=>lead.id===selected)
  const selectedTriage=triages.find(row=>row.lead_id===selected)
  const lead=currentLead?fullLead(currentLead):undefined
- const commercialData:Data={version:1,leads:leads.map(fullLead),triages:triages.map(fullTriage),meetings,activities:[],proposals:[],projects:[],finance:[],team:[...new Set(leads.map(item=>item.profile.owner).filter((owner):owner is string=>Boolean(owner)))]}
+ const commercialData:Data={version:1,leads:leads.map(fullLead),triages:triages.map(fullTriage),meetings:proposalMeetings,activities:[],proposals,projects:[],finance:[],team:[...new Set(leads.map(item=>item.profile.owner).filter((owner):owner is string=>Boolean(owner)))]}
  const meetingContext={...commercialData,leads:lead?[lead]:[],team:[]}
+ const activeProject=projects.find(item=>item.proposal_id===projectId)
  const pageLabel=sections.find(([id])=>id===page)?.[1]
  const signOut=()=>void client!.auth.signOut().then(({error})=>{if(error)setError('Não foi possível sair. Tente novamente.')})
  return <div className="app">
@@ -186,11 +202,14 @@ function SharedCrm(){
   {notice&&<p role="status">{notice}</p>}
   {!ready&&!error&&<p role="status">Carregando o CRM…</p>}
   {ready&&<>
-   {spaces.length>1&&<label>Espaço de trabalho<select disabled={busy} value={workspace} onChange={e=>{setReady(false);setError('');setLeads([]);setWorkspace(e.target.value);select()}}>{spaces.map(space=><option key={space.id} value={space.id}>{space.name}</option>)}</select></label>}
-   {page==='dashboard'&&metrics&&<PilotDashboard metrics={metrics}/>}
-   {page!=='dashboard'&&<CRM key={page} data={commercialData} triage={page==='triagem'} open={id=>select(leads.find(item=>item.id===id))} add={()=>select()}
+   {spaces.length>1&&<label>Espaço de trabalho<select disabled={busy} value={workspace} onChange={e=>{setReady(false);setError('');setLeads([]);setProjectId('');setWorkspace(e.target.value);select()}}>{spaces.map(space=><option key={space.id} value={space.id}>{space.name}</option>)}</select></label>}
+   {page==='dashboard'&&metrics&&<PilotDashboard metrics={metrics} finance={finance}/>}
+   {page==='financeiro'&&finance&&<SharedFinance key={workspace} client={client!} workspace={workspace} projects={projects} forecasts={finance[0].data??[]} receipts={finance[1].data??[]} expenses={finance[2].data??[]} busy={busy} write={write}/>}
+   {page==='projetos'&&<SharedProjects projects={projects} leads={commercialData.leads} open={setProjectId}/>}
+   {page==='propostas'&&<Proposals data={commercialData} add={()=>setProposalModal({})} open={id=>setProposalModal({id})}/>}
+   {(page==='crm'||page==='triagem')&&<CRM key={page} data={commercialData} triage={page==='triagem'} open={id=>select(leads.find(item=>item.id===id))} add={()=>select()}
     start={id=>{select(leads.find(item=>item.id===id));setEditor('triage')}}/>}
-   {page!=='dashboard'&&showForm&&<>
+   {(page==='crm'||page==='triagem')&&showForm&&<>
     <section className="card panel"><h2>{selected?'Editar estabelecimento':'Cadastrar estabelecimento'}</h2>
      <form className="pilot-fields" onSubmit={saveLead}>
       <label>Nome<input required value={draft.name} onChange={e=>setDraft({...draft,name:e.target.value})}/></label>
@@ -206,8 +225,10 @@ function SharedCrm(){
     <div className="actions">
      <button className="button" disabled={busy} onClick={()=>setEditor('triage')}>{selectedTriage?'Editar triagem':'Iniciar triagem'}</button>
      <button className="button" disabled={busy||loadedLead!==selected} onClick={()=>{setMeeting(undefined);setEditor('meeting')}}>Registrar reunião</button>
+     <button className="button" disabled={busy} onClick={()=>setProposalModal({leadId:lead.id})}>Nova proposta</button>
     </div>
-    {loadedLead===selected&&meetings.map(item=><div key={item.id} className="list-item"><div><b>{dateLabel(item.date)} · {item.state}</b><p>{item.summary||item.participants}</p></div><button className="button" disabled={busy} onClick={()=>{setMeeting(item);setEditor('meeting')}}>Editar reunião</button></div>)}
+    {loadedLead===selected&&meetings.map(item=><div key={item.id} className="list-item"><div><b>{dateLabel(item.date)} · {item.state}</b><p>{item.summary||item.participants}</p></div><button className="button" disabled={busy} onClick={()=>{setMeeting(item);setEditor('meeting')}}>Editar reunião</button>{item.state==='Realizada'&&<button className="button" disabled={busy} onClick={()=>setProposalModal({leadId:lead.id,meetingId:item.id})}>Criar proposta</button>}</div>)}
+    {proposals.filter(item=>item.leadId===lead.id).map(item=><button key={item.id} className="text-button" onClick={()=>setProposalModal({id:item.id})}>{item.title} · v{item.version} · {item.status}</button>)}
    </section>}
    {selected&&loadedLead===selected&&<div className="dashboard-grid">
     <section className="card panel"><h2>Histórico</h2>
@@ -228,11 +249,26 @@ function SharedCrm(){
     save={(triage,updatedLead)=>write(()=>saveTriage(client!,workspace,triage,updatedLead),()=>setDraft({...draft,name:updatedLead.name,segment:updatedLead.segment,city:updatedLead.city}))}/>}
    {lead&&editor==='meeting'&&<MeetingEditor data={meetingContext} item={meeting} leadId={lead.id} lockLead close={()=>setEditor(null)}
     save={(item,follow,advance)=>write(()=>saveMeeting(client!,workspace,item,follow,advance))}/>}
+   {proposalModal&&<ProposalEditor key={proposalModal.id??proposalModal.meetingId??'new'} data={commercialData}
+    item={proposals.find(item=>item.id===proposalModal.id)} leadId={proposalModal.leadId} meetingId={proposalModal.meetingId}
+    open={id=>setProposalModal({id})} close={()=>setProposalModal(undefined)}
+    project={item=>{
+     const show=()=>{setProposalModal(undefined);go('projetos');setProjectId(item.id)}
+     if(projects.some(project=>project.proposal_id===item.id))show()
+     else void write(()=>client!.rpc('hub_open_project',{w:workspace,p:item.id}),show)
+    }} projectExists={id=>projects.some(project=>project.proposal_id===id)}
+    save={(item,decision)=>write(()=>saveProposal(client!,workspace,item,decision))}/>}
+   {activeProject&&page==='projetos'&&<SharedProjectEditor key={activeProject.proposal_id} item={activeProject}
+    close={()=>setProjectId('')} save={values=>write(()=>client!.from('hub_projects').update(values)
+     .eq('workspace_id',workspace).eq('proposal_id',activeProject.proposal_id).select('proposal_id').single())}/>}
   </>}
  </main></div></div>
 }
 
-function PilotDashboard({metrics}: {metrics:PilotMetrics}) {
+function PilotDashboard({metrics,finance}: {metrics:PilotMetrics;finance?:Awaited<ReturnType<typeof loadFinance>>}) {
+ const today=day()
+ const billing=finance&&financeMetrics(finance[0].data??[],finance[1].data??[],finance[2].data??[],today,today.slice(0,7))
+ const overdue=finance&&financeMetrics(finance[0].data??[],finance[1].data??[],[],today).overdue
  const total=Object.values(metrics.funnel).reduce((sum,count)=>sum+count,0)
  const indicators=[[Users,'Estabelecimentos',total],[CalendarDays,'Reuniões agendadas',metrics.scheduled],
   [ClipboardList,'Diagnósticos realizados',metrics.diagnosed],[ListTodo,'Atividades pendentes',metrics.pending],
@@ -242,6 +278,12 @@ function PilotDashboard({metrics}: {metrics:PilotMetrics}) {
   <div className="kpis">{indicators.map(([Icon,label,value])=><article className="metric card" key={label}>
    <div className="metric-top"><span className="tile"><Icon size={19}/></span></div><h2>{label}</h2><strong>{value}</strong>
   </article>)}</div>
+  {billing&&<section className="card panel"><h2>Financeiro do mês</h2><dl className="dashboard-grid">
+   <div><dt>Receita prevista</dt><dd>{money(billing.forecast/100)}</dd></div>
+   <div><dt>Receita recebida</dt><dd>{money(billing.received/100)}</dd></div>
+   <div><dt>Despesas pagas</dt><dd>{money(billing.paidExpenses/100)}</dd></div>
+   <div><dt>Saldo atrasado de todos os meses</dt><dd>{money((overdue??0)/100)}</dd></div>
+  </dl></section>}
   <div className="dashboard-grid">
    <div className="card panel"><h3>Prioridades</h3><p>A · {metrics.priorities.A??0}　B · {metrics.priorities.B??0}　C · {metrics.priorities.C??0}</p></div>
    <div className="card panel"><h3>Funil comercial</h3>{total===0?<p>Nenhuma oportunidade cadastrada.</p>:

@@ -1,36 +1,38 @@
 # Decifaz Hub
 
-Portal interno de demonstração em React, TypeScript e Vite. Use dados fictícios nesta versão.
+Portal interno da Decifaz para gerenciar o funil comercial. O frontend usa React, TypeScript e Vite, com deploy na Vercel. O Supabase fornece login por link de e-mail, PostgreSQL, RLS e a função Edge que lista os espaços autorizados.
 
-## Executar no VS Code
+## Desenvolvimento local
 
-1. Abra esta pasta com Node.js 22.12+ ou 24.
-2. Execute `npm ci` e `npm run dev`.
-3. Abra a URL indicada pelo terminal.
-4. Use `npm run check` para validar tipos e `npm run build` para gerar a distribuição estática em `dist/`.
+Requisitos: Node.js 22.12+ ou 24.
 
-A prévia HTML portátil, quando fornecida, abre diretamente no navegador. O armazenamento em arquivos locais depende do navegador. Para persistência previsível, use o servidor local acima.
+```sh
+npm ci
+npm run dev
+npm run check
+npm test
+npm run build
+```
+
+A execução local padrão usa registros fictícios salvos no navegador. Para testar o modo compartilhado, copie `.env.example` para `.env.local`, configure `VITE_HUB_MODE=shared` e preencha a URL e a chave **publicável** do Supabase. Adicione a origem local exata em Redirect URLs apenas se precisar testar o login local.
+
+## Deploy e operação
+
+- Frontend oficial: [decifaz-hub.vercel.app](https://decifaz-hub.vercel.app/).
+- Em produção, use esse endereço em **Site URL** e **Redirect URLs** no Supabase Auth. O endereço se mantém entre deploys.
+- Na Vercel, configure as variáveis do exemplo para o ambiente desejado. O build incorpora as variáveis `VITE_`; mantenha senhas e chaves administrativas fora delas. Domínios `.vercel.app` exigem login compartilhado.
+- As migrações versionadas ficam em `supabase/migrations/` e a função de acesso em `supabase/functions/hub-workspaces/`.
+- Consulte [configuração e homologação](docs/piloto-supabase.md) e [propostas e projetos](docs/propostas-e-projetos.md).
+
+## Fluxo compartilhado
+
+O CRM, a triagem, as reuniões, as atividades vinculadas e os indicadores consultam o Supabase. Propostas registram versões e andamento. O aceite explícito permite abrir um projeto com uma cópia do escopo, serviços, valores e condições aprovados. O projeto permite acompanhar responsável, prazo, situação e entregáveis.
+
+A demonstração local mantém os módulos legados e os dados fictícios. O financeiro compartilhado registra previsões de receita, recebimentos, estornos e despesas com baixa manual. Integração de pagamentos e emissão de contratos ainda ficam fora desse fluxo. Veja [financeiro compartilhado](docs/financeiro-compartilhado.md).
 
 ## Organização
 
-- `src/domain.ts`: entidades, catálogos, critérios, funil e métricas.
-- `src/repository.ts`: interface de persistência, implementação local, exemplos fictícios e exportação JSON.
-- `src/commercial.tsx`: CRM, triagem, atividades e reuniões.
-- `src/dashboard.tsx`: dashboard e relatórios derivados dos registros.
-- `src/secondary.tsx`: conhecimento, catálogo e cadastros iniciais de propostas, projetos e financeiro.
-- `src/manual.json`: transcrição estruturada do manual, incluindo suas tabelas.
-
-## Demonstração
-
-Cadastre um lead com responsável, próxima ação e prazo. Na triagem, critérios desconhecidos ficam em branco e o rascunho permanece sem prioridade definitiva. Registre fatos, relatos e hipóteses separadamente. Depois de concluir, crie uma atividade e registre uma reunião realizada, marque a opção de atualizar o CRM e confira o histórico e o dashboard. Use Configurações para exportar o estado em JSON.
-
-O estado é local por navegador e origem, sem autenticação, sincronização entre dispositivos ou backup automático. A exportação JSON é manual e a importação pela interface fica para a fase seguinte. As métricas de conversão usam apenas ganhos e perdas no denominador. Valores financeiros realizados exigem data efetiva.
-
-## Decisões para produção
-
-- Definir repositório privado, permissões de manutenção, revisão de PRs e CI.
-- Definir papéis, alçadas comerciais e escopo de acesso a documentação, contatos e valores.
-- Substituir persistência local por uma implementação assíncrona com API e PostgreSQL, com migrações e autorização no servidor e no banco.
-- Implementar autenticação real, auditoria de mudanças, reconciliação de duplicatas, concorrência de gravação e política de backups com restauração testada.
-- Validar histórico e privacidade do material interno antes de qualquer compartilhamento.
-- Validar modelos, regras de versionamento, aceite, homologação, recorrências, faturamento e pós-venda com os sócios.
+- `src/domain.ts` contém as entidades, critérios e métricas.
+- `src/pilot-app.tsx` e `src/pilot-journey.ts` implementam o modo compartilhado.
+- `src/repository.ts` cuida da persistência local da demonstração.
+- `src/manual.json` guarda o manual estruturado.
