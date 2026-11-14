@@ -76,7 +76,7 @@ export function SharedFinance({client,workspace,projects,forecasts,receipts,expe
      event.preventDefault()
      if(project&&due&&value&&!busy)void write(()=>client.rpc('hub_forecast',{w:workspace,p:project,k:kind,d:due}))
     }}>
-     <label className="field">Projeto<select required value={project} onChange={event=>setProject(event.target.value)}>
+     <label className="field">Projeto<select aria-label="Projeto" required value={project} onChange={event=>setProject(event.target.value)}>
       <option value="">Selecione</option>{projects.map(item=><option key={item.proposal_id} value={item.proposal_id}>{item.approved.title}</option>)}
      </select></label>
      <Field label="Tipo" value={kind} options={kinds} on={setKind}/>
@@ -92,7 +92,7 @@ export function SharedFinance({client,workspace,projects,forecasts,receipts,expe
      void write(()=>client.rpc('hub_receive',{w:workspace,p:current.proposal_id,k:current.kind,m:current.period,i:receiptId,d:received,a:Number(amount)}),
       ()=>{setCharge('');setAmount('');setReceiptId(uid())})
     }}>
-     <label className="field">Previsão<select required value={charge} onChange={event=>{setCharge(event.target.value);setReceiptId(uid())}}>
+     <label className="field">Previsão<select aria-label="Previsão" required value={charge} onChange={event=>{setCharge(event.target.value);setReceiptId(uid())}}>
       <option value="">Selecione</option>{forecasts.filter(item=>outstanding(item)>0).map(item=><option key={key(item)} value={key(item)}>
        {label(item.proposal_id)} · {item.kind} · {dateLabel(item.due_on)}
       </option>)}
