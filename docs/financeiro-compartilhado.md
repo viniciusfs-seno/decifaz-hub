@@ -17,3 +17,9 @@ Cadastre despesas com descrição, vencimento e valor previsto. Na baixa, inform
 ## Regressão
 
 `npm test` valida os totais por competência e data efetiva. O arquivo `supabase/tests/financeiro_jornada.sql` cobre proposta, aceite, projeto, previsão, recebimento, estorno, despesa e isolamento. Execute com um papel administrativo em um banco de teste já migrado. As fixtures ficam em uma transação revertida.
+
+## Exportação e auditoria
+
+Exporte o CSV pelo mês selecionado ou por todos os meses. O arquivo distingue previsões, recebimentos, despesas previstas e despesas pagas. Recebimentos estornados aparecem com situação própria. A trilha mostra as 30 alterações mais recentes a partir da migração, com data, conta responsável e valores antes e depois.
+
+Para a regressão de interface do financeiro, execute `npm run test:e2e -- shared-finance.spec.mjs` com `VITE_HUB_MODE=shared`, `VITE_SUPABASE_URL=https://mock-hub.supabase.co` e `VITE_SUPABASE_PUBLISHABLE_KEY=sb_publishable_fixture`. A sessão e a API são simuladas. O teste SQL valida as regras no banco.

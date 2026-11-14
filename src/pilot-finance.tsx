@@ -7,6 +7,11 @@ import {Empty,Field,Page} from './ui'
 
 type Write=(op:()=>PromiseLike<{error:unknown;data:unknown}>,success?:()=>void)=>Promise<boolean>
 const kinds=['Implantação','Mensalidade']
+type Audit={id:string;occurred_at:string;actor_id:string|null;entity:string;operation:string;before_record:Record<string,unknown>|null;after_record:Record<string,unknown>}
+export function financeCsv(rows:string[][]){
+ return rows.map(row=>row.map(value=>'"'+(/^[\s]*[=+@-]|^[\t\r\n]/.test(value)?"'":'')+value.replaceAll('"','""')+'"').join(';')).join('\r\n')
+}
+
 export function loadFinance(client:SupabaseClient,workspace:string){
  return Promise.all([
   client.from('hub_receivables').select('proposal_id,kind,period,amount,due_on').eq('workspace_id',workspace)
@@ -14,11 +19,13 @@ export function loadFinance(client:SupabaseClient,workspace:string){
   client.from('hub_receipts').select('proposal_id,kind,period,amount,id,received_on,reversed_at,reversal_reason').eq('workspace_id',workspace)
    .order('received_on',{ascending:false}).order('id').returns<Receipt[]>(),
   client.from('hub_expenses').select('id,title,due_on,amount,paid_on,paid_amount').eq('workspace_id',workspace).order('due_on').order('id').returns<Expense[]>(),
+  client.from('hub_finance_audit').select('id,occurred_at,actor_id,entity,operation,before_record,after_record')
+   .eq('workspace_id',workspace).order('occurred_at',{ascending:false}).order('id').limit(30).returns<Audit[]>(),
  ])
 }
 
-export function SharedFinance({client,workspace,projects,forecasts,receipts,expenses,busy,write}:{
- client:SupabaseClient;workspace:string;projects:SharedProject[];forecasts:Forecast[];receipts:Receipt[];expenses:Expense[];busy:boolean;write:Write
+export function SharedFinance({client,workspace,projects,forecasts,receipts,expenses,audit,busy,write}:{
+ client:SupabaseClient;workspace:string;projects:SharedProject[];forecasts:Forecast[];receipts:Receipt[];expenses:Expense[];audit:Audit[];busy:boolean;write:Write
 }){
  const [project,setProject]=useState('')
  const [kind,setKind]=useState(kinds[0])
@@ -41,7 +48,23 @@ export function SharedFinance({client,workspace,projects,forecasts,receipts,expe
  const value=kind==='Implantação'?selected?.approved.setup:selected?.approved.monthly
  const label=(id:string)=>projects.find(item=>item.proposal_id===id)?.approved.title??'Projeto vinculado'
 
- return <Page title="Financeiro" description="Acompanhe previsões e registre os valores que a Decifaz já recebeu.">
+ function exportReport(){
+  const rows=[['Registro','Descrição','Data','Valor','Situação']]
+  const format=(amount:number)=>amount.toFixed(2).replace('.',',')
+  for(const item of forecasts.filter(item=>inMonth(item.due_on)))rows.push(['Receita prevista',label(item.proposal_id)+' · '+item.kind,dateLabel(item.due_on),format(item.amount),''])
+  for(const item of shownReceipts)rows.push(['Recebimento',label(item.proposal_id)+' · '+item.kind,dateLabel(item.received_on),format(item.amount),item.reversed_at?'Estornado':'Realizado'])
+  for(const item of expenses){
+   if(inMonth(item.due_on))rows.push(['Despesa prevista',item.title,dateLabel(item.due_on),format(item.amount),''])
+   if(item.paid_on&&item.paid_amount!==null&&inMonth(item.paid_on))rows.push(['Despesa paga',item.title,dateLabel(item.paid_on),format(item.paid_amount),'Realizado'])
+  }
+  const url=URL.createObjectURL(new Blob(['\uFEFF',financeCsv(rows)],{type:'text/csv;charset=utf-8'}))
+  const link=document.createElement('a')
+  link.href=url
+  link.download='decifaz-financeiro-'+(month||'todos')+'.csv'
+  link.click()
+  setTimeout(()=>URL.revokeObjectURL(url),1000)
+ }
+ return <Page title="Financeiro" description="Acompanhe previsões e registre os valores que a Decifaz já recebeu." actions={<button className="button" onClick={exportReport}>Exportar relatório CSV</button>}>
   <div className="toolbar"><Field label="Mês de referência" type="month" value={month} on={setMonth}/><button className="button" onClick={()=>setMonth('')}>Todos os meses</button><label><input type="checkbox" checked={overdueOnly} onChange={e=>setOverdueOnly(e.target.checked)}/> Só previsões atrasadas</label></div>
   <div className="kpis">
    {[['Receita prevista',summary.forecast],['Recebido',summary.received],['Saldo a receber',summary.balance],['Saldo atrasado',summary.overdue],['Despesas previstas',summary.expenses],['Despesas pagas',summary.paidExpenses]].map(([name,value])=>
@@ -102,6 +125,13 @@ export function SharedFinance({client,workspace,projects,forecasts,receipts,expe
     </form>:<button className="button" disabled={busy} onClick={()=>{setReason('');setReverseId(item.id)}}>Estornar</button>}</td></tr>)}</tbody>
   </table></div>:<Empty title="Nenhum recebimento registrado"/>}</section>
   <ExpensePanel client={client} workspace={workspace} expenses={expenses} month={month} busy={busy} write={write}/>
+  <section className="card panel"><h2>Últimas alterações financeiras</h2>
+   {audit.length?<ul>{audit.map(item=><li key={item.id}><details>
+    <summary>{dateLabel(item.occurred_at)} · {item.entity==='hub_expenses'?'Despesa':item.entity==='hub_receipts'?'Recebimento':'Previsão'} · {item.operation==='INSERT'?'Registro criado':item.after_record.reversed_at?'Estorno':'Baixa'}</summary>
+    <p>Conta responsável · {item.actor_id??'Sistema'}</p>
+    <pre className="details-line">{JSON.stringify({antes:item.before_record,depois:item.after_record},null,2)}</pre>
+   </details></li>)}</ul>:<Empty title="Nenhuma alteração registrada"/>}
+  </section>
  </Page>
 }
 

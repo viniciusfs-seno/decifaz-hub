@@ -6,7 +6,7 @@ import {CRM,MeetingEditor,TriageEditor} from './commercial'
 import {ProposalEditor,Proposals} from './proposals'
 import {financeMetrics} from './shared-finance-metrics'
 import {loadFinance,SharedFinance} from './pilot-finance'
-import {loadProjects,SharedProjects,SharedProjectEditor,type SharedProject} from './pilot-projects'
+import {loadProjects,ProjectActivities,SharedProjects,SharedProjectEditor,type SharedProject} from './pilot-projects'
 import {fullLead,fullTriage,leadColumns,loadMeetings,loadMetrics,loadProposals,saveProposal,saveMeeting,saveTriage,type PilotLead,type PilotMetrics,type TriageRow} from './pilot-journey'
 
 const url=import.meta.env.VITE_SUPABASE_URL
@@ -204,7 +204,7 @@ function SharedCrm(){
   {ready&&<>
    {spaces.length>1&&<label>Espaço de trabalho<select disabled={busy} value={workspace} onChange={e=>{setReady(false);setError('');setLeads([]);setProjectId('');setWorkspace(e.target.value);select()}}>{spaces.map(space=><option key={space.id} value={space.id}>{space.name}</option>)}</select></label>}
    {page==='dashboard'&&metrics&&<PilotDashboard metrics={metrics} finance={finance}/>}
-   {page==='financeiro'&&finance&&<SharedFinance key={workspace} client={client!} workspace={workspace} projects={projects} forecasts={finance[0].data??[]} receipts={finance[1].data??[]} expenses={finance[2].data??[]} busy={busy} write={write}/>}
+   {page==='financeiro'&&finance&&<SharedFinance key={workspace} client={client!} workspace={workspace} projects={projects} forecasts={finance[0].data??[]} receipts={finance[1].data??[]} expenses={finance[2].data??[]} audit={finance[3].data??[]} busy={busy} write={write}/>}
    {page==='projetos'&&<SharedProjects projects={projects} leads={commercialData.leads} open={setProjectId}/>}
    {page==='propostas'&&<Proposals data={commercialData} add={()=>setProposalModal({})} open={id=>setProposalModal({id})}/>}
    {(page==='crm'||page==='triagem')&&<CRM key={page} data={commercialData} triage={page==='triagem'} open={id=>select(leads.find(item=>item.id===id))} add={()=>select()}
@@ -259,8 +259,12 @@ function SharedCrm(){
     }} projectExists={id=>projects.some(project=>project.proposal_id===id)}
     save={(item,decision)=>write(()=>saveProposal(client!,workspace,item,decision))}/>}
    {activeProject&&page==='projetos'&&<SharedProjectEditor key={activeProject.proposal_id} item={activeProject}
-    close={()=>setProjectId('')} save={values=>write(()=>client!.from('hub_projects').update(values)
-     .eq('workspace_id',workspace).eq('proposal_id',activeProject.proposal_id).select('proposal_id').single())}/>}
+    close={()=>setProjectId('')} accept={values=>write(()=>client!.rpc('hub_accept_delivery',{
+     w:workspace,p:activeProject.proposal_id,c:values.checks,d:values.date,e:values.reference,t:values.title,o:values.owner,due:values.due,
+    }))} save={values=>write(()=>client!.from('hub_projects').update(values)
+     .eq('workspace_id',workspace).eq('proposal_id',activeProject.proposal_id).select('proposal_id').single())}>
+    <ProjectActivities client={client!} workspace={workspace} project={activeProject.proposal_id} revision={revision}/>
+   </SharedProjectEditor>}
   </>}
  </main></div></div>
 }
