@@ -58,3 +58,52 @@ test('membros compartilham chamados e contas externas ficam isoladas',async({pag
   expect(await checked(outsider.client.from('hub_activities').select('id').eq('workspace_id',workspace))).toEqual([])
  }finally{await other.close()}
 })
+
+test('link mágico do e-mail local abre o Hub e mantém a sessão após recarregar',async({page})=>{
+ test.skip(process.env.HUB_REAL_E2E!=='1','Requer a pilha local do Supabase.')
+ const endpoint='http://127.0.0.1:54321'
+ const origin='http://127.0.0.1:4181'
+ const mailbox='http://127.0.0.1:54324'
+ if(process.env.VITE_SUPABASE_URL!==endpoint)throw new Error('Use exclusivamente o Supabase local.')
+ const admin=createClient(endpoint,process.env.HUB_TEST_ADMIN_KEY,{auth:{persistSession:false,autoRefreshToken:false}})
+ const email=randomUUID()+'@example.com'
+ const workspace=randomUUID()
+ const {data:{user},error}=await admin.auth.admin.createUser({email,email_confirm:true})
+ if(error||!user)throw new Error('Falha ao criar a conta de teste.')
+ const space=await admin.from('hub_workspaces').insert({id:workspace,name:'Decifaz Link Mágico'})
+ if(space.error)throw space.error
+ const member=await admin.from('hub_members').insert({workspace_id:workspace,user_id:user.id})
+ if(member.error)throw member.error
+
+ await page.goto('/')
+ await page.getByLabel('E-mail',{exact:true}).fill(email)
+ await page.getByRole('button',{name:'Enviar link de acesso'}).click()
+ await expect(page.getByText('Confira seu e-mail para entrar.')).toBeVisible()
+
+ let messageId
+ await expect.poll(async()=>{
+  const response=await fetch(mailbox+'/api/v1/messages')
+  if(!response.ok)return false
+  const {messages}=await response.json()
+  messageId=messages?.find(message=>message.To?.some(recipient=>recipient.Address===email))?.ID
+  return Boolean(messageId)
+ },{timeout:15000,message:'O e-mail deve chegar à caixa local do destinatário'}).toBe(true)
+
+ const response=await fetch(mailbox+'/api/v1/message/'+encodeURIComponent(messageId))
+ expect(response.ok).toBe(true)
+ const {HTML}=await response.json()
+ const href=await page.evaluate(html=>{
+  const document=new DOMParser().parseFromString(html,'text/html')
+  return [...document.querySelectorAll('a[href]')].find(link=>link.href.includes('/auth/v1/verify?'))?.href
+ },HTML)
+ if(!href)throw new Error('O e-mail não contém o link de verificação.')
+ const verification=new URL(href)
+ if(verification.origin!==endpoint||verification.pathname!=='/auth/v1/verify'||verification.searchParams.get('redirect_to')!==origin+'/'){
+  throw new Error('O link de teste aponta para um destino inesperado.')
+ }
+ await page.goto(verification.href)
+ await expect(page.getByText('Decifaz Link Mágico',{exact:true})).toBeVisible()
+ await expect(page).toHaveURL(origin+'/')
+ await page.reload()
+ await expect(page.getByText('Decifaz Link Mágico',{exact:true})).toBeVisible()
+})
