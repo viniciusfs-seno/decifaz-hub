@@ -4,7 +4,7 @@ O piloto contém cadastro e edição básica de estabelecimentos, histórico de 
 
 ## Configuração da prévia
 
-Em `.env.local` ou nas variáveis de build da hospedagem privada, configure:
+Em `.env.local` ou nas variáveis de build do projeto Decifaz Hub na Vercel, configure:
 
 ```dotenv
 VITE_HUB_MODE=shared
@@ -29,4 +29,4 @@ O build padrão abre a demonstração local. O modo compartilhado começa vazio 
 
 Use a triagem guiada e conclua os sete critérios para ver a prioridade. Registre uma reunião realizada com diagnóstico e marque as opções de avanço e acompanhamento para conferir os reflexos no funil e nas atividades.
 
-Na hospedagem privada, o build com `VITE_HUB_MODE=preview` abre o piloto por `?piloto=1` e mantém a demonstração no endereço principal. Inclua o endereço da prévia com essa query na lista de redirecionamentos do Supabase Auth.
+Na Vercel, configure as três variáveis para o ambiente desejado e gere um novo deploy. Para o domínio de produção, cadastre `https://decifaz-hub.vercel.app/` em Redirect URLs no Supabase Auth e use esse endereço como Site URL se ele for o destino padrão do projeto. O app envia a origem da implantação atual como destino do login.

@@ -196,9 +196,7 @@ function App(){
 }
 
 const root=createRoot(document.getElementById('root')!)
-const hubMode=import.meta.env.VITE_HUB_MODE
-const openPilot=hubMode==='shared'||(hubMode==='preview'&&new URLSearchParams(location.search).get('piloto')==='1')
-if(openPilot){
+if(import.meta.env.VITE_HUB_MODE==='shared'){
  void import('./pilot-app').then(({default:PilotApp})=>root.render(<PilotApp/>)).catch(()=>root.render(<main><p role="alert">Não foi possível abrir o piloto compartilhado. Recarregue a página para tentar novamente.</p></main>))
 }else{
  root.render(<App/>)

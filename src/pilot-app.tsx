@@ -1,7 +1,8 @@
 import {useEffect,useState,type FormEvent} from 'react'
 import {createClient,type Session} from '@supabase/supabase-js'
-import {dateLabel,grade,stages,type Data,type Meeting} from './domain'
-import {MeetingEditor,TriageEditor} from './commercial'
+import {CalendarDays, ClipboardList, LayoutDashboard, ListTodo, Menu, Moon, Sun, Users} from 'lucide-react'
+import {dateLabel,stages,type Data,type Meeting} from './domain'
+import {CRM,MeetingEditor,TriageEditor} from './commercial'
 import {fullLead,fullTriage,leadColumns,loadMeetings,loadMetrics,saveMeeting,saveTriage,type PilotLead,type PilotMetrics,type TriageRow} from './pilot-journey'
 
 const url=import.meta.env.VITE_SUPABASE_URL
@@ -30,7 +31,7 @@ export default function PilotApp(){
   event.preventDefault()
   setBusy(true)
   setError('')
-  const {error}=await client!.auth.signInWithOtp({email:email.trim(),options:{shouldCreateUser:false,emailRedirectTo:location.origin+location.pathname+(import.meta.env.VITE_HUB_MODE==='preview'?'?piloto=1':'')}})
+  const {error}=await client!.auth.signInWithOtp({email:email.trim(),options:{shouldCreateUser:false,emailRedirectTo:new URL('/',location.origin).href}})
   setSent(!error)
   if(error)setError('Não foi possível solicitar o link. Confira o endereço e tente novamente.')
   setBusy(false)
@@ -38,13 +39,30 @@ export default function PilotApp(){
  if(!client)return <main><p role="alert">Configure a URL e a chave publicável do Supabase para abrir o piloto.</p></main>
  if(session===undefined)return <main><p role="status">Carregando sessão…</p></main>
  if(session)return <SharedCrm key={session.user.id}/>
- return <main className="pilot"><h1>Decifaz Hub</h1><p>Entre com o e-mail autorizado para acessar o CRM compartilhado.</p>
+ return <main className="pilot-login"><img className="brand-logo" src={import.meta.env.BASE_URL+'identidade/assinatura-horizontal-escuro-selo.svg'} alt="Decifaz"/><h1>Decifaz Hub</h1><p>Entre com o e-mail autorizado para acessar o CRM compartilhado.</p>
   <form className="card panel pilot-fields" onSubmit={signIn}><label>E-mail<input required type="email" autoComplete="email" value={email} onChange={e=>setEmail(e.target.value)}/></label><button className="button primary" disabled={busy}>Enviar link de acesso</button></form>
   {sent&&<p role="status">Confira seu e-mail para entrar.</p>}{error&&<p role="alert">{error}</p>}
  </main>
 }
 
+const sections=[['dashboard','Dashboard',LayoutDashboard],['crm','Captação e CRM',Users],['triagem','Triagem comercial',ClipboardList]] as const
+type Section=typeof sections[number][0]
+
 function SharedCrm(){
+ const [page,setPage]=useState<Section>('dashboard')
+ const [menu,setMenu]=useState(false)
+ const [dark,setDark]=useState(()=>{try{return localStorage.getItem('decifaz-theme')==='dark'}catch{return false}})
+ const [showForm,setShowForm]=useState(false)
+ useEffect(()=>{
+  document.documentElement.dataset.theme=dark?'dark':'light'
+  try{localStorage.setItem('decifaz-theme',dark?'dark':'light')}catch{/* tema em memória */}
+ },[dark])
+ function go(next:Section){
+  setPage(next)
+  setMenu(false)
+  setShowForm(false)
+  window.scrollTo(0,0)
+ }
  const [spaces,setSpaces]=useState<Workspace[]>([])
  const [workspace,setWorkspace]=useState('')
  const [leads,setLeads]=useState<Lead[]>([])
@@ -108,6 +126,7 @@ function SharedCrm(){
   return ()=>{current=false}
  },[workspace,selected,revision])
  function select(lead?:Lead){
+  setShowForm(true)
   setSelected(lead?.id??'')
   setDraft(lead?{name:lead.name,segment:lead.segment,city:lead.city,notes:lead.notes}:empty)
   setLoadedLead('')
@@ -147,19 +166,31 @@ function SharedCrm(){
  const currentLead=leads.find(lead=>lead.id===selected)
  const selectedTriage=triages.find(row=>row.lead_id===selected)
  const lead=currentLead?fullLead(currentLead):undefined
- const meetingContext:Data={version:1,leads:lead?[lead]:[],triages:selectedTriage?[fullTriage(selectedTriage)]:[],meetings,activities:[],proposals:[],projects:[],finance:[],team:[]}
- return <main className="pilot">
-  <header className="page-heading"><div><h1>CRM compartilhado</h1><p>{spaces.find(space=>space.id===workspace)?.name??'Decifaz Hub'}</p></div><div className="actions"><button className="button" disabled={busy||!workspace} onClick={()=>{setError('');reload(value=>value+1)}}>Atualizar</button><button className="button" disabled={busy} onClick={()=>void client!.auth.signOut().then(({error})=>{if(error)setError('Não foi possível sair. Tente novamente.')})}>Sair</button></div></header>
+ const commercialData:Data={version:1,leads:leads.map(fullLead),triages:triages.map(fullTriage),meetings,activities:[],proposals:[],projects:[],finance:[],team:[...new Set(leads.map(item=>item.profile.owner).filter((owner):owner is string=>Boolean(owner)))]}
+ const meetingContext={...commercialData,leads:lead?[lead]:[],team:[]}
+ const pageLabel=sections.find(([id])=>id===page)?.[1]
+ const signOut=()=>void client!.auth.signOut().then(({error})=>{if(error)setError('Não foi possível sair. Tente novamente.')})
+ return <div className="app">
+  {menu&&<button className="mobile-scrim" aria-label="Fechar navegação" onClick={()=>setMenu(false)}/>}
+  <aside className={'sidebar '+(menu?'open':'')}>
+   <button className="brand" onClick={()=>go('dashboard')}><img className="brand-logo" src={import.meta.env.BASE_URL+'identidade/assinatura-horizontal-escuro-selo.svg'} alt="Decifaz"/><small>Hub · Portal interno</small></button>
+   <nav aria-label="Navegação principal"><div className="nav-group"><h2>Comercial</h2>{sections.map(([id,label,Icon])=><button key={id} aria-current={page===id?'page':undefined} onClick={()=>go(id)}><Icon size={17}/><span>{label}</span></button>)}</div></nav>
+  </aside>
+  <div className="workspace"><header className="topbar">
+   <div className="crumb"><button className="icon mobile-menu" aria-label="Abrir navegação" onClick={()=>setMenu(!menu)}><Menu size={21}/></button><span>Decifaz Hub</span><span className="slash">/</span><b>{pageLabel}</b></div>
+   <div className="header-actions"><button className="icon theme" onClick={()=>setDark(!dark)} aria-label={dark?'Ativar tema claro':'Ativar tema escuro'}>{dark?<Sun size={19}/>:<Moon size={18}/>}</button><button className="button compact" disabled={busy} onClick={signOut}>Sair</button></div>
+  </header>
+  <main className="pilot">
+   <div className="row-between"><p>{spaces.find(space=>space.id===workspace)?.name??'Decifaz Hub'}</p><button className="button compact" disabled={busy||!workspace} onClick={()=>{setError('');reload(value=>value+1)}}>Atualizar</button></div>
   {error&&<p role="alert">{error}</p>}
   {notice&&<p role="status">{notice}</p>}
   {!ready&&!error&&<p role="status">Carregando o CRM…</p>}
   {ready&&<>
    {spaces.length>1&&<label>Espaço de trabalho<select disabled={busy} value={workspace} onChange={e=>{setReady(false);setError('');setLeads([]);setWorkspace(e.target.value);select()}}>{spaces.map(space=><option key={space.id} value={space.id}>{space.name}</option>)}</select></label>}
-   {metrics&&<PilotDashboard metrics={metrics}/>}
-   <div className="dashboard-grid">
-    <section className="card panel"><div className="panel-head"><h2>Estabelecimentos</h2><button className="button" disabled={busy} onClick={()=>select()}>Novo lead</button></div>
-     {leads.length?<div className="list">{leads.map(lead=><button type="button" className="list-item" aria-pressed={selected===lead.id} key={lead.id} disabled={busy} onClick={()=>select(lead)}>{lead.name} · {lead.stage}{(() => {const row=triages.find(item=>item.lead_id===lead.id);const priority=row&&grade(fullTriage(row));return priority?' · Prioridade '+priority.label:''})()}</button>)}</div>:<p>Nenhum estabelecimento cadastrado.</p>}
-    </section>
+   {page==='dashboard'&&metrics&&<PilotDashboard metrics={metrics}/>}
+   {page!=='dashboard'&&<CRM key={page} data={commercialData} triage={page==='triagem'} open={id=>select(leads.find(item=>item.id===id))} add={()=>select()}
+    start={id=>{select(leads.find(item=>item.id===id));setEditor('triage')}}/>}
+   {page!=='dashboard'&&showForm&&<>
     <section className="card panel"><h2>{selected?'Editar estabelecimento':'Cadastrar estabelecimento'}</h2>
      <form className="pilot-fields" onSubmit={saveLead}>
       <label>Nome<input required value={draft.name} onChange={e=>setDraft({...draft,name:e.target.value})}/></label>
@@ -169,7 +200,6 @@ function SharedCrm(){
       <button className="button primary" disabled={busy}>Salvar estabelecimento</button>
      </form>
     </section>
-   </div>
    {lead&&<section className="card panel">
     <h2>Jornada comercial de {lead.name}</h2><p>{lead.stage}{lead.needs?' · '+lead.needs:''}</p>
     {lead.next&&<p>Próxima ação · {lead.next} · {dateLabel(lead.due)}</p>}
@@ -193,24 +223,28 @@ function SharedCrm(){
      {tasks.length?<ul>{tasks.map(item=><li key={item.id}><label>{item.title}{item.owner?' · '+item.owner:''}{item.due_on?' · '+dateLabel(item.due_on):''}<select disabled={busy} value={item.status} onChange={e=>void write(()=>client!.from('hub_activities').update({status:e.target.value}).eq('workspace_id',workspace).eq('id',item.id).select('id').single())}>{statuses.map(status=><option key={status}>{status}</option>)}</select></label></li>)}</ul>:<p>Sem atividades registradas.</p>}
     </section>
    </div>}
+   </>}
    {lead&&editor==='triage'&&<TriageEditor lead={lead} triage={selectedTriage&&fullTriage(selectedTriage)} team={[]} close={()=>setEditor(null)}
     save={(triage,updatedLead)=>write(()=>saveTriage(client!,workspace,triage,updatedLead),()=>setDraft({...draft,name:updatedLead.name,segment:updatedLead.segment,city:updatedLead.city}))}/>}
    {lead&&editor==='meeting'&&<MeetingEditor data={meetingContext} item={meeting} leadId={lead.id} lockLead close={()=>setEditor(null)}
     save={(item,follow,advance)=>write(()=>saveMeeting(client!,workspace,item,follow,advance))}/>}
   </>}
- </main>
+ </main></div></div>
 }
 
 function PilotDashboard({metrics}: {metrics:PilotMetrics}) {
  const total=Object.values(metrics.funnel).reduce((sum,count)=>sum+count,0)
- const indicators=[['Estabelecimentos',total],['Reuniões agendadas',metrics.scheduled],['Diagnósticos realizados',metrics.diagnosed],
-  ['Atividades pendentes',metrics.pending],['Atividades vencidas',metrics.overdue]] as const
- return <section className="card panel">
-  <h2>Visão geral</h2>
+ const indicators=[[Users,'Estabelecimentos',total],[CalendarDays,'Reuniões agendadas',metrics.scheduled],
+  [ClipboardList,'Diagnósticos realizados',metrics.diagnosed],[ListTodo,'Atividades pendentes',metrics.pending],
+  [ListTodo,'Atividades vencidas',metrics.overdue]] as const
+ return <section>
+  <div className="page-heading"><div><h1>Dashboard</h1><p>Visão geral do espaço compartilhado</p></div></div>
+  <div className="kpis">{indicators.map(([Icon,label,value])=><article className="metric card" key={label}>
+   <div className="metric-top"><span className="tile"><Icon size={19}/></span></div><h2>{label}</h2><strong>{value}</strong>
+  </article>)}</div>
   <div className="dashboard-grid">
-   <dl>{indicators.map(([label,value])=><div className="row-between" key={label}><dt>{label}</dt><dd>{value}</dd></div>)}</dl>
-   <div><h3>Prioridades</h3><p>A · {metrics.priorities.A??0}　B · {metrics.priorities.B??0}　C · {metrics.priorities.C??0}</p>
-    <h3>Funil comercial</h3>{total===0?<p>Nenhuma oportunidade cadastrada.</p>:
+   <div className="card panel"><h3>Prioridades</h3><p>A · {metrics.priorities.A??0}　B · {metrics.priorities.B??0}　C · {metrics.priorities.C??0}</p></div>
+   <div className="card panel"><h3>Funil comercial</h3>{total===0?<p>Nenhuma oportunidade cadastrada.</p>:
      <ul>{stages.filter(stage=>metrics.funnel[stage]).map(stage=><li key={stage}>{stage} · {metrics.funnel[stage]}</li>)}</ul>}</div>
   </div>
  </section>
