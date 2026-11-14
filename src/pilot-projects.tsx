@@ -1,4 +1,4 @@
-import {useState} from 'react'
+import {useEffect,useState,type ReactNode} from 'react'
 import type {SupabaseClient} from '@supabase/supabase-js'
 import {dateLabel,day,money,type Lead,type Proposal} from './domain'
 import {deliveryChecks} from './delivery'
@@ -28,7 +28,24 @@ export function SharedProjects({projects,leads,open}:{projects:SharedProject[];l
  </Page>
 }
 
-export function SharedProjectEditor({item,close,save,accept}:{item:SharedProject;close:()=>void;save:(values:ProjectUpdate)=>Promise<boolean>;accept:(values:DeliveryAcceptance)=>Promise<boolean>}){
+type ProjectActivity={id:string;title:string;owner:string;due_on:string|null;status:string}
+export function ProjectActivities({client,workspace,project,revision}:{client:SupabaseClient;workspace:string;project:string;revision:number}){
+ const [result,setResult]=useState<{rows:ProjectActivity[];error:boolean}>()
+ useEffect(()=>{
+  let current=true
+  setResult(undefined)
+  void client.from('hub_activities').select('id,title,owner,due_on,status').eq('workspace_id',workspace)
+   .eq('project_proposal_id',project).order('due_on').order('id').returns<ProjectActivity[]>()
+   .then(({data,error})=>{if(current)setResult({rows:data??[],error:!!error})})
+  return ()=>{current=false}
+ },[client,workspace,project,revision])
+ return <section className="dialog-body"><h3>Atividades de pós-venda</h3>
+  {!result?<p role="status">Carregando atividades…</p>:result.error?<p role="alert">Não foi possível carregar as atividades.</p>:
+   result.rows.length?<ul>{result.rows.map(row=><li key={row.id}><b>{row.title}</b> · {row.owner||'Sem responsável'} · {dateLabel(row.due_on??'')} · {row.status}</li>)}</ul>:
+   <p>Nenhuma atividade de pós-venda registrada.</p>}
+ </section>
+}
+export function SharedProjectEditor({item,close,save,accept,children}:{item:SharedProject;close:()=>void;save:(values:ProjectUpdate)=>Promise<boolean>;accept:(values:DeliveryAcceptance)=>Promise<boolean>;children?:ReactNode}){
  const [draft,setDraft]=useState<ProjectUpdate>({owner:item.owner,due_on:item.due_on,status:item.status,deliverables:item.deliverables})
  const [saving,setSaving]=useState(false)
  const [error,setError]=useState('')
@@ -70,7 +87,7 @@ export function SharedProjectEditor({item,close,save,accept}:{item:SharedProject
    <div className="fields">
     <Field label="Responsável" value={draft.owner} on={owner=>setDraft({...draft,owner})}/>
     <Field label="Prazo" type="date" value={draft.due_on??''} on={due=>setDraft({...draft,due_on:due||null})}/>
-    <Field label="Situação" options={statuses.filter(status=>status!=='Entregue'||item.status==='Entregue')} required value={draft.status} on={status=>setDraft({...draft,status:status as ProjectUpdate['status']})}/>
+    <Field label="Situação" options={statuses.filter(status=>status!=='Entregue'||item.status==='Entregue'||item.delivery)} required value={draft.status} on={status=>setDraft({...draft,status:status as ProjectUpdate['status']})}/>
    </div>
    <Field label="Entregáveis operacionais" type="area" value={draft.deliverables} on={deliverables=>setDraft({...draft,deliverables})}/>
   </Form>
@@ -87,6 +104,7 @@ export function SharedProjectEditor({item,close,save,accept}:{item:SharedProject
     <button className="button primary" type="button" disabled={saving} onClick={()=>void confirm()}>Confirmar aceite da entrega</button>
    </>}
   </section>
+  {children}
  </Dialog>
 }
 

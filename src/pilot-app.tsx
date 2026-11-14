@@ -6,7 +6,7 @@ import {CRM,MeetingEditor,TriageEditor} from './commercial'
 import {ProposalEditor,Proposals} from './proposals'
 import {financeMetrics} from './shared-finance-metrics'
 import {loadFinance,SharedFinance} from './pilot-finance'
-import {loadProjects,SharedProjects,SharedProjectEditor,type SharedProject} from './pilot-projects'
+import {loadProjects,ProjectActivities,SharedProjects,SharedProjectEditor,type SharedProject} from './pilot-projects'
 import {fullLead,fullTriage,leadColumns,loadMeetings,loadMetrics,loadProposals,saveProposal,saveMeeting,saveTriage,type PilotLead,type PilotMetrics,type TriageRow} from './pilot-journey'
 
 const url=import.meta.env.VITE_SUPABASE_URL
@@ -262,7 +262,9 @@ function SharedCrm(){
     close={()=>setProjectId('')} accept={values=>write(()=>client!.rpc('hub_accept_delivery',{
      w:workspace,p:activeProject.proposal_id,c:values.checks,d:values.date,e:values.reference,t:values.title,o:values.owner,due:values.due,
     }))} save={values=>write(()=>client!.from('hub_projects').update(values)
-     .eq('workspace_id',workspace).eq('proposal_id',activeProject.proposal_id).select('proposal_id').single())}/>}
+     .eq('workspace_id',workspace).eq('proposal_id',activeProject.proposal_id).select('proposal_id').single())}>
+    <ProjectActivities client={client!} workspace={workspace} project={activeProject.proposal_id} revision={revision}/>
+   </SharedProjectEditor>}
   </>}
  </main></div></div>
 }
