@@ -95,7 +95,7 @@ test('membros compartilham chamados e lançamentos financeiros com isolamento',a
  await expect(page.getByRole('row').filter({has:proposalButton})).toContainText('Aceita')
  await proposalButton.click()
  await quote.getByRole('button',{name:'Abrir projeto a partir do aceite'}).click()
- await expect(page.getByRole('dialog').getByText('Escopo de teste',{exact:true})).toBeVisible()
+ await expect(page.getByRole('dialog').getByRole('paragraph').filter({hasText:/^Escopo de teste$/})).toBeVisible()
  const saved=await checked(second.client.from('hub_projects').select('proposal_id,lead_id').eq('workspace_id',workspace).single())
  const proposal=saved.proposal_id
  const lead=await checked(second.client.from('hub_leads').select('stage').eq('workspace_id',workspace).eq('id',saved.lead_id).single())
