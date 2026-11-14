@@ -40,7 +40,7 @@ test('membros compartilham chamados e lançamentos financeiros com isolamento',a
  await page.getByRole('button',{name:'Salvar estabelecimento'}).click()
  await page.getByRole('button',{name:'Nova proposta',exact:true}).click()
  const quote=page.getByRole('dialog')
- await quote.getByLabel('Título',{exact:true}).fill('Projeto E2E')
+ await quote.getByLabel(/^Título/).fill('Projeto E2E')
  await quote.getByLabel('Escopo e entregáveis').fill('Escopo de teste')
  await quote.getByLabel('Implantação (R$)').fill('100')
  await quote.getByRole('button',{name:'Salvar rascunho'}).click()
@@ -105,7 +105,7 @@ test('membros compartilham chamados e lançamentos financeiros com isolamento',a
  expect(ledger[0].reversed_at).toBeTruthy()
  expect(await checked(outsider.client.from('hub_receipts').select('id').eq('workspace_id',workspace))).toEqual([])
 
- await page.getByLabel('Descrição',{exact:true}).fill('Licença de teste')
+ await page.getByLabel(/^Descrição/).fill('Licença de teste')
  await page.getByLabel('Valor previsto (R$)').fill('25')
  await page.getByRole('button',{name:'Registrar despesa prevista'}).click()
  const expense=page.getByRole('row').filter({hasText:'Licença de teste'})
