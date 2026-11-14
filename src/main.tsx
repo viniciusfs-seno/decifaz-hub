@@ -195,4 +195,10 @@ function App(){
  </div>
 }
 
-createRoot(document.getElementById('root')!).render(<App/>)
+const root=createRoot(document.getElementById('root')!)
+const vercelHost=location.hostname.endsWith('.vercel.app')
+if(vercelHost||import.meta.env.VITE_HUB_MODE==='shared'){
+ void import('./pilot-app').then(({default:PilotApp})=>root.render(<PilotApp/>)).catch(()=>root.render(<main><p role="alert">Não foi possível abrir o piloto compartilhado. Recarregue a página para tentar novamente.</p></main>))
+}else{
+ root.render(<App/>)
+}

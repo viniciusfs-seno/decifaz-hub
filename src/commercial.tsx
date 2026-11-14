@@ -46,22 +46,25 @@ export function LeadEditor({data,lead,onSave,close}:{data:Data;lead?:Lead;onSave
  </Form></Dialog>
 }
 const steps=['Identificação','Presença digital','Diagnóstico preliminar','Soluções aplicáveis','Pontuação','Encaminhamento']
-export function TriageEditor({lead,triage,team,save,close}:{lead:Lead;triage?:Triage;team:string[];save:(t:Triage,lead:Lead)=>boolean;close:()=>void}){
+export function TriageEditor({lead,triage,team,save,close}:{lead:Lead;triage?:Triage;team:string[];save:(t:Triage,lead:Lead)=>boolean|Promise<boolean>;close:()=>void}){
  const [t,set]=useState(triage??emptyTriage(lead))
  const [l,setLead]=useState(lead)
  const [step,setStep]=useState(0)
  const [error,setError]=useState('')
  const [qualify,setQualify]=useState(false)
+ const [saving,setSaving]=useState(false)
  const setT=(key:keyof Triage,value:string)=>set({...t,[key]:value})
- const field=(key:'observations'|'reports'|'hypotheses'|'evidence'|'approach'|'next'|'due'|'owner',label:string,type='area')=><Field key={key} label={label} type={type} options={key==='owner'?team:undefined} value={t[key]} on={v=>setT(key,v)}/>
+ const field=(key:'observations'|'reports'|'hypotheses'|'evidence'|'approach'|'next'|'due'|'owner',label:string,type='area')=><Field key={key} label={label} type={type} options={key==='owner'&&team.length?team:undefined} value={t[key]} on={v=>setT(key,v)}/>
  const reviewed=t.scores.filter(n=>n!==null).length
  const complete=!!(l.name.trim()&&l.segment.trim()&&l.city.trim()&&reviewed===criteria.length&&(t.observations.trim()||t.reports.trim()||t.evidence.trim())&&t.owner&&t.next.trim()&&t.due&&t.approach.trim())
- function commit(final:boolean){
+ async function commit(final:boolean){
+  if(saving)return
   if(!l.name.trim()||!l.segment.trim()||!l.city.trim()){setStep(0);return setError('Preencha a identificação do estabelecimento.')}
   if(final&&!complete)return setError('Para concluir, avalie os sete critérios, inclua evidência ou relato e informe abordagem, responsável, próxima ação e prazo.')
   const updated={...t,completed:final,updated:day()}
   const updatedLead={...l,services:t.services,...(final?{owner:t.owner,next:t.next,due:t.due,stage:qualify?'Qualificado' as const:l.stage}:{})}
-  if(save(updated,updatedLead))close()
+  setSaving(true)
+  try{if(await save(updated,updatedLead))close();else setError('Não foi possível salvar a triagem.')}finally{setSaving(false)}
  }
  return <Dialog title="Triagem comercial" subtitle={lead.name} wide onClose={close}><div className="wizard-tabs" aria-label="Etapas da triagem">{steps.map((s,i)=><button key={s} aria-current={i===step?'step':undefined} className={step===i?'current':''} onClick={()=>{setStep(i);setError('')}}><span>{i+1}</span>{s}</button>)}</div><div className="dialog-body"><h3>{steps[step]}</h3>
  {step===0&&<div className="fields">{([['name','Nome comercial'],['segment','Segmento'],['city','Cidade'],['region','Região'],['address','Localização'],['instagram','Instagram'],['website','Site'],['whatsapp','WhatsApp'],['other','Outros canais']] as const).map(([k,label])=><Field key={k} label={label} value={l[k]} on={v=>setLead({...l,[k]:v})}/>)}</div>}
@@ -70,7 +73,7 @@ export function TriageEditor({lead,triage,team,save,close}:{lead:Lead;triage?:Tr
  {step===3&&<Choices items={solutions} value={t.services} on={services=>set({...t,services})}/>}
  {step===4&&<><p className="muted">{reviewed} de 7 critérios avaliados. Use “Não avaliado” quando faltar evidência.</p><div className="score-fields">{criteria.map(([label,max],i)=><label key={label} className="field"><span>{label} · 0–{max}</span><select value={t.scores[i]??''} onChange={e=>set({...t,scores:t.scores.map((n,j)=>i===j?(e.target.value===''?null:Number(e.target.value)):n)})}><option value="">Não avaliado</option>{Array.from({length:max+1},(_,n)=><option key={n} value={n}>{n}</option>)}</select></label>)}</div></>}
  {step===5&&<><div className="callout"><ClipboardList size={19}/><div><b>{complete?'Pronta para concluir':'Triagem incompleta'}</b><p>{reviewed} de 7 critérios avaliados · {t.services.join(', ')||'Nenhuma solução selecionada'}. A prioridade aparece após a conclusão.</p></div></div>{field('approach','Abordagem sugerida')}<div className="fields">{field('owner','Responsável','text')}{field('next','Próxima ação','text')}{field('due','Prazo','date')}</div>{(['Identificado','Em pesquisa'] as Stage[]).includes(l.stage)&&<label className="checkline"><input type="checkbox" checked={qualify} onChange={e=>setQualify(e.target.checked)}/>Mover para Qualificado ao concluir</label>}</>}
- {error&&<p className="error" role="alert">{error}</p>}</div><div className="dialog-foot"><button className="button" onClick={()=>commit(false)}>Salvar rascunho</button>{step>0&&<button className="button" onClick={()=>{setStep(step-1);setError('')}}>Voltar</button>}<button className="button primary" onClick={()=>step<5?(setStep(step+1),setError('')):commit(true)}>{step<5?'Continuar':'Concluir triagem'}</button></div></Dialog>
+ {error&&<p className="error" role="alert">{error}</p>}</div><div className="dialog-foot"><button className="button" disabled={saving} onClick={()=>void commit(false)}>Salvar rascunho</button>{step>0&&<button className="button" onClick={()=>{setStep(step-1);setError('')}}>Voltar</button>}<button className="button primary" disabled={saving} onClick={()=>step<5?(setStep(step+1),setError('')):commit(true)}>{step<5?'Continuar':'Concluir triagem'}</button></div></Dialog>
 }
 export function ActivityList({data,edit,add,done}:{data:Data;edit:(id:string)=>void;add:()=>void;done:(id:string)=>void}){
  const [filter,set]=useState('Todas')
@@ -104,25 +107,29 @@ export function MeetingList({data,edit,add,propose}:{data:Data;edit:(id:string)=
  </div>
  {presentation?<MeetingPresentation meetings={data.meetings} leads={data.leads}/>:<div className="card table-wrap">{data.meetings.length?<table><thead><tr><th>Estabelecimento</th><th>Data</th><th>Participantes</th><th>Situação</th><th>Próxima ação</th><th>Ações</th></tr></thead><tbody>{[...data.meetings].sort((a,b)=>b.date.localeCompare(a.date)).map(m=><tr key={m.id}><td><button className="text-button lead-name" onClick={()=>edit(m.id)}>{data.leads.find(l=>l.id===m.leadId)?.name}</button></td><td>{dateLabel(m.date)}</td><td>{m.participants}</td><td><Tag tone={m.state==='Realizada'?'green':'blue'}>{m.state}</Tag></td><td>{m.next||'—'}</td><td>{m.state!=='Cancelada'&&meetingLink(m.callUrl)&&<a className="button compact" href={meetingLink(m.callUrl)!} target="_blank" rel="noopener noreferrer">Abrir chamada</a>}{m.state==='Realizada'&&<button className="button compact" onClick={()=>propose(m.id,m.leadId)}>Criar proposta</button>}</td></tr>)}</tbody></table>:<Empty title="Sem reuniões registradas"/>}</div>}</Page>
 }
-export function MeetingEditor({data,item,leadId,save,close}:{data:Data;item?:Meeting;leadId?:string;save:(m:Meeting,follow:boolean,update:boolean)=>boolean;close:()=>void}){
+export function MeetingEditor({data,item,leadId,save,close,lockLead}:{data:Data;item?:Meeting;leadId?:string;save:(m:Meeting,follow:boolean,update:boolean)=>boolean|Promise<boolean>;close:()=>void;lockLead?:boolean}){
  const [m,set]=useState<Meeting>(item??{id:'',leadId:leadId??'',date:day(),participants:'',state:'Agendada',answers:{},checked:[],summary:'',tools:'',objections:'',budget:'',next:'',owner:data.leads.find(l=>l.id===leadId)?.owner??data.team[0]??'',due:''})
+ const [newMeetingId]=useState(uid)
  const [simple,setSimple]=useState(false)
  const [follow,setFollow]=useState(false)
  const [update,setUpdate]=useState(false)
+ const [saving,setSaving]=useState(false)
  const [error,setError]=useState('')
  const l=data.leads.find(l=>l.id===m.leadId)
- const f=(k:'date'|'participants'|'summary'|'tools'|'objections'|'budget'|'next'|'owner'|'due',label:string,type='text',required=false)=><Field label={label} type={type} required={required} options={k==='owner'?data.team:undefined} value={m[k]} on={v=>set({...m,[k]:v})}/>
- function commit(){
+ const f=(k:'date'|'participants'|'summary'|'tools'|'objections'|'budget'|'next'|'owner'|'due',label:string,type='text',required=false)=><Field label={label} type={type} required={required} options={k==='owner'&&data.team.length?data.team:undefined} value={m[k]} on={v=>set({...m,[k]:v})}/>
+ async function commit(){
+  if(saving)return
   if(!l||!m.date||!m.participants.trim()||!m.state)return setError('Informe estabelecimento, data, participantes e situação.')
   if(m.state==='Realizada'&&!m.summary.trim())return setError('Registre um resumo do diagnóstico para finalizar.')
   if(m.state!=='Cancelada'&&follow&&(!m.next.trim()||!m.owner||!m.due))return setError('Para criar o acompanhamento, informe ação, responsável e prazo.')
   const callUrl=meetingLink(m.callUrl)
   if(m.callUrl?.trim()&&!callUrl)return setError('Informe um link de chamada HTTPS válido.')
-  if(save({...m,callUrl:callUrl??undefined,id:m.id||uid()},follow&&m.state!=='Cancelada',update&&m.state!=='Cancelada'))close()
+  setSaving(true)
+  try{if(await save({...m,callUrl:callUrl??undefined,id:m.id||newMeetingId},follow&&m.state!=='Cancelada',update&&m.state!=='Cancelada'))close();else setError('Não foi possível salvar a reunião.')}finally{setSaving(false)}
  }
- return <Dialog title={item?'Editar reunião':'Registrar reunião'} subtitle={l?.name} wide onClose={close}><Form onClose={close} onSave={commit} error={error} label="Salvar reunião">
+ return <Dialog title={item?'Editar reunião':'Registrar reunião'} subtitle={l?.name} wide onClose={close}><Form onClose={close} onSave={commit} error={error} label={saving?"Salvando…":"Salvar reunião"}>
  <div className="row-between"><h3>{simple?'Roteiro durante a reunião':'Preparação e roteiro'}</h3><button type="button" className="button compact" onClick={()=>setSimple(!simple)}>{simple?'Voltar à ficha completa':'Modo reunião'}</button></div>
- {!simple&&<><div className="fields"><label className="field"><span>Estabelecimento *</span><select required value={m.leadId} onChange={e=>set({...m,leadId:e.target.value,owner:data.leads.find(l=>l.id===e.target.value)?.owner??m.owner})}><option value="">Selecionar</option>{data.leads.map(l=><option key={l.id} value={l.id}>{l.name}</option>)}</select></label>{f('date','Data','date',true)}{f('participants','Participantes','text',true)}<Field label="Link da chamada (HTTPS)" type="url" value={m.callUrl??''} on={v=>set({...m,callUrl:v})}/><Field label="Situação" options={['Agendada','Realizada','Cancelada']} required value={m.state} on={v=>set({...m,state:v as Meeting['state']})}/></div>{l&&<div className="callout"><div><b>Contexto da oportunidade</b><p>{l.stage} · {l.needs||l.notes||'Sem diagnóstico anterior.'}</p><p>{data.triages.find(t=>t.leadId===l.id)?.hypotheses||l.history.at(0)?.text}</p></div></div>}</>}
+ {!simple&&<><div className="fields"><label className="field"><span>Estabelecimento *</span><select required disabled={lockLead} value={m.leadId} onChange={e=>set({...m,leadId:e.target.value,owner:data.leads.find(l=>l.id===e.target.value)?.owner??m.owner})}><option value="">Selecionar</option>{data.leads.map(l=><option key={l.id} value={l.id}>{l.name}</option>)}</select></label>{f('date','Data','date',true)}{f('participants','Participantes','text',true)}<Field label="Link da chamada (HTTPS)" type="url" value={m.callUrl??''} on={v=>set({...m,callUrl:v})}/><Field label="Situação" options={['Agendada','Realizada','Cancelada']} required value={m.state} on={v=>set({...m,state:v as Meeting['state']})}/></div>{l&&<div className="callout"><div><b>Contexto da oportunidade</b><p>{l.stage} · {l.needs||l.notes||'Sem diagnóstico anterior.'}</p><p>{data.triages.find(t=>t.leadId===l.id)?.hypotheses||l.history.at(0)?.text}</p></div></div>}</>}
  <div className="script">{script.map(([title,prompt],i)=><details key={title} open={simple?true:undefined}><summary><b>{i+1}. {title}</b>{m.checked.includes(i)&&<Tag tone="green">Realizada</Tag>}</summary><p>{prompt}</p><label className="checkline"><input type="checkbox" checked={m.checked.includes(i)} onChange={e=>set({...m,checked:e.target.checked?[...m.checked,i]:m.checked.filter(n=>n!==i)})}/>Pergunta realizada</label><Field label="Resposta" type="area" value={m.answers[i]??''} on={v=>set({...m,answers:{...m.answers,[i]:v}})}/></details>)}</div>
  {f('summary','Resumo do diagnóstico','area',m.state==='Realizada')}{!simple&&<div className="fields">{f('tools','Ferramentas atuais','area')}{f('objections','Objeções e restrições','area')}{f('budget','Faixa de investimento declarada')}{f('next','Próxima ação')}{f('owner','Responsável pelo acompanhamento')}{f('due','Prazo do acompanhamento','date')}</div>}
  {!simple&&m.state!=='Cancelada'&&<><label className="checkline"><input type="checkbox" checked={follow} onChange={e=>setFollow(e.target.checked)}/>Criar atividade de acompanhamento ao salvar</label><label className="checkline"><input type="checkbox" checked={update} onChange={e=>setUpdate(e.target.checked)}/>Atualizar a etapa do CRM ao salvar, se avançar o funil</label></>}
