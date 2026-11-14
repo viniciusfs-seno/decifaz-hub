@@ -5,3 +5,8 @@ dist/
 
 /playwright-report/
 /test-results/
+!.env.example
+/.vercel/
+/supabase/.temp/
+/supabase/.branches/
+*.tsbuildinfo

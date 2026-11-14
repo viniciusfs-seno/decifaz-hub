@@ -14,7 +14,7 @@ export function Proposals({data,add,open}:{data:Data;add:()=>void;open:(id:strin
  </Page>
 }
 
-export function ProposalEditor({data,item,leadId='',meetingId='',save,close,open,project}:{data:Data;item?:Proposal;leadId?:string;meetingId?:string;save:(p:Proposal,decision?:ProposalDecision)=>boolean|Promise<boolean>;close:()=>void;open:(id:string)=>void;project?:(p:Proposal)=>void}){
+export function ProposalEditor({data,item,leadId='',meetingId='',save,close,open,project,projectExists}:{data:Data;item?:Proposal;leadId?:string;meetingId?:string;save:(p:Proposal,decision?:ProposalDecision)=>boolean|Promise<boolean>;close:()=>void;open:(id:string)=>void;project?:(p:Proposal)=>void;projectExists?:(id:string)=>boolean}){
  const [p,set]=useState<Proposal>(item??{id:'',leadId,meetingId,title:'',services:[],scope:'',setup:0,monthly:0,terms:'',validity:day(14),version:1,status:'Rascunho'})
  const [amount,setAmount]=useState(String(p.setup))
  const [monthly,setMonthly]=useState(String(p.monthly))
@@ -25,6 +25,7 @@ export function ProposalEditor({data,item,leadId='',meetingId='',save,close,open
  const [error,setError]=useState('')
  const [copied,setCopied]=useState('')
  const [saving,setSaving]=useState(false)
+ const hasProject=!!item&&(projectExists?.(item.id)??data.projects.some(v=>v.proposalId===item.id))
  const lead=data.leads.find(l=>l.id===p.leadId)
  const meetings=data.meetings.filter(m=>m.leadId===p.leadId&&m.state==='Realizada')
  const meeting=meetings.find(m=>m.id===p.meetingId)
@@ -65,7 +66,7 @@ export function ProposalEditor({data,item,leadId='',meetingId='',save,close,open
  {meeting&&<div className="callout"><div><b>Diagnóstico vinculado · {dateLabel(meeting.date)}</b><p>{meeting.summary}</p></div></div>}
  <div className="lead-summary"><div><span>Implantação</span><b>{money(p.setup)}</b></div><div><span>Mensalidade</span><b>{money(p.monthly)}</b></div></div>
  <h3>Escopo</h3><p className="details-line">{p.scope}</p>{p.services.length>0&&<p>{p.services.join(' · ')}</p>}{p.terms&&<p className="details-line">{p.terms}</p>}
- {project&&item?.status==='Aceita'&&(lead?.stage==='Ganho'||data.projects.some(v=>v.proposalId===item.id))&&<div><button className="button primary" onClick={()=>project(item)}>{data.projects.some(v=>v.proposalId===item.id)?'Abrir projeto vinculado':'Abrir projeto a partir do aceite'}</button></div>}
+ {project&&item?.status==='Aceita'&&(lead?.stage==='Ganho'||hasProject)&&<div><button className="button primary" onClick={()=>project(item)}>{hasProject?'Abrir projeto vinculado':'Abrir projeto a partir do aceite'}</button></div>}
  {latest&&item?.status!=='Aceita'&&<div><button className="button" onClick={()=>{setError('');setRevision(true)}}>Criar nova versão</button></div>}
  </div>}
  {item&&!revision&&<div className="dialog-body">

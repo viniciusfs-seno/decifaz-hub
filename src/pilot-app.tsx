@@ -1,9 +1,10 @@
 import {useEffect,useState,type FormEvent} from 'react'
 import {createClient,type Session} from '@supabase/supabase-js'
-import {CalendarDays, ClipboardList, FileCheck2, LayoutDashboard, ListTodo, Menu, Moon, Sun, Users} from 'lucide-react'
+import {CalendarDays, ClipboardList, FileCheck2, FolderKanban, LayoutDashboard, ListTodo, Menu, Moon, Sun, Users} from 'lucide-react'
 import {dateLabel,stages,type Data,type Meeting,type Proposal} from './domain'
 import {CRM,MeetingEditor,TriageEditor} from './commercial'
 import {ProposalEditor,Proposals} from './proposals'
+import {loadProjects,SharedProjects,SharedProjectEditor,type SharedProject} from './pilot-projects'
 import {fullLead,fullTriage,leadColumns,loadMeetings,loadMetrics,loadProposals,saveProposal,saveMeeting,saveTriage,type PilotLead,type PilotMetrics,type TriageRow} from './pilot-journey'
 
 const url=import.meta.env.VITE_SUPABASE_URL
@@ -46,7 +47,7 @@ export default function PilotApp(){
  </main>
 }
 
-const sections=[['dashboard','Dashboard',LayoutDashboard],['crm','Captação e CRM',Users],['triagem','Triagem comercial',ClipboardList],['propostas','Propostas comerciais',FileCheck2]] as const
+const sections=[['dashboard','Dashboard',LayoutDashboard],['crm','Captação e CRM',Users],['triagem','Triagem comercial',ClipboardList],['propostas','Propostas comerciais',FileCheck2],['projetos','Projetos e entregas',FolderKanban]] as const
 type Section=typeof sections[number][0]
 
 function SharedCrm(){
@@ -62,6 +63,7 @@ function SharedCrm(){
   setPage(next)
   setMenu(false)
   setShowForm(false)
+  setProjectId('')
   window.scrollTo(0,0)
  }
  const [spaces,setSpaces]=useState<Workspace[]>([])
@@ -69,6 +71,8 @@ function SharedCrm(){
  const [leads,setLeads]=useState<Lead[]>([])
  const [selected,setSelected]=useState('')
  const [triages,setTriages]=useState<TriageRow[]>([])
+ const [projects,setProjects]=useState<SharedProject[]>([])
+ const [projectId,setProjectId]=useState('')
  const [proposals,setProposals]=useState<Proposal[]>([])
  const [proposalMeetings,setProposalMeetings]=useState<Meeting[]>([])
  const [proposalModal,setProposalModal]=useState<{id?:string;leadId?:string;meetingId?:string}>()
@@ -104,13 +108,14 @@ function SharedCrm(){
   let current=true
   const leadsQuery=client!.from('hub_leads').select(leadColumns).eq('workspace_id',workspace).order('name').returns<Lead[]>()
   const triagesQuery=client!.from('hub_triages').select('lead_id,record,scores,completed').eq('workspace_id',workspace).returns<TriageRow[]>()
-  void Promise.all([leadsQuery,triagesQuery,loadMetrics(client!,workspace),loadProposals(client!,workspace),loadMeetings(client!,workspace)]).then(([leads,triages,dashboard,quotes,diagnoses])=>{
+  void Promise.all([leadsQuery,triagesQuery,loadMetrics(client!,workspace),loadProposals(client!,workspace),loadMeetings(client!,workspace),loadProjects(client!,workspace)]).then(([leads,triages,dashboard,quotes,diagnoses,delivery])=>{
    if(!current)return
-   if(leads.error||triages.error||dashboard.error||!dashboard.data||quotes.error||!quotes.data||diagnoses.error||!diagnoses.data){setReady(false);setError('Não foi possível carregar a jornada comercial. Confira seu acesso e atualize.');return}
+   if(leads.error||triages.error||dashboard.error||!dashboard.data||quotes.error||!quotes.data||diagnoses.error||!diagnoses.data||delivery.error||!delivery.data){setReady(false);setError('Não foi possível carregar a jornada comercial. Confira seu acesso e atualize.');return}
    setLeads(leads.data)
    setTriages(triages.data)
    setMetrics(dashboard.data)
    setProposals(quotes.data)
+   setProjects(delivery.data)
    setProposalMeetings(diagnoses.data)
    setReady(true)
   })
@@ -174,6 +179,7 @@ function SharedCrm(){
  const lead=currentLead?fullLead(currentLead):undefined
  const commercialData:Data={version:1,leads:leads.map(fullLead),triages:triages.map(fullTriage),meetings:proposalMeetings,activities:[],proposals,projects:[],finance:[],team:[...new Set(leads.map(item=>item.profile.owner).filter((owner):owner is string=>Boolean(owner)))]}
  const meetingContext={...commercialData,leads:lead?[lead]:[],team:[]}
+ const activeProject=projects.find(item=>item.proposal_id===projectId)
  const pageLabel=sections.find(([id])=>id===page)?.[1]
  const signOut=()=>void client!.auth.signOut().then(({error})=>{if(error)setError('Não foi possível sair. Tente novamente.')})
  return <div className="app">
@@ -192,8 +198,9 @@ function SharedCrm(){
   {notice&&<p role="status">{notice}</p>}
   {!ready&&!error&&<p role="status">Carregando o CRM…</p>}
   {ready&&<>
-   {spaces.length>1&&<label>Espaço de trabalho<select disabled={busy} value={workspace} onChange={e=>{setReady(false);setError('');setLeads([]);setWorkspace(e.target.value);select()}}>{spaces.map(space=><option key={space.id} value={space.id}>{space.name}</option>)}</select></label>}
+   {spaces.length>1&&<label>Espaço de trabalho<select disabled={busy} value={workspace} onChange={e=>{setReady(false);setError('');setLeads([]);setProjectId('');setWorkspace(e.target.value);select()}}>{spaces.map(space=><option key={space.id} value={space.id}>{space.name}</option>)}</select></label>}
    {page==='dashboard'&&metrics&&<PilotDashboard metrics={metrics}/>}
+   {page==='projetos'&&<SharedProjects projects={projects} leads={commercialData.leads} open={setProjectId}/>}
    {page==='propostas'&&<Proposals data={commercialData} add={()=>setProposalModal({})} open={id=>setProposalModal({id})}/>}
    {(page==='crm'||page==='triagem')&&<CRM key={page} data={commercialData} triage={page==='triagem'} open={id=>select(leads.find(item=>item.id===id))} add={()=>select()}
     start={id=>{select(leads.find(item=>item.id===id));setEditor('triage')}}/>}
@@ -240,7 +247,15 @@ function SharedCrm(){
    {proposalModal&&<ProposalEditor key={proposalModal.id??proposalModal.meetingId??'new'} data={commercialData}
     item={proposals.find(item=>item.id===proposalModal.id)} leadId={proposalModal.leadId} meetingId={proposalModal.meetingId}
     open={id=>setProposalModal({id})} close={()=>setProposalModal(undefined)}
+    project={item=>{
+     const show=()=>{setProposalModal(undefined);go('projetos');setProjectId(item.id)}
+     if(projects.some(project=>project.proposal_id===item.id))show()
+     else void write(()=>client!.rpc('hub_open_project',{w:workspace,p:item.id}),show)
+    }} projectExists={id=>projects.some(project=>project.proposal_id===id)}
     save={(item,decision)=>write(()=>saveProposal(client!,workspace,item,decision))}/>}
+   {activeProject&&page==='projetos'&&<SharedProjectEditor key={activeProject.proposal_id} item={activeProject}
+    close={()=>setProjectId('')} save={values=>write(()=>client!.from('hub_projects').update(values)
+     .eq('workspace_id',workspace).eq('proposal_id',activeProject.proposal_id).select('proposal_id').single())}/>}
   </>}
  </main></div></div>
 }
