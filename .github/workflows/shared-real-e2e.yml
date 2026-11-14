@@ -1,0 +1,40 @@
+name: Supabase local e navegador
+
+on:
+  pull_request:
+  push:
+    branches: [main]
+
+permissions:
+  contents: read
+
+jobs:
+  browser-with-supabase:
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    env:
+      HUB_REAL_E2E: '1'
+      VITE_HUB_MODE: shared
+      VITE_SUPABASE_URL: http://127.0.0.1:54321
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '24'
+          cache: npm
+      - uses: supabase/setup-cli@v1
+        with:
+          version: 3.0.0
+      - run: npm ci
+      - run: npx playwright install --with-deps chromium
+      - run: supabase start
+      - name: Testar com a pilha local
+        run: |
+          set -a
+          source <(supabase status -o env)
+          set +a
+          export VITE_SUPABASE_PUBLISHABLE_KEY="${PUBLISHABLE_KEY:?Chave publicável local ausente}"
+          export HUB_TEST_ADMIN_KEY="${SECRET_KEY:-${SERVICE_ROLE_KEY:?Chave administrativa local ausente}}"
+          npm run test:e2e -- shared-real.spec.mjs
+      - if: always()
+        run: supabase stop --no-backup
