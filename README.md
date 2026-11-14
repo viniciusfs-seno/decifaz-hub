@@ -36,3 +36,7 @@ A demonstração local mantém os módulos legados e os dados fictícios. O fina
 - `src/pilot-app.tsx` e `src/pilot-journey.ts` implementam o modo compartilhado.
 - `src/repository.ts` cuida da persistência local da demonstração.
 - `src/manual.json` guarda o manual estruturado.
+
+## Homologação e pós-venda
+
+No projeto compartilhado, confirme os três itens do checklist e registre a data e a evidência para marcar a entrega como aceita. A opção de pós-venda cria uma atividade vinculada ao projeto e ao estabelecimento na mesma operação. A entrega também aparece no histórico do CRM. O financeiro exporta o relatório CSV e exibe o histórico recente de alterações.

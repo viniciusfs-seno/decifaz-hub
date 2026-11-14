@@ -1,18 +1,20 @@
 import {useState} from 'react'
 import type {SupabaseClient} from '@supabase/supabase-js'
-import {dateLabel,money,type Lead,type Proposal} from './domain'
+import {dateLabel,day,money,type Lead,type Proposal} from './domain'
+import {deliveryChecks} from './delivery'
 import {Dialog,Empty,Field,Form,Page,Tag} from './ui'
 
 const statuses=['Planejado','Em andamento','Em homologação','Entregue'] as const
 export type SharedProject={
  proposal_id:string; lead_id:string; owner:string; due_on:string|null;
+ delivery:{checks:string[];acceptedAt:string;reference:string}|null;
  status:typeof statuses[number]; deliverables:string;
  approved:Pick<Proposal,'title'|'version'|'scope'|'services'|'setup'|'monthly'|'terms'|'decisionAt'|'decisionNote'>
 }
 export type ProjectUpdate=Pick<SharedProject,'owner'|'due_on'|'status'|'deliverables'>
 
 export function loadProjects(client:SupabaseClient,workspace:string){
- return client.from('hub_projects').select('proposal_id,lead_id,owner,due_on,status,deliverables,approved')
+ return client.from('hub_projects').select('proposal_id,lead_id,owner,due_on,status,deliverables,approved,delivery')
   .eq('workspace_id',workspace).order('due_on').order('proposal_id').returns<SharedProject[]>()
 }
 
@@ -26,11 +28,31 @@ export function SharedProjects({projects,leads,open}:{projects:SharedProject[];l
  </Page>
 }
 
-export function SharedProjectEditor({item,close,save}:{item:SharedProject;close:()=>void;save:(values:ProjectUpdate)=>Promise<boolean>}){
+export function SharedProjectEditor({item,close,save,accept}:{item:SharedProject;close:()=>void;save:(values:ProjectUpdate)=>Promise<boolean>;accept:(values:DeliveryAcceptance)=>Promise<boolean>}){
  const [draft,setDraft]=useState<ProjectUpdate>({owner:item.owner,due_on:item.due_on,status:item.status,deliverables:item.deliverables})
  const [saving,setSaving]=useState(false)
  const [error,setError]=useState('')
  const {approved}=item
+ const [checks,setChecks]=useState<string[]>([])
+ const [date,setDate]=useState(day())
+ const [reference,setReference]=useState('')
+ const [follow,setFollow]=useState(false)
+ const [title,setTitle]=useState('Acompanhamento pós-venda')
+ const [owner,setOwner]=useState(item.owner)
+ const [due,setDue]=useState(day())
+ async function confirm(){
+  if(saving)return
+  if(checks.length!==deliveryChecks.length||!date||date>day()||!reference.trim()||(follow&&(!title.trim()||!owner.trim()||!due))){
+   setError('Confira o checklist, a data e a evidência do aceite. Se houver acompanhamento, informe título, responsável e prazo.')
+   return
+  }
+  setSaving(true)
+  setError('')
+  try{
+   if(await accept({checks,date,reference,title:follow?title:'',owner,due:follow?due:null}))close()
+   else setError('Não foi possível registrar o aceite. Atualize o projeto e tente novamente.')
+  }finally{setSaving(false)}
+ }
  async function submit(){
   if(saving)return
   setSaving(true)
@@ -48,9 +70,24 @@ export function SharedProjectEditor({item,close,save}:{item:SharedProject;close:
    <div className="fields">
     <Field label="Responsável" value={draft.owner} on={owner=>setDraft({...draft,owner})}/>
     <Field label="Prazo" type="date" value={draft.due_on??''} on={due=>setDraft({...draft,due_on:due||null})}/>
-    <Field label="Situação" options={[...statuses]} required value={draft.status} on={status=>setDraft({...draft,status:status as ProjectUpdate['status']})}/>
+    <Field label="Situação" options={statuses.filter(status=>status!=='Entregue'||item.status==='Entregue')} required value={draft.status} on={status=>setDraft({...draft,status:status as ProjectUpdate['status']})}/>
    </div>
    <Field label="Entregáveis operacionais" type="area" value={draft.deliverables} on={deliverables=>setDraft({...draft,deliverables})}/>
   </Form>
+  <section className="dialog-body"><h3>Homologação e aceite</h3>
+   {item.delivery?<p>Entrega aceita em {dateLabel(item.delivery.acceptedAt)} · {item.delivery.reference}</p>:<>
+    {deliveryChecks.map(([id,label])=><label key={id} className="checkline">
+     <input type="checkbox" checked={checks.includes(id)} onChange={e=>setChecks(e.target.checked?[...checks,id]:checks.filter(check=>check!==id))}/>{label}
+    </label>)}
+    <div className="fields"><Field label="Data do aceite" type="date" value={date} on={setDate}/>
+     <Field label="Evidência do aceite" value={reference} on={setReference}/></div>
+    <label className="checkline"><input type="checkbox" checked={follow} onChange={e=>setFollow(e.target.checked)}/>Criar atividade de pós-venda</label>
+    {follow&&<div className="fields"><Field label="Atividade" value={title} on={setTitle}/>
+     <Field label="Responsável pela atividade" value={owner} on={setOwner}/><Field label="Prazo da atividade" type="date" value={due} on={setDue}/></div>}
+    <button className="button primary" type="button" disabled={saving} onClick={()=>void confirm()}>Confirmar aceite da entrega</button>
+   </>}
+  </section>
  </Dialog>
 }
+
+export type DeliveryAcceptance={checks:string[];date:string;reference:string;title:string;owner:string;due:string|null}

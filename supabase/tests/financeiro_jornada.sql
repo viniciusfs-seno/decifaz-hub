@@ -20,7 +20,13 @@ begin
  update public.hub_expenses set paid_on=dt,paid_amount=12 where workspace_id=w and id=i;
  update public.hub_expenses set paid_on=dt,paid_amount=14 where workspace_id=w and id=i;
  if not exists(select 1 from public.hub_expenses where workspace_id=w and amount=10 and paid_amount=12) then raise exception 'expense'; end if;
+ if public.hub_accept_delivery(w,p,'[]',dt,'Aceite','','',null) then raise exception 'incomplete checklist'; end if;
+ if not public.hub_accept_delivery(w,p,'["tests","scope","pending"]',dt,'Aceite de teste','Pós-venda','Equipe',dt+1) then raise exception 'delivery'; end if;
+ if public.hub_accept_delivery(w,p,'["tests","scope","pending"]',dt,'Aceite de teste','Pós-venda','Equipe',dt+1) then raise exception 'duplicate delivery'; end if;
+ if (select count(*) from public.hub_activities where workspace_id=w and project_proposal_id=p)<>1 then raise exception 'post-sale'; end if;
+ if (select count(*) from public.hub_finance_audit where workspace_id=w and actor_id=auth.uid())<>6 then raise exception 'audit'; end if;
  perform set_config('request.jwt.claim.sub','00000000-0000-4000-8000-000000000062',true);
+ if exists(select 1 from public.hub_finance_audit where workspace_id=w) then raise exception 'audit isolation'; end if;
  if exists(select 1 from public.hub_expenses where workspace_id=w) or public.hub_reverse_receipt(w,p,'Implantação',m,j,'Intruso') then raise exception 'isolation'; end if;
 end $$;
 rollback;
