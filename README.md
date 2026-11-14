@@ -47,4 +47,4 @@ Abra chamados pela ficha do projeto com título, responsável e prazo. A ficha m
 
 ### Teste de integração com Supabase local
 
-O workflow **Supabase local e navegador** sobe uma pilha descartável com Docker, aplica as migrações e cria três contas fictícias. Dois membros autenticados compartilham um chamado entre contextos independentes do navegador. A terceira conta confirma o isolamento dos registros. O teste usa sessões reais obtidas por senha de fixture. A entrega do link mágico continua fora da cobertura.
+O workflow **Supabase local e navegador** sobe uma pilha descartável com Docker, aplica as migrações e cria três contas fictícias. Dois membros autenticados compartilham um chamado entre contextos independentes do navegador. A terceira conta confirma o isolamento dos registros. O teste usa sessões reais obtidas por senha de fixture. Um segundo teste solicita um link mágico pela interface, lê o e-mail capturado pelo Mailpit local e verifica o retorno ao portal e a sessão após recarregar.
