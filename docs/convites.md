@@ -1,6 +1,6 @@
 # Convites em Administração → Equipe
 
-Entrega em PR separado, em rascunho, sobre a main com #16 publicado (`464dfa3f80579dcc18dc739a5d0e6884f5ffa16f`). A migração `20261115230000_convites.sql`, frontend e fluxo de e-mail desta entrega não foram publicados. Testes mutantes e envios usam somente Supabase/Mailpit locais e endereços fictícios; nenhum destinatário real foi acionado.
+Entrega no PR #17, em rascunho, sobre a main com #16 publicado (`464dfa3f80579dcc18dc739a5d0e6884f5ffa16f`). O merge e a publicação foram autorizados condicionados à homologação de Auth/e-mail. A condição ainda não foi satisfeita: a migração `20261115230000_convites.sql`, frontend e fluxo de e-mail desta entrega não foram publicados. Testes mutantes e envios usam somente Supabase/Mailpit locais e endereços fictícios; nenhum destinatário real foi acionado.
 
 ## Regras e fluxo
 
@@ -62,6 +62,38 @@ Foram aprovados localmente tipagem, 18 unitários, builds, cinco regressões SQL
 
 ## Publicação futura e recuperação
 
-Somente após revisão/autorização do novo PR: reconferir head/base/checks, histórico remoto (até `20261115220000`) e recuperação. Dry-run do checkout aprovado deve conter só `20261115230000_convites.sql`, sem seeds/include-all/reaplicação. Aplicar migração, conferir funções, grants e contexto privado, preservando vínculos reais. Homologar a configuração Auth/e-mail e publicar frontend; confirmar SHA/deployment e fluxo em ambiente de homologação com contas fictícias antes de liberar envios. Não reaplicar #13–#16. A branch está com deploy automático desabilitado.
+Somente após a homologação de Auth/e-mail, incluindo entrega externa e primeiro acesso em caixa autorizada: reconferir head/base/checks, histórico remoto (até `20261115220000`) e recuperação. Dry-run do checkout aprovado deve conter só `20261115230000_convites.sql`, sem seeds/include-all/reaplicação. Aplicar migração, conferir funções, grants e contexto privado, preservando vínculos reais. Integrar o PR e publicar frontend; confirmar SHA/deployment e domínio, sem enviar convites a integrantes/clientes. Não reaplicar #13–#16. A branch está com deploy automático desabilitado; o merge em main pode disparar a publicação. A autorização já registrada continua condicionada à homologação.
 
 Falha na migração reverte sua transação. Depois de instalada, recuperar frontend para o #16 (`464dfa3`, deployment `dpl_4sNsxK4xhjjuYv76ZNKxfaeyBdY5`), preservando convites, vínculos aceitos, histórico e revisões. Se precisar suspender novas concessões, bloquear temporariamente a execução de criação/aceite no servidor por mudança operacional revisada; não apagar vínculos/eventos nem desabilitar auditoria. Convites pendentes devem permanecer gerenciáveis para revogação. Vínculos já aceitos não são removidos por recuperação ou revogação do convite.
+
+## Homologação de Auth/e-mail em 15/11/2026
+
+Candidato inicial reconferido: `dc7d7565365496f1ebfb5e184a65f3fe33670cfa`; base/main `464dfa3f80579dcc18dc739a5d0e6884f5ffa16f`. Checks desse candidato: [Interface](https://github.com/viniciusfs-seno/decifaz-hub/actions/runs/43749384080) e [Supabase local e navegador](https://github.com/viniciusfs-seno/decifaz-hub/actions/runs/43749384096), ambos aprovados. Este complemento adiciona regressão de Auth e documentação; o head final e seus próprios links de CI ficam no corpo do PR #17.
+
+Leituras de produção, sem alteração de Auth, banco ou vínculos:
+
+| Item | Evidência / estado |
+| --- | --- |
+| Vercel/domínio | READY/production, deployment `dpl_4sNsxK4xhjjuYv76ZNKxfaeyBdY5`, SHA `464dfa3f80579dcc18dc739a5d0e6884f5ffa16f`; login HTTP 200, formulário presente sem enviar e-mail |
+| Supabase | Última migração `20261115220000`, três vínculos, zero eventos; `hub_invites` ausente |
+| Site URL / redirects | `https://decifaz-hub.vercel.app/` nos dois campos; nenhum domínio adicional liberado nesta etapa |
+| Cadastro / confirmação | Cadastro Auth habilitado; `mailer_autoconfirm=false`; confirmação de e-mail obrigatória; provedor e-mail habilitado |
+| OTP | Oito dígitos, expiração 3600 s, intervalo de envio 60 s, limite de verificações 30. O limite de e-mails/h veio nulo na representação da CLI; não foi tratado como ilimitado nem homologado sob carga |
+| SMTP próprio | Desativado; host, porta e remetente próprios não configurados. Nenhuma credencial foi solicitada, persistida ou impressa |
+| Template e entrega externa | Pendente: não houve envio externo nem inspeção de mensagem entregue em caixa autorizada. Não assumir que o template efetivo de produção coincide com o local |
+
+A consulta usou `supabase@3.0.0 config diff --remote=<projeto> --output-format json`, com saída capturada em memória e relatório com campos permitidos, e `db query --read-only` com contagens agregadas. Não copiar a configuração remota completa para Git/artefatos. Conforme a [documentação SMTP do Supabase](https://supabase.com/docs/guides/auth/auth-smtp), o serviço padrão restringe destinatários aos membros da organização e não substitui SMTP de produção; a documentação informa dois e-mails/h, sujeito a mudança. Não testar esse limite enviando a endereços reais.
+
+`node scripts/local-validation.mjs` executa cinco regressões SQL e dez cenários reais, incluindo o novo `e2e/invite-auth-real.spec.mjs`. Este teste clona somente o Auth **local** em container temporário, usa o mesmo hostname canônico e allow-list raiz da configuração consultada e OTP de oito dígitos/uma hora/60 s, mantendo SMTP apontado para Mailpit. As requisições do hostname canônico são interceptadas e atendidas pelo frontend/backend locais: nenhuma requisição autenticada, conta ou convite é criado no domínio/Supabase de produção. O container é removido ao concluir.
+
+Comprovado localmente: mensagem de confirmação capturada, conta inicialmente não verificada/sem sessão, reenvio imediato recusado com 429, retorno conserva `?convite=<id>`, confirmação torna a conta verificada, Edge ainda nega acesso e não há vínculo até clicar Aceitar. O aceite explícito libera somente o espaço/papel concedido. Um segundo cadastro direto na API, **sem convite**, verifica o e-mail e entra no Hub, mas continua com caixa vazia, sem vínculos, sem leitura de espaços, sem evento de concessão e com Edge 403. O login normal por link mágico e persistência de sessão continuam cobertos por `shared-real.spec.mjs`.
+
+**Bloqueios para publicação:** disponibilizar/configurar SMTP de produção e remetente validado (incluindo autenticação do domínio no provedor), homologar template efetivo de acesso e confirmação, limites de envio/OTP e redirects; identificar caixa externa de teste autorizada e acesso conectado de leitura para comprovar entrega/primeiro acesso automaticamente. Não usar integrantes/clientes como destinatários. Não pedir senha, token ou link por chat. Sem essas condições, manter rascunho e não executar dry-run/aplicação, merge ou frontend. O ensaio canônico local não foi apresentado como entrega externa ou fluxo real de produção.
+
+## Operação de convites após a ativação
+
+1. **Criar:** Administração → Equipe → Novo convite; informar e-mail, selecionar um ou mais papéis e escolher se solicita link de acesso. Criar convite mantém Pendente até o aceite verificado. Conferir papéis antes de enviar; para mudar um pendente, revogar e emitir outro.
+2. **Reenviar:** no cartão pendente ainda válido, usar Enviar link de acesso. Não prolonga a validade do convite. Esperar o intervalo de OTP; se o link expirou, pedir outro, sem recriar o vínculo. Copiar link fornece apenas o atalho ao portal, sem autenticar nem conceder acesso por si só.
+3. **Revogar:** usar Revogar convite no cartão pendente válido. O servidor impede aceite posterior. Convite aceito exige gestão de papéis na Equipe; revogar convite não retira vínculo existente.
+4. **Investigar entrega:** conferir estado/prazo do convite e a mensagem da tela; uma solicitação aceita pelo Auth não comprova recebimento. Correlacionar horário e código HTTP nos logs Auth e no provedor SMTP, consultando dados sensíveis apenas nos painéis autorizados. Verificar supressão/bounce, domínio/remetente, SPF/DKIM/DMARC, spam, template de confirmação versus magic link, limites de envio/OTP e destino de retorno. Não colar destinatários, corpos com links, tokens ou credenciais no PR, Git, CI ou evidências compartilhadas.
+5. Erro 429 pede aguardar o limite; erro SMTP/503 mantém o convite pendente e permite tentar novamente. Falha de histórico impede concessão e reverte a operação: corrigir a causa e tentar o aceite novamente, sem desabilitar auditoria. Se houver dúvida sobre um aceite, atualizar lista/Equipe/histórico antes de repetir. Estado Aceito e evento persistido são a prova da concessão, não o envio do e-mail.
