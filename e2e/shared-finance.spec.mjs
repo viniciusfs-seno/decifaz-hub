@@ -26,9 +26,9 @@ test('financeiro compartilhado exporta o mês e exclui estornos do total recebid
    return route.fulfill({json:{id}})
   }
   const fixtures={
-   '/functions/v1/hub-workspaces':{workspaces:[{id:'w',name:'Homologação automatizada'}]},
+   '/functions/v1/hub-workspaces':{workspaces:[{id:'w',name:'Homologação automatizada',role:'admin'}]},
    '/rest/v1/rpc/hub_dashboard':{funnel:{},priorities:{},scheduled:0,diagnosed:0,pending:0,overdue:0},
-   '/rest/v1/hub_projects':[{proposal_id:'p',status:delivery?'Entregue':'Em andamento',owner:'Equipe',due_on:null,deliverables:'',delivery,approved:{title:'Projeto teste',scope:'Teste',version:1,services:[],setup:100,monthly:0}}],
+   '/rest/v1/hub_projects_visible':[{proposal_id:'p',status:delivery?'Entregue':'Em andamento',owner:'Equipe',due_on:null,deliverables:'',delivery,approved:{title:'Projeto teste',scope:'Teste',version:1,services:[],setup:100,monthly:0}}],
    '/rest/v1/hub_activities':activity,
    '/rest/v1/hub_receivables':[{...charge,due_on:month+'-02'}],
    '/rest/v1/hub_receipts':[{...charge,id:'r',received_on:month+'-02',reversed_at:month+'-03',reversal_reason:'Teste'}],

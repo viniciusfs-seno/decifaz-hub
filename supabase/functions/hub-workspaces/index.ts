@@ -26,5 +26,12 @@ Deno.serve(async request => {
  const {data,error} = await client.from('hub_workspaces').select('id,name').order('name')
  if (error) return json({error:'Não foi possível consultar o espaço de trabalho.'}, 500)
  if (!data.length) return json({error:'Conta sem acesso a um espaço de trabalho.'}, 403)
- return json({workspaces:data})
+ const {data:members,error:roleError}=await client.from('hub_members').select('workspace_id,role').eq('user_id',claims.claims.sub)
+ if(roleError)return json({error:'Não foi possível consultar as permissões.'},500)
+ const workspaces=data.flatMap(space=>{
+  const member=members?.find(item=>item.workspace_id===space.id)
+  return member?[{...space,role:member.role}]:[]
+ })
+ if(!workspaces.length)return json({error:'Conta sem acesso a um espaço de trabalho.'},403)
+ return json({workspaces})
 })

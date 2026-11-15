@@ -1,3 +1,4 @@
+import {can,type Role} from './access'
 import {Knowledge} from './secondary'
 import {CommercialCenter} from './commercial-center'
 import {useEffect,useState,type FormEvent} from 'react'
@@ -16,7 +17,7 @@ const url=import.meta.env.VITE_SUPABASE_URL
 const key=import.meta.env.VITE_SUPABASE_PUBLISHABLE_KEY
 const client=url&&key?.startsWith('sb_publishable_')?createClient(url,key):null
 
-type Workspace={id:string;name:string}
+type Workspace={id:string;name:string;role:Role}
 type Lead=PilotLead
 type Interaction={id:string;body:string;created_at:string}
 type Task={id:string;title:string;status:string;due_on:string|null;owner:string}
@@ -73,6 +74,8 @@ function SharedCrm(){
  }
  const [spaces,setSpaces]=useState<Workspace[]>([])
  const [workspace,setWorkspace]=useState('')
+ const role=spaces.find(space=>space.id===workspace)?.role
+ const [moduleErrors,setModuleErrors]=useState<string[]>([])
  const [leads,setLeads]=useState<Lead[]>([])
  const [selected,setSelected]=useState('')
  const [triages,setTriages]=useState<TriageRow[]>([])
@@ -114,20 +117,32 @@ function SharedCrm(){
   let current=true
   const leadsQuery=client!.from('hub_leads').select(leadColumns).eq('workspace_id',workspace).order('name').returns<Lead[]>()
   const triagesQuery=client!.from('hub_triages').select('lead_id,record,scores,completed').eq('workspace_id',workspace).returns<TriageRow[]>()
-  void Promise.all([leadsQuery,triagesQuery,loadMetrics(client!,workspace),loadProposals(client!,workspace),loadMeetings(client!,workspace),loadProjects(client!,workspace),loadFinance(client!,workspace)]).then(([leads,triages,dashboard,quotes,diagnoses,delivery,financial])=>{
+  setReady(false)
+  setFinance(undefined)
+  setModuleErrors([])
+  void Promise.allSettled([leadsQuery,triagesQuery,loadMetrics(client!,workspace),loadProposals(client!,workspace),loadMeetings(client!,workspace),loadProjects(client!,workspace),can(role,'finance')?loadFinance(client!,workspace):Promise.resolve(undefined)]).then(results=>{
    if(!current)return
-   if(leads.error||triages.error||dashboard.error||!dashboard.data||quotes.error||!quotes.data||diagnoses.error||!diagnoses.data||delivery.error||!delivery.data||financial.some(result=>result.error||!result.data)){setReady(false);setError('Não foi possível carregar a jornada comercial. Confira seu acesso e atualize.');return}
-   setLeads(leads.data)
-   setTriages(triages.data)
-   setMetrics(dashboard.data)
-   setProposals(quotes.data)
-   setProjects(delivery.data)
-   setFinance(financial)
-   setProposalMeetings(diagnoses.data)
+   const failures:string[]=[]
+   function result<T>(index:number,label:string):T|undefined{
+    const item=results[index]
+    if(item.status==='rejected'){failures.push(label);return}
+    if((item.value as {error?:unknown}|undefined)?.error){failures.push(label);return}
+    return item.value as T
+   }
+   setLeads(result<{data:Lead[]}>(0,'CRM')?.data??[])
+   setTriages(result<{data:TriageRow[]}>(1,'Triagem')?.data??[])
+   setMetrics(result<{data:PilotMetrics}>(2,'Indicadores')?.data??null)
+   setProposals(result<{data:Proposal[]}>(3,'Propostas')?.data??[])
+   setProposalMeetings(result<{data:Meeting[]}>(4,'Reuniões')?.data??[])
+   setProjects(result<{data:SharedProject[]}>(5,'Projetos')?.data??[])
+   const financial=result<Awaited<ReturnType<typeof loadFinance>>>(6,'Financeiro')
+   if(financial?.some(item=>item.error||!item.data))failures.push('Financeiro')
+   else setFinance(financial)
+   setModuleErrors(failures)
    setReady(true)
   })
   return ()=>{current=false}
- },[workspace,revision])
+ },[workspace,revision,role])
  useEffect(()=>{
   if(!workspace||!selected)return
   let current=true
@@ -193,7 +208,7 @@ function SharedCrm(){
   {menu&&<button className="mobile-scrim" aria-label="Fechar navegação" onClick={()=>setMenu(false)}/>}
   <aside className={'sidebar '+(menu?'open':'')}>
    <button className="brand" onClick={()=>go('dashboard')}><img className="brand-logo" src={import.meta.env.BASE_URL+'identidade/assinatura-horizontal-escuro-selo.svg'} alt="Decifaz"/><small>Hub · Portal interno</small></button>
-   <nav aria-label="Navegação principal"><div className="nav-group"><h2>Comercial</h2>{sections.map(([id,label,Icon])=><button key={id} aria-current={page===id?'page':undefined} onClick={()=>go(id)}><Icon size={17}/><span>{label}</span></button>)}</div></nav>
+   <nav aria-label="Navegação principal"><div className="nav-group"><h2>Comercial</h2>{sections.filter(([id])=>id!=='financeiro'||can(role,'finance')).map(([id,label,Icon])=><button key={id} aria-current={page===id?'page':undefined} onClick={()=>go(id)}><Icon size={17}/><span>{label}</span></button>)}</div></nav>
   </aside>
   <div className="workspace"><header className="topbar">
    <div className="crumb"><button className="icon mobile-menu" aria-label="Abrir navegação" onClick={()=>setMenu(!menu)}><Menu size={21}/></button><span>Decifaz Hub</span><span className="slash">/</span><b>{pageLabel}</b></div>
@@ -202,6 +217,7 @@ function SharedCrm(){
   <main className="pilot">
    <div className="row-between"><p>{spaces.find(space=>space.id===workspace)?.name??'Decifaz Hub'}</p><button className="button compact" disabled={busy||!workspace} onClick={()=>{setError('');reload(value=>value+1)}}>Atualizar</button></div>
   {error&&<p role="alert">{error}</p>}
+  {moduleErrors.map(label=><p role="alert" key={label}>{label}: não foi possível carregar. Os demais módulos continuam disponíveis.</p>)}
   {notice&&<p role="status">{notice}</p>}
   {!ready&&!error&&<p role="status">Carregando o CRM…</p>}
   {ready&&<>
@@ -212,67 +228,68 @@ function SharedCrm(){
     openLead={id=>{const item=leads.find(lead=>lead.id===id);if(item){go('crm');select(item)}}}
     openProject={id=>{go('projetos');setProjectId(id)}}/>}
    {page==='conhecimento'&&<Knowledge download={false} go={()=>go('central')}/>}
-   {page==='financeiro'&&finance&&<SharedFinance key={workspace} client={client!} workspace={workspace} projects={projects} forecasts={finance[0].data??[]} receipts={finance[1].data??[]} expenses={finance[2].data??[]} initialMonth={reportMonth} audit={finance[3].data??[]} busy={busy} write={write}/>}
-   {page==='agenda'&&<ProjectSupport key={workspace} client={client!} workspace={workspace} revision={revision} busy={busy} write={write} projectName={id=>projects.find(item=>item.proposal_id===id)?.approved.title??'Projeto'}/>}
+   {page==='financeiro'&&!can(role,'finance')&&<p role="status">Seu papel não permite acesso ao Financeiro.</p>}
+   {page==='financeiro'&&can(role,'finance')&&finance&&<SharedFinance key={workspace} client={client!} workspace={workspace} projects={projects} forecasts={finance[0].data??[]} receipts={finance[1].data??[]} expenses={finance[2].data??[]} month={reportMonth} setMonth={setReportMonth} audit={finance[3].data??[]} busy={busy} write={write}/>}
+   {page==='agenda'&&<ProjectSupport readOnly={!can(role,'projects',true)} key={workspace} client={client!} workspace={workspace} revision={revision} busy={busy} write={write} projectName={id=>projects.find(item=>item.proposal_id===id)?.approved.title??'Projeto'}/>}
    {page==='projetos'&&<SharedProjects projects={projects} leads={commercialData.leads} open={setProjectId}/>}
    {page==='propostas'&&<Proposals data={commercialData} add={()=>setProposalModal({})} open={id=>setProposalModal({id})}/>}
    {(page==='crm'||page==='triagem')&&<CRM key={page} data={commercialData} triage={page==='triagem'} open={id=>select(leads.find(item=>item.id===id))} add={()=>select()}
     start={id=>{select(leads.find(item=>item.id===id));setEditor('triage')}}/>}
    {(page==='crm'||page==='triagem')&&showForm&&<>
     <section className="card panel"><h2>{selected?'Editar estabelecimento':'Cadastrar estabelecimento'}</h2>
-     <form className="pilot-fields" onSubmit={saveLead}>
+     <fieldset disabled={!can(role,'commercial',true)}><form className="pilot-fields" onSubmit={saveLead}>
       <label>Nome<input required value={draft.name} onChange={e=>setDraft({...draft,name:e.target.value})}/></label>
       <label>Segmento<input value={draft.segment} onChange={e=>setDraft({...draft,segment:e.target.value})}/></label>
       <label>Cidade<input value={draft.city} onChange={e=>setDraft({...draft,city:e.target.value})}/></label>
       <label>Observações<textarea value={draft.notes} onChange={e=>setDraft({...draft,notes:e.target.value})}/></label>
       <button className="button primary" disabled={busy}>Salvar estabelecimento</button>
-     </form>
+     </form></fieldset>
     </section>
    {lead&&<section className="card panel">
     <h2>Jornada comercial de {lead.name}</h2><p>{lead.stage}{lead.needs?' · '+lead.needs:''}</p>
     {lead.next&&<p>Próxima ação · {lead.next} · {dateLabel(lead.due)}</p>}
     <div className="actions">
-     <button className="button" disabled={busy} onClick={()=>setEditor('triage')}>{selectedTriage?'Editar triagem':'Iniciar triagem'}</button>
-     <button className="button" disabled={busy||loadedLead!==selected} onClick={()=>{setMeeting(undefined);setEditor('meeting')}}>Registrar reunião</button>
-     <button className="button" disabled={busy} onClick={()=>setProposalModal({leadId:lead.id})}>Nova proposta</button>
+     <button className="button" disabled={busy||!can(role,'commercial',true)} onClick={()=>setEditor('triage')}>{selectedTriage?'Editar triagem':'Iniciar triagem'}</button>
+     <button className="button" disabled={busy||!can(role,'commercial',true)||loadedLead!==selected} onClick={()=>{setMeeting(undefined);setEditor('meeting')}}>Registrar reunião</button>
+     <button className="button" disabled={busy||!can(role,'commercial',true)} onClick={()=>setProposalModal({leadId:lead.id})}>Nova proposta</button>
     </div>
-    {loadedLead===selected&&meetings.map(item=><div key={item.id} className="list-item"><div><b>{dateLabel(item.date)} · {item.state}</b><p>{item.summary||item.participants}</p></div><button className="button" disabled={busy} onClick={()=>{setMeeting(item);setEditor('meeting')}}>Editar reunião</button>{item.state==='Realizada'&&<button className="button" disabled={busy} onClick={()=>setProposalModal({leadId:lead.id,meetingId:item.id})}>Criar proposta</button>}</div>)}
+    {loadedLead===selected&&meetings.map(item=><div key={item.id} className="list-item"><div><b>{dateLabel(item.date)} · {item.state}</b><p>{item.summary||item.participants}</p></div><button className="button" disabled={busy} onClick={()=>{setMeeting(item);setEditor('meeting')}}>Editar reunião</button>{item.state==='Realizada'&&<button className="button" disabled={busy||!can(role,'commercial',true)} onClick={()=>setProposalModal({leadId:lead.id,meetingId:item.id})}>Criar proposta</button>}</div>)}
     {proposals.filter(item=>item.leadId===lead.id).map(item=><button key={item.id} className="text-button" onClick={()=>setProposalModal({id:item.id})}>{item.title} · v{item.version} · {item.status}</button>)}
    </section>}
    {selected&&loadedLead===selected&&<div className="dashboard-grid">
-    <section className="card panel"><h2>Histórico</h2>
+    <section className="card panel"><h2>Histórico</h2><fieldset disabled={!can(role,'commercial',true)}>
      <form className="pilot-fields" onSubmit={e=>{e.preventDefault();if(note.trim())void write(()=>client!.from('hub_interactions').insert({workspace_id:workspace,lead_id:selected,body:note.trim()}).select('id').single(),()=>setNote(''))}}>
       <label>Nova interação<textarea required value={note} onChange={e=>setNote(e.target.value)}/></label><button className="button" disabled={busy}>Registrar interação</button>
      </form>
-     {interactions.length?<ul>{interactions.map(entry=><li key={entry.id}>{entry.body} · {dateLabel(entry.created_at)}</li>)}</ul>:<p>Sem interações registradas.</p>}
+     </fieldset>{interactions.length?<ul>{interactions.map(entry=><li key={entry.id}>{entry.body} · {dateLabel(entry.created_at)}</li>)}</ul>:<p>Sem interações registradas.</p>}
     </section>
-    <section className="card panel"><h2>Atividades</h2>
+    <section className="card panel"><h2>Atividades</h2><fieldset disabled={!can(role,'commercial',true)}>
      <form className="pilot-fields" onSubmit={e=>{e.preventDefault();if(task.trim())void write(()=>client!.from('hub_activities').insert({workspace_id:workspace,lead_id:selected,title:task.trim(),due_on:due||null}).select('id').single(),()=>{setTask('');setDue('')})}}>
       <label>Título<input required value={task} onChange={e=>setTask(e.target.value)}/></label><label>Prazo<input type="date" value={due} onChange={e=>setDue(e.target.value)}/></label><button className="button" disabled={busy}>Criar atividade</button>
      </form>
-     {tasks.length?<ul>{tasks.map(item=><li key={item.id}><label>{item.title}{item.owner?' · '+item.owner:''}{item.due_on?' · '+dateLabel(item.due_on):''}<select disabled={busy} value={item.status} onChange={e=>void write(()=>client!.from('hub_activities').update({status:e.target.value}).eq('workspace_id',workspace).eq('id',item.id).select('id').single())}>{statuses.map(status=><option key={status}>{status}</option>)}</select></label></li>)}</ul>:<p>Sem atividades registradas.</p>}
+     {tasks.length?<ul>{tasks.map(item=><li key={item.id}><label>{item.title}{item.owner?' · '+item.owner:''}{item.due_on?' · '+dateLabel(item.due_on):''}<select disabled={busy} value={item.status} onChange={e=>void write(()=>client!.from('hub_activities').update({status:e.target.value}).eq('workspace_id',workspace).eq('id',item.id).select('id').single())}>{statuses.map(status=><option key={status}>{status}</option>)}</select></label></li>)}</ul>:<p>Sem atividades registradas.</p>}</fieldset>
     </section>
    </div>}
    </>}
-   {lead&&editor==='triage'&&<TriageEditor lead={lead} triage={selectedTriage&&fullTriage(selectedTriage)} team={[]} close={()=>setEditor(null)}
+   {can(role,'commercial',true)&&lead&&editor==='triage'&&<TriageEditor lead={lead} triage={selectedTriage&&fullTriage(selectedTriage)} team={[]} close={()=>setEditor(null)}
     save={(triage,updatedLead)=>write(()=>saveTriage(client!,workspace,triage,updatedLead),()=>setDraft({...draft,name:updatedLead.name,segment:updatedLead.segment,city:updatedLead.city}))}/>}
-   {lead&&editor==='meeting'&&<MeetingEditor data={meetingContext} item={meeting} leadId={lead.id} lockLead close={()=>setEditor(null)}
+   {can(role,'commercial',true)&&lead&&editor==='meeting'&&<MeetingEditor data={meetingContext} item={meeting} leadId={lead.id} lockLead close={()=>setEditor(null)}
     save={(item,follow,advance)=>write(()=>saveMeeting(client!,workspace,item,follow,advance))}/>}
-   {proposalModal&&<ProposalEditor key={proposalModal.id??proposalModal.meetingId??'new'} data={commercialData}
+   {proposalModal&&<ProposalEditor readOnly={!can(role,'commercial',true)} financial={can(role,'finance')} key={proposalModal.id??proposalModal.meetingId??'new'} data={commercialData}
     item={proposals.find(item=>item.id===proposalModal.id)} leadId={proposalModal.leadId} meetingId={proposalModal.meetingId}
     open={id=>setProposalModal({id})} close={()=>setProposalModal(undefined)}
-    project={item=>{
+    project={can(role,'projects',true)?item=>{
      const show=()=>{setProposalModal(undefined);go('projetos');setProjectId(item.id)}
      if(projects.some(project=>project.proposal_id===item.id))show()
      else void write(()=>client!.rpc('hub_open_project',{w:workspace,p:item.id}),show)
-    }} projectExists={id=>projects.some(project=>project.proposal_id===id)}
-    save={(item,decision)=>write(()=>saveProposal(client!,workspace,item,decision))}/>}
-   {activeProject&&page==='projetos'&&<SharedProjectEditor key={activeProject.proposal_id} item={activeProject}
+    }:undefined} projectExists={id=>projects.some(project=>project.proposal_id===id)}
+    save={(item,decision)=>write(()=>saveProposal(client!,workspace,item,decision,can(role,'finance')))}/>}
+   {activeProject&&page==='projetos'&&<SharedProjectEditor readOnly={!can(role,'projects',true)} key={activeProject.proposal_id} item={activeProject}
     close={()=>setProjectId('')} accept={values=>write(()=>client!.rpc('hub_accept_delivery',{
      w:workspace,p:activeProject.proposal_id,c:values.checks,d:values.date,e:values.reference,t:values.title,o:values.owner,due:values.due,
     }))} save={values=>write(()=>client!.from('hub_projects').update(values)
      .eq('workspace_id',workspace).eq('proposal_id',activeProject.proposal_id).select('proposal_id').single())}>
-    <ProjectSupport client={client!} workspace={workspace} project={activeProject.proposal_id} revision={revision} busy={busy} write={write} projectName={()=>activeProject.approved.title}/>
+    <ProjectSupport readOnly={!can(role,'projects',true)} client={client!} workspace={workspace} project={activeProject.proposal_id} revision={revision} busy={busy} write={write} projectName={()=>activeProject.approved.title}/>
    </SharedProjectEditor>}
   </>}
  </main></div></div>
@@ -287,7 +304,7 @@ function PilotDashboard({metrics,finance,leads,projects,proposals,month,setMonth
  const decisions=proposals.filter(item=>item.decisionAt?.startsWith(month)&&['Aceita','Recusada'].includes(item.status))
  const wins=decisions.filter(item=>item.status==='Aceita').length
  const billing=finance&&financeMetrics(finance[0].data??[],finance[1].data??[],finance[2].data??[],today,month)
- const overdue=finance&&financeMetrics(finance[0].data??[],finance[1].data??[],[],today).overdue
+ const overdue=billing?.overdue
  const total=Object.values(metrics.funnel).reduce((sum,count)=>sum+count,0)
  const indicators=[[Users,'Estabelecimentos',total],[CalendarDays,'Reuniões agendadas',metrics.scheduled],
   [ClipboardList,'Diagnósticos realizados',metrics.diagnosed],[ListTodo,'Atividades pendentes',metrics.pending],
@@ -305,7 +322,7 @@ function PilotDashboard({metrics,finance,leads,projects,proposals,month,setMonth
    <div><dt>Receita recebida</dt><dd>{money(billing.received/100)}</dd></div>
    <div><dt>Despesas previstas</dt><dd>{money(billing.expenses/100)}</dd></div>
    <div><dt>Despesas pagas</dt><dd>{money(billing.paidExpenses/100)}</dd></div>
-   <div><dt>Saldo atrasado de todos os meses</dt><dd>{money((overdue??0)/100)}</dd></div>
+   <div><dt>Saldo atrasado no mês</dt><dd>{money((overdue??0)/100)}</dd></div>
   </dl></section>}
   <div className="dashboard-grid">
    <div className="card panel"><h3>Prioridades</h3><p>A · {metrics.priorities.A??0}　B · {metrics.priorities.B??0}　C · {metrics.priorities.C??0}</p></div>

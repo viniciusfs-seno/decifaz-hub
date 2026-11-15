@@ -4,11 +4,11 @@ Na seção **Financeiro**, escolha um projeto, selecione implantação ou mensal
 
 Ao receber um pagamento, selecione a previsão e informe a data efetiva e o valor recebido. Pagamentos parciais mantêm o restante em aberto. O banco serializa registros na mesma previsão para impedir que o total recebido ultrapasse o valor previsto.
 
-As previsões e os recebimentos ficam em tabelas separadas. O painel exibe total previsto, recebido e saldo. O acesso é restrito aos membros do espaço. Nesta etapa, os lançamentos são manuais. Edição de previsões e cobranças automáticas ainda precisam de fluxos próprios.
+As previsões e os recebimentos ficam em tabelas separadas. O painel exibe total previsto, recebido e saldo. O acesso exige o papel Administração ou Financeiro no espaço. Nesta etapa, os lançamentos são manuais. Edição de previsões e cobranças automáticas ainda precisam de fluxos próprios.
 
 ## Visão mensal, atrasos e estornos
 
-O filtro de mês usa o vencimento para previsões e a data efetiva para recebimentos e despesas pagas. O saldo de uma previsão considera todos os recebimentos válidos associados a ela, mesmo quando registrados em outro mês. O dashboard mostra o mês atual e o saldo atrasado acumulado.
+O filtro de mês usa o vencimento para previsões e a data efetiva para recebimentos e despesas pagas. O saldo de uma previsão considera todos os recebimentos válidos associados a ela, mesmo quando registrados em outro mês. Dashboard e Financeiro compartilham o mesmo estado de mês nas duas direções; o saldo atrasado do Dashboard também segue esse mês. `financeScope` define as coleções usadas pelos indicadores e pelo CSV. “Todos os meses” remove o recorte em ambos. O filtro “Só previsões atrasadas” afeta apenas a lista de previsões, sem alterar o relatório mensal exportado.
 
 Estorne um recebimento pelo histórico, informando o motivo. O lançamento original permanece visível com a data e o motivo do estorno. O total recebido é recalculado excluindo o lançamento estornado no mês original e o saldo da previsão reabre. Esta é uma correção de registro, sem movimentação bancária.
 

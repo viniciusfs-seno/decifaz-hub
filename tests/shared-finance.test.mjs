@@ -1,6 +1,6 @@
 import test from 'node:test'
 import assert from 'node:assert/strict'
-import {financeMetrics} from '../src/shared-finance-metrics.ts'
+import {financeMetrics,financeScope} from '../src/shared-finance-metrics.ts'
 
 test('separa competência, recebimento efetivo, estorno e despesa paga',()=>{
  const base={proposal_id:'p',kind:'Implantação',period:'0001-01-01'}
@@ -15,4 +15,10 @@ test('separa competência, recebimento efetivo, estorno e despesa paga',()=>{
   [10000,0,7000,7000,2000,0])
  const november=financeMetrics(forecasts,receipts,expenses,'2026-11-14','2026-11')
  assert.deepEqual([november.forecast,november.received,november.overdue,november.expenses,november.paidExpenses],[0,3000,0,0,2500])
+ assert.deepEqual(november.scope,financeScope(forecasts,receipts,expenses,'2026-11'))
+ assert.equal(november.scope.forecasts.length,0)
+ assert.equal(november.scope.receipts.length,1)
+ assert.equal(november.scope.expenses.length,0)
+ assert.equal(november.scope.payments.length,1)
+ assert.deepEqual(financeScope(forecasts,receipts,expenses,'').receipts,receipts)
 })

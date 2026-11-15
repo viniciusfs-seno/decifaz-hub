@@ -18,6 +18,8 @@ No VS Code, instale a extensão oficial [Codex](https://developers.openai.com/co
 
 ## Prompt de continuidade
 
+A continuação de permissões está na branch `feat/papeis-recorte-mensal`, baseada no PR #12. Antes de atualizar, preserve alterações locais. A migração de papéis e a Edge Function devem ser revisadas em conjunto com o frontend, que usa as novas views de consulta. Para repetir os testes de navegador, instale o Chromium com `npx playwright install chromium`, execute `node scripts/local-validation.mjs` com a pilha local iniciada e `node scripts/mock-validation.mjs` para a API simulada. Execute as suítes em sequência, pois usam a mesma porta do Vite. Veja `docs/validacao-papeis.md` para a evidência da entrega.
+
 ```text
 Continue o Decifaz Hub neste repositório. Confira git status, a branch, os últimos commits e o estado do PR de central e conhecimento. Leia README.md, docs/vscode.md e docs/papeis-e-permissoes.md. Preserve alterações locais.
 
