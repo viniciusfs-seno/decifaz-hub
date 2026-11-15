@@ -44,7 +44,13 @@ Na regressão de concorrência, a primeira sessão PostgreSQL, autenticada como 
 
 Os checks do #12 foram conferidos no SHA `8357a4ac49b1d29fa0589768018f827234ccc896`: [Interface compartilhada aprovada](https://github.com/viniciusfs-seno/decifaz-hub/actions/runs/43633658802) e [Supabase local e navegador aprovado](https://github.com/viniciusfs-seno/decifaz-hub/actions/runs/43633658833). O check Vercel também está aprovado. Não havia reviews ou threads de revisão registradas. O #12 permanece aberto, sem merge; o #13 continua baseado nele. As instruções do #14 foram lidas diretamente na branch `docs/padrao-de-pull-requests`, ainda aberta.
 
-CI das correções atuais do #13: pendente de envio e execução. A evidência do SHA e os links serão registrados após a conclusão dos workflows, sem reutilizar o sucesso do commit anterior como validação do código novo.
+Código validado localmente e no CI: **`f7de4eb225dec85bc254c74728085fa4e924f49f`**. A validação não reutiliza o sucesso da implementação anterior. Atualizações posteriores exclusivamente documentais não alteram os arquivos executados por esses testes; o corpo do PR identifica também o head documental atual.
+
+- [Interface compartilhada — aprovado, execução 23](https://github.com/viniciusfs-seno/decifaz-hub/actions/runs/43710846248): tipagem, 17 testes unitários, build compartilhado, 5 cenários simulados e 1 cenário do modo local.
+- [Supabase local e navegador — aprovado, execução 19](https://github.com/viniciusfs-seno/decifaz-hub/actions/runs/43710846213): inicialização limpa, duas regressões SQL, 4 cenários reais e o cenário de transição/recuperação, com os builds anteriores fixados por SHA.
+- **Não executados:** migrações em produção, deploy de Edge, deploy de frontend, merge e atribuição de papéis reais. Permanecem para revisão.
+
+A execução inicial desta revisão detectou uma referência permanente à função temporária em um checkout limpo. A configuração agora é instalada somente durante o teste, preservada e restaurada byte a byte; o executor recusa sobrescrever uma fixture já existente ou uma alteração concorrente na configuração. A subida normal sem a fixture e os workflows acima passaram após a correção.
 
 ## Pendente de revisão
 
