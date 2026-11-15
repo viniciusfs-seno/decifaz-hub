@@ -1,6 +1,6 @@
 import {spawnSync} from 'node:child_process'
-import {mkdirSync,writeFileSync,symlinkSync,existsSync,rmSync} from 'node:fs'
-import {resolve} from 'node:path'
+import {mkdirSync,writeFileSync,readFileSync,symlinkSync,existsSync,rmSync} from 'node:fs'
+import {resolve,dirname} from 'node:path'
 if(!process.argv.includes('--reset-local-fixtures'))throw Error('Confirme a recriação da pilha fictícia com --reset-local-fixtures.')
 const shell=process.platform==='win32'
 const run=(command,args,options={})=>{
@@ -26,11 +26,18 @@ for(const [name,sha] of [['previous','8357a4ac49b1d29fa0589768018f827234ccc896']
  run(process.execPath,[resolve('node_modules/vite/bin/vite.js'),'build',directory],{env})
  console.log(`Build ${name}: passou no SHA ${sha}.`)
 }
-const fixture=resolve('supabase/functions/hub-workspaces-legacy-test')
+const functionsRoot=resolve('supabase/functions')
+const fixture=resolve(functionsRoot,'hub-workspaces-legacy-test')
+if(dirname(fixture)!==functionsRoot)throw Error('Caminho de fixture fora do diretório permitido.')
+if(existsSync(fixture))throw Error('A fixture temporária já existe; revise-a antes de executar novamente.')
 mkdirSync(fixture,{recursive:true})
 writeFileSync(resolve(fixture,'index.ts'),run('git',['show','8357a4ac49b1d29fa0589768018f827234ccc896:supabase/functions/hub-workspaces/index.ts']))
+const configPath=resolve('supabase/config.toml')
+const originalConfig=readFileSync(configPath,'utf8')
+const testConfig=originalConfig+'\n[functions.hub-workspaces-legacy-test]\nverify_jwt = false\n'
 let result=1
 try{
+ writeFileSync(configPath,testConfig)
  // Reload the local Edge routing configuration for the generated legacy fixture.
  run('npx',['--yes','supabase@3.0.0','stop'])
  run('npx',['--yes','supabase@3.0.0','start'])
@@ -38,6 +45,8 @@ try{
  run('npx',['--yes','supabase@3.0.0','db','reset','--local','--version','20261114181046'])
  result=spawnSync('npx',['playwright','test','--config','playwright.transition.config.mjs'],{env,shell,stdio:'inherit'}).status??1
 }finally{
+ if(readFileSync(configPath,'utf8')!==testConfig)throw Error('Configuração alterada durante o teste; preserve a alteração e revise a limpeza local.')
+ writeFileSync(configPath,originalConfig)
  // Exact generated fixture path inside this checkout, never a user directory.
  rmSync(fixture,{recursive:true,force:true})
  console.log('Restaurando a pilha fictícia local com todas as migrações atuais.')
