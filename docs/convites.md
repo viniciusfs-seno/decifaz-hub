@@ -1,6 +1,6 @@
 # Convites em Administração → Equipe
 
-Entrega no PR #17, em rascunho, sobre a main com #16 publicado (`464dfa3f80579dcc18dc739a5d0e6884f5ffa16f`). O merge e a publicação foram autorizados condicionados à homologação de Auth/e-mail. A condição ainda não foi satisfeita: a migração `20261115230000_convites.sql`, frontend e fluxo de e-mail desta entrega não foram publicados. Testes mutantes e envios usam somente Supabase/Mailpit locais e endereços fictícios; nenhum destinatário real foi acionado.
+Entrega no PR #17, sobre a main com #16 publicado (`464dfa3f80579dcc18dc739a5d0e6884f5ffa16f`). O merge e a publicação foram autorizados condicionados à homologação de Auth/e-mail. A homologação externa foi concluída nos dois testes separados descritos abaixo; o SHA final, os checks e o resultado de cada fase de publicação ficam registrados no corpo do PR. Alterações de papéis, vínculos e eventos nos testes continuam restritas a contas fictícias locais/CI. Os únicos envios externos do agente foram os expressamente autorizados para homologação; endereços, UUIDs e links não são registrados no repositório.
 
 ## Regras e fluxo
 
@@ -36,10 +36,10 @@ O link leva ao Hub e à caixa Meus convites. Novos destinatários podem criar a 
 
 Envio e concessão não são a mesma transação: falha de e-mail mantém o convite pendente e mostra aviso, com opção de reenviar/copiar o link. A tela diz que o envio foi solicitado, não que a caixa externa recebeu. Os estados de entrega não são uma fila/outbox persistente. Reenviar o link Auth não estende os sete dias. A validade do link OTP é configurada no Auth e pode ser menor que a do convite; pedir novo link não duplica concessão. Erro 503 foi simulado e o aviso permanece após atualizar a lista.
 
-Para ativar em produção ainda é necessário revisar e homologar:
+Os pontos de homologação para ativação são:
 
 1. SMTP/remetente e templates Auth para destinatários novos, confirmação de e-mail, limites de envio/cadastros e eventual CAPTCHA. Nenhuma configuração Auth de produção foi alterada por este PR.
-2. Site URL e redirects permitidos para o domínio canônico e retorno a `/?convite=...`, sem liberar domínios arbitrários. Testado em `127.0.0.1:4181`, com captura no Mailpit `127.0.0.1:54324`; envio externo, reputação/entregabilidade e templates reais **não foram testados**.
+2. Site URL e redirects permitidos para o domínio canônico e retorno a `/?convite=...`, sem liberar domínios arbitrários. Retorno com parâmetro foi testado com Auth/frontend locais simulando o domínio canônico, com captura no Mailpit; a entrada Auth externa está comprovada separadamente abaixo. Não tratar a tela anterior à publicação como prova de aceite de convite persistente.
 3. Aprovação da política de sete dias, papéis concedíveis e remetente/texto do convite. O Auth envia seu template de acesso; não há template transacional de convite específico nem promessa de entrega externa.
 
 ## Validação automatizada
@@ -70,7 +70,7 @@ Falha na migração reverte sua transação. Depois de instalada, recuperar fron
 
 Candidato inicial reconferido: `dc7d7565365496f1ebfb5e184a65f3fe33670cfa`; base/main `464dfa3f80579dcc18dc739a5d0e6884f5ffa16f`. Checks desse candidato: [Interface](https://github.com/viniciusfs-seno/decifaz-hub/actions/runs/43749384080) e [Supabase local e navegador](https://github.com/viniciusfs-seno/decifaz-hub/actions/runs/43749384096), ambos aprovados. Este complemento adiciona regressão de Auth e documentação; o head final e seus próprios links de CI ficam no corpo do PR #17.
 
-Leituras de produção, sem alteração de Auth, banco ou vínculos:
+Snapshot inicial de produção, anterior à configuração de SMTP pelo usuário, sem alteração de Auth, banco ou vínculos pelo agente:
 
 | Item | Evidência / estado |
 | --- | --- |
@@ -88,7 +88,18 @@ A consulta usou `supabase@3.0.0 config diff --remote=<projeto> --output-format j
 
 Comprovado localmente: mensagem de confirmação capturada, conta inicialmente não verificada/sem sessão, reenvio imediato recusado com 429, retorno conserva `?convite=<id>`, confirmação torna a conta verificada, Edge ainda nega acesso e não há vínculo até clicar Aceitar. O aceite explícito libera somente o espaço/papel concedido. Um segundo cadastro direto na API, **sem convite**, verifica o e-mail e entra no Hub, mas continua com caixa vazia, sem vínculos, sem leitura de espaços, sem evento de concessão e com Edge 403. O login normal por link mágico e persistência de sessão continuam cobertos por `shared-real.spec.mjs`.
 
-**Bloqueios para publicação:** disponibilizar/configurar SMTP de produção e remetente validado (incluindo autenticação do domínio no provedor), homologar template efetivo de acesso e confirmação, limites de envio/OTP e redirects; identificar caixa externa de teste autorizada e acesso conectado de leitura para comprovar entrega/primeiro acesso automaticamente. Não usar integrantes/clientes como destinatários. Não pedir senha, token ou link por chat. Sem essas condições, manter rascunho e não executar dry-run/aplicação, merge ou frontend. O ensaio canônico local não foi apresentado como entrega externa ou fluxo real de produção.
+Os bloqueios do snapshot inicial foram resolvidos pela configuração de SMTP feita pelo usuário e pelas confirmações externas abaixo. O ensaio canônico local continua identificado como local, sem alegação de aceite persistente em produção.
+
+### Homologação externa: evidências separadas
+
+| Teste | Evidência e limite |
+| --- | --- |
+| A — conta administrativa existente | Única solicitação do agente às 23:28:20 UTC de 15/11/2026, cadastro desabilitado, HTTP 200. Usuário confirmou recebimento na Caixa de entrada e abertura correta dos módulos após “Sign in”; captura mostra o template padrão em inglês, remetente Decifaz Hub do domínio verificado e aviso de uso único/expiração. Mensagem também localizada pelo conector Gmail da conta autorizada. Quatro papéis e vínculos preservados por consulta agregada; não se atribui a inspeção do painel Resend ao que foi comprovado por recebimento e login. |
+| B — primeiro acesso Auth sem vínculo | Antes do único envio autorizado do agente às 22:38 UTC, zero contas/vínculos para a caixa de teste. Usuário confirmou recebimento e entrada após informar o e-mail e receber outro link solicitado por ele; captura no domínio principal mostra “Esta conta ainda não faz parte do espaço de trabalho”. Consulta de produção confirmou conta verificada/com login e zero vínculos. O agente não reenviou. Isso comprova confirmação/entrada Auth e ausência de acesso automático; nenhum convite persistente, aceite ou papel real foi criado nesse teste. |
+
+Configuração reconferida por leitura: SMTP próprio ativo, host/remetente/usuário configurados, porta 465, limite de envio 30/h, confirmação obrigatória, OTP oito dígitos/3600 s e intervalo 60 s. Template de acesso permanece em inglês; sua tradução é melhoria posterior, sem alterar links nesta publicação. Não foram feitos testes de carga, reputação de domínio ou todas as caixas/provedores; o resultado é limitado às caixas autorizadas. Tokens, destinatários, cabeçalhos com dados pessoais e capturas privadas não entram em Git/CI.
+
+Os três vínculos reais e suas revisões continuam com o mesmo digest agregado anterior à homologação, sem eventos artificiais. A publicação pode seguir o roteiro autorizado após conferir os checks do head final. Não atribuir papéis à conta de teste como efeito da publicação; as provas mutantes de convite/aceite permanecem locais/CI. A sequência completa (convite → confirmação → aceite explícito → vínculo + evento únicos) está coberta pelos testes fictícios descritos acima, inclusive o retorno com parâmetro no hostname canônico simulado.
 
 ## Operação de convites após a ativação
 
