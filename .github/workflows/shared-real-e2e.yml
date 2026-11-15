@@ -40,7 +40,7 @@ jobs:
           docker exec -i supabase_db_decifaz-hub-e2e psql -U postgres -v ON_ERROR_STOP=1 < supabase/tests/financeiro_jornada.sql
           docker exec -i supabase_db_decifaz-hub-e2e psql -U postgres -v ON_ERROR_STOP=1 < supabase/tests/papeis_associacoes.sql
           docker exec -i supabase_db_decifaz-hub-e2e psql -U postgres -v ON_ERROR_STOP=1 < supabase/tests/equipe.sql
-          npm run test:e2e -- shared-real.spec.mjs roles-real.spec.mjs concurrency-real.spec.mjs team-real.spec.mjs
+          npm run test:e2e -- shared-real.spec.mjs roles-real.spec.mjs concurrency-real.spec.mjs team-real.spec.mjs team-concurrency-real.spec.mjs
       - name: Validar transição e recuperação com versões anteriores
         run: node scripts/transition-validation.mjs --reset-local-fixtures
       - if: always()

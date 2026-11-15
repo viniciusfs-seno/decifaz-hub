@@ -77,6 +77,11 @@ test('Equipe: admin edita conjuntos, servidor nega usuário comum e outro espaç
   await expect(page.getByRole('button',{name:'Equipe',exact:true})).toHaveCount(0)
   await expect(page.getByText('Seu papel não permite gerir a equipe deste espaço.',{exact:true})).toBeVisible()
   expect((await owner.client.rpc('hub_list_members',{w})).error?.code).toBe('42501')
+  await expect(page.getByRole('button',{name:'Financeiro',exact:true})).toHaveCount(0)
+  expect(await checked(owner.client.rpc('hub_can',{w,module:'admin',writing:true}))).toBe(false)
+  expect(await checked(owner.client.rpc('hub_can',{w,module:'finance',writing:true}))).toBe(false)
+  expect(await checked(owner.client.rpc('hub_can',{w,module:'projects',writing:true}))).toBe(false)
+  expect((await owner.client.rpc('hub_update_member_roles',{w,u:member.id,r:['finance'],expected_revision:'0'})).error?.code).toBe('42501')
  }finally{
   for(const context of contexts)await context.close().catch(()=>{})
   for(const id of users)await service.auth.admin.deleteUser(id)
