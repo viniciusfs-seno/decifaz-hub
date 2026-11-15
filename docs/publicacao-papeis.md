@@ -1,6 +1,6 @@
 # Publicação e recuperação dos papéis
 
-Este é um roteiro para revisão da publicação dos papéis. #14 e #12 foram integrados e seus deploys automáticos concluíram pelo check Vercel. Nenhuma fase de banco, Edge ou frontend do #13 foi publicada. Os testes autenticados usam apenas a pilha fictícia `decifaz-hub-e2e`, em `127.0.0.1:54321`.
+Este é um roteiro para revisão da publicação dos papéis. #14 e #12 foram integrados e seus deploys automáticos concluíram. A API Vercel confirmou que `decifaz-hub.vercel.app` aponta para `dpl_G22ENmxVFTwmJXB7w4S1fHw9zQMU`, READY em production, no SHA `304922f4e13f22181e12032f31ea75e6eccec4be`. Nenhuma fase de banco, Edge ou frontend do #13 foi publicada. Os testes autenticados usam apenas a pilha fictícia `decifaz-hub-e2e`, em `127.0.0.1:54321`.
 
 ## Dependências e integração
 
