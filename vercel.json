@@ -3,7 +3,8 @@
   "git": {
     "deploymentEnabled": {
       "feat/papeis-recorte-mensal": false,
-      "feat/administracao-equipe": false
+      "feat/administracao-equipe": false,
+      "feat/historico-papeis": false
     }
   }
 }

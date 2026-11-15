@@ -1,6 +1,12 @@
 # Administração → Equipe
 
-PR #15 em rascunho, sobre a main `ab6427fc8d66de9bb959a0beda173ac1e8031ea1`, com #13 em produção. Não há autorização explícita para publicar o #15. Migrações de Equipe e concorrência aplicadas somente na pilha fictícia local; vínculos reais não foram alterados nesta revisão.
+PR #15 autorizado e publicado em fases em 15/11/2026. Candidato `6a3c49e2f9f9d096a18b047e38ce823d7dafe599`, base `ab6427f`, squash merge **`cd0efb81ab70c4ac2b18f18df8a2184c2f7b2f09`**. Aplicadas separadamente `20261115200000_equipe.sql` e `20261115210000_equipe_concorrencia.sql`, cada uma após dry-run e conferência; só então merge e frontend.
+
+Deployment ativo confirmado pela API no domínio `decifaz-hub.vercel.app`: **`dpl_7WM8XdJBCMa55pMJsP8G4SfkapTY`**, READY/production, SHA de integração. [URL imutável](https://decifaz-gq91458kw-vinicius-ferreiras-projects-84ef88fb.vercel.app). [Interface main](https://github.com/viniciusfs-seno/decifaz-hub/actions/runs/43743673967) e [Supabase main](https://github.com/viniciusfs-seno/decifaz-hub/actions/runs/43743673918) aprovados.
+
+Papéis/vínculos dos três membros comparados antes/depois por resumo sem identificadores, sem alterações; revisões inicializadas em zero. RPC legada inalterada, trigger habilitada, grants corretos, listagem administrativa e negação sem vínculo conferidas no servidor. Funções remotas coincidem com as testadas localmente após normalizar CRLF. Chromium confirmou tela de acesso, HTTP 200 e assets com `hub_list_members`/`hub_update_member_roles`/`expected_revision`; sem envio de formulário ou criação de sessão Auth real. Testes de gravação/concorrência usaram somente contas fictícias locais/CI. Restrições financeiras do #13 preservadas.
+
+O [histórico](historico-papeis.md) é outra entrega em rascunho; sua migração ainda não foi aplicada em produção. O roteiro abaixo registra o procedimento utilizado e a recuperação para novas revisões, sem autorizar a publicação do histórico.
 
 Administração vê o item Equipe na navegação, lista os integrantes do espaço e seleciona vários papéis por integrante. Salvar envia conjunto completo e revisão lida à nova RPC `hub_update_member_roles`. Não grava diretamente em `hub_members` nem usa a chamada legada como fallback. Seleção vazia não permite salvar. Após salvar, consulta novamente o próprio vínculo pela Edge; perder admin retira Equipe e suas operações. Financeiro e demais permissões são recalculados. Falha nessa atualização limpa o contexto de acesso.
 
@@ -36,18 +42,18 @@ node scripts/transition-validation.mjs --reset-local-fixtures
 
 Resultados locais desta revisão: tipagem, 18 unitários, builds padrão/compartilhado, três regressões SQL e seis cenários reais aprovados; cinco simulados e backup também executados. Equipe mantém a cobertura de viewport de 390 px sem overflow. Transição/recuperação e workflows do candidato final são conferidos no PR. Dados e evidências visuais são exclusivamente fictícios.
 
-## Publicação futura e recuperação
+## Publicação e recuperação
 
-1. Após autorização explícita do #15, reconferir head/base/checks, deployment ativo e histórico remoto. A leitura desta revisão confirmou produção até `20261114220000`, sem listagem ou RPC revisada.
+1. Reconferir autorização, head/base/checks, deployment ativo e histórico remoto. Antes da publicação do #15 a produção estava em `20261114220000`; após, em `20261115210000`.
 2. Em cópia operacional do SHA aprovado, repetir dry-run. Devem constar somente `20261115200000_equipe.sql` e `20261115210000_equipe_concorrencia.sql`. Não usar include-all, seeds ou reaplicar o rollout do #13.
 3. Aplicar primeiro listagem, depois concorrência. Conferir história, coluna/revisão, trigger, função revisada, grants, compatibilidade da RPC antiga, isolamento e negação de não admins. Preservar papéis reais. Não usar vínculos de terceiros como teste; regressões mutantes são locais/fictícias.
 4. Só então integrar o frontend. Merge na main pode disparar deploy; aguardar READY, confirmar SHA/deployment no domínio e que o cliente usa a RPC revisada sem fallback. Guardar deployment compatível e manter as revogações financeiras. Nenhuma nova publicação de Edge é necessária.
 
-Comandos preparados (não executados em produção): `npx --yes supabase@3.0.0 db push --remote=<projeto> --workdir <copia-aprovada> --skip-vault --dry-run`; após autorização/conferência, mesmo comando sem dry-run e com confirmação. A branch de Equipe continua com deploy automático desabilitado em `vercel.json`. Nenhum merge, apply remoto ou deploy do #15 foi feito nesta revisão.
+Comandos usados: `npx --yes supabase@3.0.0 db push --remote=<projeto> --workdir <copia-da-fase> --skip-vault --dry-run`; após autorização/conferência, mesmo comando sem dry-run e com confirmação. As cópias operacionais separadas ficaram em `.validation/rollout15/list` e `.validation/rollout15/revision`, extraídas dos objetos Git aprovados. O deploy automático da antiga branch de Equipe continua desabilitado em `vercel.json`; main publicou após merge conforme esperado.
 
 Antes do frontend, falha de uma migração reverte sua própria transação; manter #13 e corrigir antes de avançar. Depois, recuperar o frontend para o deployment do #13 (`ab6427f`, `dpl_Ho86q5fP38RcURGtFvY2XUQ99dBW`), sem a tela de Equipe. Preservar RPCs aditivas, coluna/trigger de revisão, papéis e revogações dos JSONs. Não voltar à tela `375f1e5`, que sobrescreve seleções antigas; corrigir a RPC/cliente mantendo a proteção. Não reabrir leitura bruta, restaurar DEFAULT admin nem zerar revisões.
 
 ## Próximas entregas propostas
 
 - Convites: fluxo administrativo no servidor, escopo por espaço, conjunto explícito aprovado, expiração/revogação e idempotência. Associar somente a conta verificada ao aceitar; tratar separadamente Auth e banco, sem expor chave administrativa ou registrar e-mails/tokens no CI. Nenhum convite será enviado nesta entrega.
-- Histórico: eventos imutáveis gerados no servidor na mesma transação, com espaço, ator, alvo, conjunto anterior/novo e revisões; leitura restrita por RLS. Cobrir chamadas novas e legadas, conflitos recusados e isolamento. Não aceitar identidade do ator enviada pelo cliente nem criar edição/exclusão de eventos para membros.
+- Histórico: implementado no servidor em [PR separado para revisão](historico-papeis.md), sem publicação. Cobre gravações legadas/revisadas, sem registrar conflitos/recusas como alterações efetivas.
