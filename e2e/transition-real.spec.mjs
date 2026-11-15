@@ -49,7 +49,15 @@ test('publicação em fases e rollback mantêm versões compatíveis e fecham JS
   await expect.poll(async()=>{const {data}=await owner.client.from('hub_members').select('role').eq('workspace_id',w);return data?.[0]?.role}).toBe('admin')
   expect(sql("select column_default is null from information_schema.columns where table_schema='public' and table_name='hub_members' and column_name='role';")).toBe('t')
   expect((await admin.from('hub_members').insert({workspace_id:w,user_id:missing.id})).error?.code).toBe('23502')
-  expect((await admin.from('hub_members').insert({workspace_id:w,user_id:sales.id,role:'commercial'})).error?.code).toBe('23514')
+  // PostgREST validates INSERT keys against its asynchronously reloaded cache.
+  for (const membership of [{role:'commercial'},{role:'admin',extra_roles:['operations']}]) {
+   await expect.poll(async()=>{
+    const {error}=await admin.from('hub_members').insert({workspace_id:w,user_id:sales.id,...membership})
+    if(error?.code==='PGRST204')return 'schema cache reloading'
+    expect(error?.code,'Vínculo restrito antes da fase D').toBe('23514')
+    return 'ready'
+   },{timeout:10000}).toBe('ready')
+  }
   await checked(admin.from('hub_members').insert({workspace_id:w,user_id:sales.id,role:'admin'}))
   await old.reload()
   await old.getByRole('button',{name:'Projetos e entregas',exact:true}).click()
