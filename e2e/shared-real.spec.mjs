@@ -21,7 +21,7 @@ test('membros compartilham chamados e lançamentos financeiros com isolamento',a
  async function account(member){
   const email=randomUUID()+'@example.com',password=randomUUID()
   const {user}=await checked(admin.auth.admin.createUser({email,password,email_confirm:true}))
-  if(member)await checked(admin.from('hub_members').insert({workspace_id:workspace,user_id:user.id}))
+  if(member)await checked(admin.from('hub_members').insert({workspace_id:workspace,user_id:user.id,role:'admin'}))
   const client=createClient(endpoint,key,options)
   const {session}=await checked(client.auth.signInWithPassword({email,password}))
   return {client,session}
@@ -196,7 +196,7 @@ test('link mágico do e-mail local abre o Hub e mantém a sessão após recarreg
  if(error||!user)throw new Error('Falha ao criar a conta de teste.')
  const space=await admin.from('hub_workspaces').insert({id:workspace,name:'Decifaz Link Mágico'})
  if(space.error)throw space.error
- const member=await admin.from('hub_members').insert({workspace_id:workspace,user_id:user.id})
+ const member=await admin.from('hub_members').insert({workspace_id:workspace,user_id:user.id,role:'admin'})
  if(member.error)throw member.error
 
  await page.goto('/')
