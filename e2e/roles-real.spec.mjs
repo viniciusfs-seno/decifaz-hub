@@ -151,6 +151,7 @@ test('matriz real: tabelas, RPCs, Edge, JSON financeiro, membros legados e isola
   expect(await checked(sales.client.rpc('hub_save_proposal',{...decision,decision:'Enviada'}))).toBe(true)
   expect(await checked(sales.client.rpc('hub_save_proposal',{...decision,decision:'Aceita'}))).toBe(false)
   await checked(admin.from('hub_leads').update({stage:'Negociação'}).eq('workspace_id',w).eq('id',l))
+  expect((await sales.client.from('hub_leads').insert({workspace_id:w,id:uuid(),name:'Ganho direto',stage:'Ganho'})).error?.code).toBe('42501')
   expect((await sales.client.from('hub_leads').update({stage:'Ganho'}).eq('workspace_id',w).eq('id',l)).error?.code).toBe('42501')
   expect(await checked(assign.rpc('hub_save_proposal',{...decision,decision:'Aceita'}))).toBe(true)
   expect((await checked(sales.client.from('hub_leads').select('stage').eq('workspace_id',w).eq('id',l).single())).stage).toBe('Ganho')

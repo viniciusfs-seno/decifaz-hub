@@ -32,14 +32,14 @@ grant execute on function public.hub_set_role(uuid,uuid,text) to authenticated;
 create function hub_private.guard_lead_won()
 returns trigger language plpgsql security invoker set search_path='' as $$
 begin
- if new.stage='Ganho' and old.stage is distinct from new.stage and auth.uid() is not null
+ if new.stage='Ganho' and (tg_op='INSERT' or old.stage is distinct from new.stage) and auth.uid() is not null
   and not public.hub_can(new.workspace_id,'admin',true)
  then raise insufficient_privilege using message='Somente Administração pode marcar o lead como Ganho'; end if;
  return new;
 end;
 $$;
 revoke all on function hub_private.guard_lead_won() from public,anon,authenticated;
-create trigger hub_lead_won_guard before update of stage on public.hub_leads
+create trigger hub_lead_won_guard before insert or update of stage on public.hub_leads
  for each row execute function hub_private.guard_lead_won();
 
 -- Replace every broad member policy, including finance audit history.
