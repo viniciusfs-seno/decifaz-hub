@@ -1,6 +1,8 @@
+import {Knowledge} from './secondary'
+import {CommercialCenter} from './commercial-center'
 import {useEffect,useState,type FormEvent} from 'react'
 import {createClient,type Session} from '@supabase/supabase-js'
-import {CalendarDays, ClipboardList, FileCheck2, FolderKanban, LayoutDashboard, ListTodo, Menu, Moon, Sun, Users, Wallet} from 'lucide-react'
+import {BookOpen, CalendarDays, ClipboardList, FileCheck2, FolderKanban, LayoutDashboard, ListTodo, Menu, Moon, Sun, Users, Wallet} from 'lucide-react'
 import {dateLabel,day,money,stages,type Data,type Meeting,type Proposal} from './domain'
 import {CRM,MeetingEditor,TriageEditor} from './commercial'
 import {ProposalEditor,Proposals} from './proposals'
@@ -49,10 +51,11 @@ export default function PilotApp(){
  </main>
 }
 
-const sections=[['dashboard','Dashboard',LayoutDashboard],['agenda','Agenda operacional',CalendarDays],['crm','Captação e CRM',Users],['triagem','Triagem comercial',ClipboardList],['propostas','Propostas comerciais',FileCheck2],['projetos','Projetos e entregas',FolderKanban],['financeiro','Financeiro',Wallet]] as const
+const sections=[['dashboard','Dashboard',LayoutDashboard],['agenda','Agenda operacional',CalendarDays],['central','Central comercial',ListTodo],['conhecimento','Base de conhecimento',BookOpen],['crm','Captação e CRM',Users],['triagem','Triagem comercial',ClipboardList],['propostas','Propostas comerciais',FileCheck2],['projetos','Projetos e entregas',FolderKanban],['financeiro','Financeiro',Wallet]] as const
 type Section=typeof sections[number][0]
 
 function SharedCrm(){
+ const [reportMonth,setReportMonth]=useState(day().slice(0,7))
  const [page,setPage]=useState<Section>('dashboard')
  const [menu,setMenu]=useState(false)
  const [dark,setDark]=useState(()=>{try{return localStorage.getItem('decifaz-theme')==='dark'}catch{return false}})
@@ -203,8 +206,13 @@ function SharedCrm(){
   {!ready&&!error&&<p role="status">Carregando o CRM…</p>}
   {ready&&<>
    {spaces.length>1&&<label>Espaço de trabalho<select disabled={busy} value={workspace} onChange={e=>{setReady(false);setError('');setLeads([]);setProjectId('');setWorkspace(e.target.value);select()}}>{spaces.map(space=><option key={space.id} value={space.id}>{space.name}</option>)}</select></label>}
-   {page==='dashboard'&&metrics&&<PilotDashboard metrics={metrics} finance={finance}/>}
-   {page==='financeiro'&&finance&&<SharedFinance key={workspace} client={client!} workspace={workspace} projects={projects} forecasts={finance[0].data??[]} receipts={finance[1].data??[]} expenses={finance[2].data??[]} audit={finance[3].data??[]} busy={busy} write={write}/>}
+   {page==='dashboard'&&metrics&&<PilotDashboard metrics={metrics} finance={finance} proposals={proposals} month={reportMonth} setMonth={setReportMonth} openFinance={()=>go('financeiro')} leads={commercialData.leads} projects={projects}/>}
+   {page==='central'&&<CommercialCenter key={workspace} client={client!} workspace={workspace} revision={revision}
+    leads={commercialData.leads} meetings={proposalMeetings}
+    openLead={id=>{const item=leads.find(lead=>lead.id===id);if(item){go('crm');select(item)}}}
+    openProject={id=>{go('projetos');setProjectId(id)}}/>}
+   {page==='conhecimento'&&<Knowledge download={false} go={()=>go('central')}/>}
+   {page==='financeiro'&&finance&&<SharedFinance key={workspace} client={client!} workspace={workspace} projects={projects} forecasts={finance[0].data??[]} receipts={finance[1].data??[]} expenses={finance[2].data??[]} initialMonth={reportMonth} audit={finance[3].data??[]} busy={busy} write={write}/>}
    {page==='agenda'&&<ProjectSupport key={workspace} client={client!} workspace={workspace} revision={revision} busy={busy} write={write} projectName={id=>projects.find(item=>item.proposal_id===id)?.approved.title??'Projeto'}/>}
    {page==='projetos'&&<SharedProjects projects={projects} leads={commercialData.leads} open={setProjectId}/>}
    {page==='propostas'&&<Proposals data={commercialData} add={()=>setProposalModal({})} open={id=>setProposalModal({id})}/>}
@@ -270,22 +278,32 @@ function SharedCrm(){
  </main></div></div>
 }
 
-function PilotDashboard({metrics,finance}: {metrics:PilotMetrics;finance?:Awaited<ReturnType<typeof loadFinance>>}) {
+function PilotDashboard({metrics,finance,leads,projects,proposals,month,setMonth,openFinance}: {
+ metrics:PilotMetrics;finance?:Awaited<ReturnType<typeof loadFinance>>;leads:Data['leads'];projects:SharedProject[];proposals:Proposal[];month:string;setMonth:(month:string)=>void;openFinance:()=>void
+}) {
+ const noNext=leads.filter(lead=>!lead.next.trim()&&!['Ganho','Perdido','Arquivado'].includes(lead.stage)).length
+ const lateProjects=projects.filter(project=>project.due_on&&project.due_on<day()&&project.status!=='Entregue').length
  const today=day()
- const billing=finance&&financeMetrics(finance[0].data??[],finance[1].data??[],finance[2].data??[],today,today.slice(0,7))
+ const decisions=proposals.filter(item=>item.decisionAt?.startsWith(month)&&['Aceita','Recusada'].includes(item.status))
+ const wins=decisions.filter(item=>item.status==='Aceita').length
+ const billing=finance&&financeMetrics(finance[0].data??[],finance[1].data??[],finance[2].data??[],today,month)
  const overdue=finance&&financeMetrics(finance[0].data??[],finance[1].data??[],[],today).overdue
  const total=Object.values(metrics.funnel).reduce((sum,count)=>sum+count,0)
  const indicators=[[Users,'Estabelecimentos',total],[CalendarDays,'Reuniões agendadas',metrics.scheduled],
   [ClipboardList,'Diagnósticos realizados',metrics.diagnosed],[ListTodo,'Atividades pendentes',metrics.pending],
-  [ListTodo,'Atividades vencidas',metrics.overdue]] as const
+  [ListTodo,'Atividades vencidas',metrics.overdue],[Users,'Oportunidades sem próxima ação',noNext],[FolderKanban,'Projetos com prazo vencido',lateProjects]] as const
  return <section>
   <div className="page-heading"><div><h1>Dashboard</h1><p>Visão geral do espaço compartilhado</p></div></div>
   <div className="kpis">{indicators.map(([Icon,label,value])=><article className="metric card" key={label}>
    <div className="metric-top"><span className="tile"><Icon size={19}/></span></div><h2>{label}</h2><strong>{value}</strong>
   </article>)}</div>
-  {billing&&<section className="card panel"><h2>Financeiro do mês</h2><dl className="dashboard-grid">
+  <section className="card panel"><label>Mês de análise <input type="month" value={month} onChange={event=>{if(event.target.value)setMonth(event.target.value)}}/></label>
+   <p>Conversão de propostas decididas no mês · {decisions.length?new Intl.NumberFormat('pt-BR',{style:'percent',maximumFractionDigits:1}).format(wins/decisions.length):'Sem decisões'} ({wins} aceitas de {decisions.length})</p>
+  </section>
+  {billing&&<section className="card panel"><h2>Financeiro do mês selecionado</h2><button className="button" onClick={openFinance}>Abrir financeiro neste mês</button><dl className="dashboard-grid">
    <div><dt>Receita prevista</dt><dd>{money(billing.forecast/100)}</dd></div>
    <div><dt>Receita recebida</dt><dd>{money(billing.received/100)}</dd></div>
+   <div><dt>Despesas previstas</dt><dd>{money(billing.expenses/100)}</dd></div>
    <div><dt>Despesas pagas</dt><dd>{money(billing.paidExpenses/100)}</dd></div>
    <div><dt>Saldo atrasado de todos os meses</dt><dd>{money((overdue??0)/100)}</dd></div>
   </dl></section>}

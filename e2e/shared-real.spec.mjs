@@ -170,6 +170,16 @@ test('membros compartilham chamados e lançamentos financeiros com isolamento',a
  expect(csv).toMatch(/"Despesa paga";"Licença de teste";"[^"]+";"30,00";"Realizado"/)
  expect(csv).toContain('"Estornado"')
 
+ await page.getByRole('button',{name:'Central comercial',exact:true}).click()
+ const contact=page.getByRole('row').filter({hasText:'Apresentar proposta'})
+ await expect(contact).toContainText('Equipe E2E')
+ await contact.getByRole('button',{name:'Apresentar proposta',exact:true}).click()
+ await expect(page.getByRole('heading',{name:'Jornada comercial de Cliente fictício'})).toBeVisible()
+ await page.getByRole('button',{name:'Base de conhecimento',exact:true}).click()
+ await page.getByLabel('Buscar na base').fill('Checklist de entrega e homologação')
+ await page.getByRole('button',{name:'Checklist de entrega e homologação',exact:true}).click()
+ await expect(page.getByRole('heading',{name:'Checklist de entrega e homologação',exact:true})).toBeVisible()
+
 })
 
 test('link mágico do e-mail local abre o Hub e mantém a sessão após recarregar',async({page})=>{

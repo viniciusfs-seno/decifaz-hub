@@ -24,8 +24,8 @@ export function loadFinance(client:SupabaseClient,workspace:string){
  ])
 }
 
-export function SharedFinance({client,workspace,projects,forecasts,receipts,expenses,audit,busy,write}:{
- client:SupabaseClient;workspace:string;projects:SharedProject[];forecasts:Forecast[];receipts:Receipt[];expenses:Expense[];audit:Audit[];busy:boolean;write:Write
+export function SharedFinance({client,workspace,projects,forecasts,receipts,expenses,audit,busy,write,initialMonth}:{
+ client:SupabaseClient;workspace:string;projects:SharedProject[];forecasts:Forecast[];receipts:Receipt[];expenses:Expense[];audit:Audit[];initialMonth?:string;busy:boolean;write:Write
 }){
  const [project,setProject]=useState('')
  const [kind,setKind]=useState(kinds[0])
@@ -34,7 +34,7 @@ export function SharedFinance({client,workspace,projects,forecasts,receipts,expe
  const [received,setReceived]=useState(day())
  const [amount,setAmount]=useState('')
  const [receiptId,setReceiptId]=useState(uid)
- const [month,setMonth]=useState(day().slice(0,7))
+ const [month,setMonth]=useState(initialMonth??day().slice(0,7))
  const [overdueOnly,setOverdueOnly]=useState(false)
  const [reverseId,setReverseId]=useState('')
  const [reason,setReason]=useState('')

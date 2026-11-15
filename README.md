@@ -54,3 +54,5 @@ O teste com Supabase local também exercita a previsão de receita, o recebiment
 A regressão do Chromium com Supabase local percorre o cadastro do estabelecimento, rascunho, envio e aceite da proposta pela interface. Também cobre a criação do projeto, a baixa de despesa e o CSV filtrado por mês, com verificação dos registros de auditoria.
 
 O cenário comercial também valida a prioridade após a triagem, a evolução do funil ao registrar o diagnóstico e a persistência da atividade de acompanhamento. A proposta do teste é aberta pela reunião realizada.
+
+Para continuar no editor, consulte o [guia de VS Code e prompt de continuidade](docs/vscode.md). A [matriz proposta de papéis](docs/papeis-e-permissoes.md) descreve os limites de acesso para a próxima fase.
