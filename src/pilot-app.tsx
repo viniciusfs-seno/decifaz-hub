@@ -1,5 +1,6 @@
 import {can,hasRole,type Role} from './access'
 import {Knowledge} from './secondary'
+import {Team} from './team'
 import {CommercialCenter} from './commercial-center'
 import {useEffect,useState,type FormEvent} from 'react'
 import {createClient,type Session} from '@supabase/supabase-js'
@@ -53,7 +54,7 @@ export default function PilotApp(){
 }
 
 const sections=[['dashboard','Dashboard',LayoutDashboard],['agenda','Agenda operacional',CalendarDays],['central','Central comercial',ListTodo],['conhecimento','Base de conhecimento',BookOpen],['crm','Captação e CRM',Users],['triagem','Triagem comercial',ClipboardList],['propostas','Propostas comerciais',FileCheck2],['projetos','Projetos e entregas',FolderKanban],['financeiro','Financeiro',Wallet]] as const
-type Section=typeof sections[number][0]
+type Section=typeof sections[number][0]|'equipe'
 
 function SharedCrm(){
  const [reportMonth,setReportMonth]=useState(day().slice(0,7))
@@ -73,6 +74,15 @@ function SharedCrm(){
   window.scrollTo(0,0)
  }
  const [spaces,setSpaces]=useState<Workspace[]>([])
+ async function refreshMemberships(){
+  const {data,error}=await client!.functions.invoke<{workspaces:Workspace[]}>('hub-workspaces',{body:{}})
+  if(error||!data?.workspaces.length){setSpaces([]);setError('Papéis salvos, mas seu acesso não pôde ser atualizado. Recarregue a página.');throw Error('Não foi possível atualizar seu acesso.')}
+  setSpaces(previous=>data.workspaces.map(space=>{
+   const current=previous.find(item=>item.id===space.id)
+   return current&&current.name===space.name&&current.role===space.role&&JSON.stringify(current.roles)===JSON.stringify(space.roles)?current:space
+  }))
+  setNotice('Papéis salvos. Seu acesso foi atualizado.')
+ }
  const [workspace,setWorkspace]=useState('')
  const membership=spaces.find(space=>space.id===workspace)
  const role=membership?.roles??membership?.role
@@ -204,13 +214,13 @@ function SharedCrm(){
  const commercialData:Data={version:1,leads:leads.map(fullLead),triages:triages.map(fullTriage),meetings:proposalMeetings,activities:[],proposals,projects:[],finance:[],team:[...new Set(leads.map(item=>item.profile.owner).filter((owner):owner is string=>Boolean(owner)))]}
  const meetingContext={...commercialData,leads:lead?[lead]:[],team:[]}
  const activeProject=projects.find(item=>item.proposal_id===projectId)
- const pageLabel=sections.find(([id])=>id===page)?.[1]
+ const pageLabel=page==='equipe'?'Administração / Equipe':sections.find(([id])=>id===page)?.[1]
  const signOut=()=>void client!.auth.signOut().then(({error})=>{if(error)setError('Não foi possível sair. Tente novamente.')})
  return <div className="app">
   {menu&&<button className="mobile-scrim" aria-label="Fechar navegação" onClick={()=>setMenu(false)}/>}
   <aside className={'sidebar '+(menu?'open':'')}>
    <button className="brand" onClick={()=>go('dashboard')}><img className="brand-logo" src={import.meta.env.BASE_URL+'identidade/assinatura-horizontal-escuro-selo.svg'} alt="Decifaz"/><small>Hub · Portal interno</small></button>
-   <nav aria-label="Navegação principal"><div className="nav-group"><h2>Comercial</h2>{sections.filter(([id])=>id!=='financeiro'||can(role,'finance')).map(([id,label,Icon])=><button key={id} aria-current={page===id?'page':undefined} onClick={()=>go(id)}><Icon size={17}/><span>{label}</span></button>)}</div></nav>
+   <nav aria-label="Navegação principal"><div className="nav-group"><h2>Comercial</h2>{sections.filter(([id])=>id!=='financeiro'||can(role,'finance')).map(([id,label,Icon])=><button key={id} aria-current={page===id?'page':undefined} onClick={()=>go(id)}><Icon size={17}/><span>{label}</span></button>)}</div>{administrator&&<div className="nav-group"><h2>Administração</h2><button aria-current={page==='equipe'?'page':undefined} onClick={()=>go('equipe')}><Users size={17}/><span>Equipe</span></button></div>}</nav>
   </aside>
   <div className="workspace"><header className="topbar">
    <div className="crumb"><button className="icon mobile-menu" aria-label="Abrir navegação" onClick={()=>setMenu(!menu)}><Menu size={21}/></button><span>Decifaz Hub</span><span className="slash">/</span><b>{pageLabel}</b></div>
@@ -223,6 +233,7 @@ function SharedCrm(){
   {notice&&<p role="status">{notice}</p>}
   {!ready&&!error&&<p role="status">Carregando o CRM…</p>}
   {ready&&<>
+   {page==='equipe'&&(administrator?<Team key={workspace} client={client!} workspace={workspace} onSaved={refreshMemberships}/>:<p role="alert">Seu papel não permite gerir a equipe deste espaço.</p>)}
    {spaces.length>1&&<label>Espaço de trabalho<select disabled={busy} value={workspace} onChange={e=>{setReady(false);setError('');setLeads([]);setProjectId('');setWorkspace(e.target.value);select()}}>{spaces.map(space=><option key={space.id} value={space.id}>{space.name}</option>)}</select></label>}
    {page==='dashboard'&&metrics&&<PilotDashboard metrics={metrics} finance={finance} proposals={proposals} month={reportMonth} setMonth={setReportMonth} openFinance={()=>go('financeiro')} leads={commercialData.leads} projects={projects}/>}
    {page==='central'&&<CommercialCenter key={workspace} client={client!} workspace={workspace} revision={revision}

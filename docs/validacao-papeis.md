@@ -1,5 +1,15 @@
 # Validação de papéis e relatórios
 
+## Rollout concluído em produção
+
+Autorização explícita recebida para o candidato `bab124d48d3ac234ec43ab63d629b20ec48090f1`, reconferido sem mudança de base/head e com os dois checks aprovados. #13 integrado em `ab6427fc8d66de9bb959a0beda173ac1e8031ea1`; [Interface main](https://github.com/viniciusfs-seno/decifaz-hub/actions/runs/43736345907) e [Supabase main](https://github.com/viniciusfs-seno/decifaz-hub/actions/runs/43736345894) aprovados. Deployment `dpl_Ho86q5fP38RcURGtFvY2XUQ99dBW`, READY/production, confirmado no domínio principal e no SHA de integração.
+
+Aplicadas em ordem: `20261114200000`, Edge compatível v2, frontend com views, `20261114210000`, `20261114220000`. Histórico remoto com 14 versões; hardened=true; SELECT bruto negado nos dois JSONs; views consultadas no contexto do administrador verificado. Fonte da Edge remoto corresponde ao aprovado; chamadas sem sessão/inválidas retornaram 401. Chromium confirmou a tela de acesso e os assets novos. Não foi criada sessão Auth de usuário em produção; jornada autenticada e resposta Edge com papéis exercitadas pelas suítes locais/CI.
+
+O único vínculo real aprovado recebeu exatamente os quatro papéis pela RPC administrativa, com direito de gestão validado no mesmo espaço e preservação dos demais vínculos. Leitura independente confirmou a persistência; detalhes pessoais permaneceram somente na operação privada. O primeiro comando multilinha não persistiu o conjunto; detectado pela leitura e corrigido com bloco atômico em uma linha. Restrições nunca foram reabertas. Registro completo e artefatos de recuperação em [publicacao-papeis.md](publicacao-papeis.md).
+
+A tela Administração → Equipe e sua migração aditiva são entrega separada, ainda não publicada; consultar [equipe.md](equipe.md). Os estados pendentes nas seções seguintes são evidências históricas anteriores à autorização.
+
 ## Preparação do rollout com conjunto aprovado
 
 Aplicação reconferida no head **`cd6ceaaadef716685223eb7b6c7f0e8a2ac24823`**, base main **`304922f4e13f22181e12032f31ea75e6eccec4be`**. PR #13 aberto e em rascunho. Checkout atualizado por fast-forward a partir de árvore limpa; nenhum trabalho local descartado. [Interface aprovada, execução 34](https://github.com/viniciusfs-seno/decifaz-hub/actions/runs/43729209219) e [Supabase/transição aprovado, execução 30](https://github.com/viniciusfs-seno/decifaz-hub/actions/runs/43729209271) pertencem ao candidato cumulativo, não aos SHAs históricos abaixo.

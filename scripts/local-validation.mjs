@@ -12,12 +12,13 @@ if(values.API_URL!=='http://127.0.0.1:54321')throw Error('Somente a pilha local 
 const env={...process.env,HUB_REAL_E2E:'1',VITE_HUB_MODE:'shared',VITE_SUPABASE_URL:values.API_URL,
  VITE_SUPABASE_PUBLISHABLE_KEY:values.PUBLISHABLE_KEY,HUB_TEST_ADMIN_KEY:values.SECRET_KEY||values.SERVICE_ROLE_KEY}
 if(!env.VITE_SUPABASE_PUBLISHABLE_KEY||!env.HUB_TEST_ADMIN_KEY)throw Error('Chaves locais indisponíveis.')
-for(const name of ['financeiro_jornada.sql','papeis_associacoes.sql']){
+for(const name of ['financeiro_jornada.sql','papeis_associacoes.sql','equipe.sql']){
  const sql=spawnSync('docker',['exec','-i','supabase_db_decifaz-hub-e2e','psql','-U','postgres','-v','ON_ERROR_STOP=1'],{
   input:readFileSync(new URL('../supabase/tests/'+name,import.meta.url)),encoding:'utf8',shell,
  })
  if(sql.status!==0){process.stderr.write(sql.stderr);process.exit(sql.status??1)}
  console.log('SQL '+name+': passou; fixtures revertidas.')
 }
-const result=spawnSync('npx',['playwright','test','shared-real.spec.mjs','roles-real.spec.mjs','concurrency-real.spec.mjs'],{env,stdio:'inherit',shell})
+const targets=process.argv.slice(2)
+const result=spawnSync('npx',['playwright','test',...(targets.length?targets:['shared-real.spec.mjs','roles-real.spec.mjs','concurrency-real.spec.mjs','team-real.spec.mjs'])],{env,stdio:'inherit',shell})
 process.exit(result.status??1)
