@@ -1,5 +1,35 @@
 # Validação de papéis e relatórios
 
+## Homologação preparada em 15/11/2026
+
+Candidato de aplicação/artefatos validado: **`b4737477f5e2ac308a004d82c8aa5be112780400`**, base main `304922f4e13f22181e12032f31ea75e6eccec4be`. A rodada começou na branch `feat/papeis-recorte-mensal`, árvore limpa e head `14e0ae3`, conferido no Git e no PR #13. Não houve rebase ou alteração da base nesta rodada. O commit posterior que registra estas evidências é somente documental; conferir seu head e checks no corpo do PR.
+
+A [matriz detalhada](homologacao-papeis.md) compara tabelas, views, RPCs e Edge, deixa todas as decisões dos sócios reunidas e uma tabela privada por membro/espaço sem preencher. Pontos explícitos: somente Administração define preço/condições e papéis; Financeiro consulta preço/condições sem editar proposta; Comercial pode registrar aceite sem vê-los. Não há restrição por responsável no mesmo espaço. Manual e materiais estáticos são públicos nos assets; conteúdo confidencial exige outra solução.
+
+| Comando / verificação local | Resultado |
+| --- | --- |
+| `npm run check` | Aprovado |
+| `npm test` | 17/17 aprovados |
+| `npm run build` | Aprovado; avisos não bloqueantes de `use client` do lucide |
+| `node scripts/local-validation.mjs` | Duas regressões SQL e 4 cenários Playwright aprovados; permitido/negado, JSONs, Edge, isolamento, membros existentes, papel omitido/nulo, último admin e duas sessões concorrentes |
+| `node scripts/mock-validation.mjs` | Build compartilhado e 5/5 cenários aprovados; filtros, vazios, fichas, falha independente e mês comum ao CSV |
+| `npx playwright test backup.spec.mjs` | 1/1 aprovado |
+| `node scripts/prepare-role-artifacts.mjs b4737477f5e2ac308a004d82c8aa5be112780400` | 210 arquivos separados por fase, manifesto SHA-256; segunda execução verificou conteúdo sem sobrescrita |
+| `node scripts/transition-validation.mjs --reset-local-fixtures` | Aprovado com SQLs dos artefatos A/D; builds históricos, Edge antiga, expansão, views, revogação antes de papel restrito e recuperações antes/depois da revogação |
+| Consulta local de privilégios após restaurar migrações | `hardened=true`, DEFAULT de papel nulo, SELECT de `record`/`approved` para authenticated false |
+
+Total: 11 cenários Playwright e duas regressões SQL, somente em `127.0.0.1`, com dados fictícios. O teste de alteração fictícia de um arquivo no pacote B foi recusado pelo manifesto; bytes originais restaurados e manifesto reconferido. A primeira preparação encontrou `vercel.json` ausente na baseline antiga; a seleção foi corrigida antes do candidato validado e o pacote antigo não ganhou configuração nova.
+
+Artefatos locais: `.validation/role-release/b4737477f5e2ac308a004d82c8aa5be112780400/`. Manifesto SHA-256: `ccba34cf345edcc3d1c27b84ae8a9ba8e293f99e62dda4203caa396f92a478d0`. Pastas A/B/C/D e recuperações estão descritas com os critérios de avanço no [roteiro](publicacao-papeis.md). Os pacotes são fontes, sem credenciais nem build publicável; não foram enviados a produção.
+
+CI do candidato: [Interface aprovada, execução 30](https://github.com/viniciusfs-seno/decifaz-hub/actions/runs/43725781662) e [Supabase/transição aprovado, execução 26](https://github.com/viniciusfs-seno/decifaz-hub/actions/runs/43725781733). Ambos concluídos com sucesso; nenhuma falha reproduzível de autorização ou transição nesta rodada.
+
+### Fotografia remota, somente leitura
+
+`supabase@3.0.0 projects list`, `functions list --project-ref lnteuryqkabnpcixguxh` e `db query --remote=lnteuryqkabnpcixguxh --read-only` confirmaram projeto ativo, PostgreSQL `17.11.0.019`, 11 migrações até `20261114181046` e Edge `hub-workspaces` ACTIVE v1 com `verify_jwt=true`. Nenhuma migração do #13 consta no histórico remoto. Consultas a `information_schema.columns`, `to_regclass` e `has_column_privilege` confirmaram coluna `role` ausente, ambas as views ausentes e leitura dos JSONs brutos ainda concedida, como esperado na versão anterior. Nenhuma linha de negócio ou membro real foi consultada/alterada. Histórico e metadados não substituem comparação integral de schema/código remoto; repetir leitura e dry-run do artefato autorizado na janela de publicação.
+
+Na fase B será necessário configurar especificamente `hub-workspaces` com `verify_jwt=false`, pois a Edge compatível valida a sessão com `getClaims` no código; não copiar a configuração local inteira para produção. Ordem obrigatória: expansão → Edge compatível → frontend com views → restrição dos JSONs → papéis homologados. Antes da restrição pode recuperar frontend/Edge antigos mantendo expansão; depois, somente par compatível com views/papel, preservando restrições. Não executados: merge #13, migração remota, publicação Edge/frontend dos papéis ou atribuição real. Continuam pendentes todas as decisões dos sócios listadas na matriz; nenhum teste manual do usuário é necessário para esta evidência técnica.
+
 O #13 agora tem base `main`, em `304922f4e13f22181e12032f31ea75e6eccec4be`, após os squash merges do #14 e do #12. O trabalho começou com a árvore limpa e segue em `feat/papeis-recorte-mensal`. Nenhuma alteração local anterior foi removida. O PR permanece em rascunho; suas fases de publicação ainda não foram executadas.
 
 ## Implementado
