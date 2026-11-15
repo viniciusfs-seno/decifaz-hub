@@ -1,13 +1,27 @@
 # Publicação e recuperação dos papéis
 
-Este é um roteiro para revisão da publicação dos papéis. #14 e #12 foram integrados e seus deploys automáticos concluíram. A API Vercel confirmou que `decifaz-hub.vercel.app` aponta para `dpl_G22ENmxVFTwmJXB7w4S1fHw9zQMU`, READY em production, no SHA `304922f4e13f22181e12032f31ea75e6eccec4be`. Nenhuma fase de banco, Edge ou frontend do #13 foi publicada. Os testes autenticados usam apenas a pilha fictícia `decifaz-hub-e2e`, em `127.0.0.1:54321`.
+O rollout do #13 foi autorizado e executado em fases em 15/11/2026. Candidato `bab124d48d3ac234ec43ab63d629b20ec48090f1`, squash merge `ab6427fc8d66de9bb959a0beda173ac1e8031ea1`. Domínio `decifaz-hub.vercel.app` confirmado pela API no deployment `dpl_Ho86q5fP38RcURGtFvY2XUQ99dBW`, READY/production, nesse SHA. URL imutável: `https://decifaz-o7guxbee3-vinicius-ferreiras-projects-84ef88fb.vercel.app`.
+
+## Registro da execução autorizada
+
+- A: aplicada somente `20261114200000`; três vínculos preservados, admin sem extras, DEFAULT ausente, views presentes e hardened=false.
+- B: Edge `hub-workspaces` v2 ACTIVE, verify_jwt=false; fonte baixado do remoto confere com blob `8118d8c04360b69eacafb6ff7b16bf12cfb2d799`. Sem sessão/token inválido: 401. Nenhuma fixture legada publicada.
+- C: merge e deploy automático confirmados; Chromium verificou tela de acesso, HTTP 200, sem enviar formulário. Assets publicados usam views e roles. Checks da main: [Interface](https://github.com/viniciusfs-seno/decifaz-hub/actions/runs/43736345907) e [Supabase](https://github.com/viniciusfs-seno/decifaz-hub/actions/runs/43736345894), ambos aprovados.
+- D: aplicadas somente `20261114210000` e `20261114220000`, após dry-run. Histórico com 14 versões, hardened=true, privilégios de leitura bruta false; SELECTs reais sob authenticated negados com 42501. Revogações preservadas.
+- E: identidade confirmada resolvida privadamente pelo vínculo existente. RPC executada no contexto authenticated do administrador verificado, em bloco atômico; conjunto completo e direito de gestão validados, demais vínculos comparados antes/depois sem diferenças. Nova leitura independente confirmou o conjunto exato persistido. Nenhum ID/e-mail real foi gravado no Git, artefatos ou CI. Nenhuma conta, senha, token ou link de acesso foi criado.
+
+A CLI não transportou corretamente o primeiro comando multilinha passado como argumento; a leitura posterior detectou que o conjunto não havia sido persistido. A operação foi refeita em um único bloco sem quebras de linha, com as mesmas guardas e nova leitura de confirmação. Não usar somente código de saída ou rows=[] como prova de gravação. Testes que alteram terceiros seguem exclusivamente locais e fictícios; a Edge autenticada foi exercitada localmente, sem criar sessão de usuário em produção.
+
+Os pacotes do candidato aprovado e as cópias operacionais ficaram em `.validation/role-release/bab124d48d3ac234ec43ab63d629b20ec48090f1/` e `.validation/rollout-bab124d/`. Recuperação atual pós-restrição: deployment do #13 acima e Edge v2 com roles/role, mantendo todas as restrições. O deployment anterior `304922f` só é recuperação anterior a D. A tela de Equipe é outra entrega, descrita em [equipe.md](equipe.md), ainda não publicada.
+
+O restante registra o roteiro, critérios e fotografias anteriores usados na operação; estados pendentes dessas fotografias foram superados pelo registro acima.
 
 ## Dependências e integração
 
 1. #14 integrado por squash em `3206234a70c5080f459facc8a329fae85aac5741`; padrão disponível na main.
 2. #12 integrado por squash em `304922f4e13f22181e12032f31ea75e6eccec4be`; essa é a base comercial da publicação. O frontend ainda usa os JSONs brutos.
 3. #13 retargetado para `main`, com os quatro commits próprios reaplicados sobre `304922f`. O `git range-diff` confirmou equivalência dos quatro patches; a diferença de árvore para o head anterior contém somente os três arquivos do #14. O head anterior está preservado na tag remota `validation/pr13-before-main-48ff670`, também necessária para obter os snapshots históricos usados no teste de transição. Consultar o SHA revalidado e os checks em `validacao-papeis.md`.
-4. Manter #13 em rascunho enquanto não houver autorização explícita do rollout. O conjunto de quatro papéis de um único vínculo já foi aprovado em instrução privada; isso não autoriza publicação nem outros vínculos. Não fazer merge antes de expansão e Edge: o frontend publicado pela main depende das views e dos campos `roles`/`role`.
+4. #13 foi integrado após autorização e verificação de expansão/Edge. Somente o conjunto do único vínculo aprovado foi atribuído. A entrega seguinte de Equipe permanece em rascunho até revisão própria.
 
 ## Publicação em fases
 

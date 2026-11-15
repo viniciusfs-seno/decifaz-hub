@@ -1,6 +1,6 @@
 # Homologação dos papéis pelos sócios
 
-Matriz implementada, com publicação ainda não autorizada. Há aprovação explícita para um único vínculo existente receber `admin`, `commercial`, `operations` e `finance`, após a restrição. Identificadores desse vínculo ficam exclusivamente na operação privada; não inserir e-mail ou UUID em Git, artefatos ou logs do CI. Nenhuma atribuição real foi aplicada. Conferida contra `hub_can`, RLS, privilégios de coluna, views, RPCs e `hub-workspaces` do PR #13. Não há isolamento por responsável dentro do mesmo espaço; permissões dos papéis no vínculo são somadas.
+Matriz implementada e publicada pelo #13, após autorização explícita do rollout. O único vínculo aprovado recebeu `admin`, `commercial`, `operations` e `finance`, depois da restrição; persistência e gestão administrativa confirmadas. Identificadores desse vínculo ficaram exclusivamente na operação privada; não inserir e-mail ou UUID real em Git, artefatos ou logs do CI. Outros conjuntos não foram atribuídos. Conferida contra `hub_can`, RLS, privilégios de coluna, views, RPCs e `hub-workspaces`. Não há isolamento por responsável dentro do mesmo espaço; permissões dos papéis no vínculo são somadas.
 
 | Consulta ou ação | Administração (`admin`) | Comercial (`commercial`) | Operação (`operations`) | Financeiro (`finance`) |
 | --- | --- | --- | --- | --- |
@@ -47,7 +47,7 @@ Campos livres permitidos (escopo, título, serviços e histórico comercial) nã
 2. Confirmar a leitura compartilhada no espaço e os demais conjuntos. Papéis cumulativos já implementados; o único conjunto real aprovado contém os quatro papéis.
 3. Informar os outros vínculos/papéis por espaço, caso existam no futuro. Não inferir atribuições além do único vínculo aprovado. O backfill admin é compatibilidade temporária.
 4. Revisar informações financeiras em campos livres e decidir se a distribuição pública dos materiais estáticos é aceitável.
-5. Autorizar explicitamente o rollout coordenado do PR #13 (banco, Edge, merge/frontend, restrição e atribuição aprovada), com responsável/janela e recuperação. A aprovação do conjunto de um vínculo não autoriza publicar o PR.
+5. Rollout do #13 autorizado e concluído; próximos conjuntos e a publicação da tela de Equipe exigem revisão/autorização próprias.
 
 Preencher a tabela abaixo em registro privado; não colocar nomes, e-mails ou identificadores reais no Git. Linhas vazias não autorizam alteração. `hub_set_roles` associa um usuário Auth já existente; não cria a conta Auth nem envia convite.
 
@@ -55,8 +55,8 @@ Preencher a tabela abaixo em registro privado; não colocar nomes, e-mails ou id
 | --- | --- | --- | --- | --- |
 | A preencher fora do Git | A preencher | A preencher | Pendente | Pendente |
 
-Roteiro: [publicação e recuperação](publicacao-papeis.md). Evidências automatizadas: [validação](validacao-papeis.md). Nenhum papel real foi atribuído nesta preparação.
+Roteiro: [publicação e recuperação](publicacao-papeis.md). Evidências automatizadas: [validação](validacao-papeis.md). Somente o vínculo real explicitamente aprovado foi alterado.
 
 ## Próxima entrega proposta
 
-PR separado para **Administração → Equipe**: listar os vínculos do próprio espaço para quem tem admin, editar papéis com seleção múltipla e enviar o conjunto completo a `hub_set_roles`. Mostrar os papéis atuais, tratar recusa do último administrador e impedir autoelevação de usuários comuns; testar também isolamento e alterações concorrentes. Não criar listagem ampla nem editar membros diretamente para contornar a RPC. A interface ainda não existe nesta entrega.
+PR separado, em rascunho, para **Administração → Equipe**: lista os vínculos do próprio espaço para quem tem admin, edita papéis com seleção múltipla e envia o conjunto completo a `hub_set_roles`. A autorização da listagem é conferida no servidor. Trata a recusa do último admin, impede autoelevação e testa isolamento. Não há escrita direta em membros. Interface/migração ainda não publicadas; ver [equipe.md](equipe.md).
