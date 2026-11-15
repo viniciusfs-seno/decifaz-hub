@@ -1,5 +1,29 @@
 # Validação de papéis e relatórios
 
+## Preparação do rollout com conjunto aprovado
+
+Aplicação reconferida no head **`cd6ceaaadef716685223eb7b6c7f0e8a2ac24823`**, base main **`304922f4e13f22181e12032f31ea75e6eccec4be`**. PR #13 aberto e em rascunho. Checkout atualizado por fast-forward a partir de árvore limpa; nenhum trabalho local descartado. [Interface aprovada, execução 34](https://github.com/viniciusfs-seno/decifaz-hub/actions/runs/43729209219) e [Supabase/transição aprovado, execução 30](https://github.com/viniciusfs-seno/decifaz-hub/actions/runs/43729209271) pertencem ao candidato cumulativo, não aos SHAs históricos abaixo.
+
+**Aprovação de atribuição:** um único vínculo existente pode receber explicitamente `admin`, `commercial`, `operations`, `finance` e administrar conjuntos de outros vínculos no próprio espaço. Identidade mantida exclusivamente na instrução privada/operação; não replicar e-mail ou UUID real nesta documentação, artefatos ou CI. Nenhum outro conjunto real aprovado. **Autorização do rollout ainda não registrada**: nenhuma fase aplicada nem atribuição executada.
+
+| Verificação repetida nesta rodada | Resultado |
+| --- | --- |
+| `npm run check`; `npm test`; `npm run build` | Aprovados; 18 testes unitários, build padrão com aviso não bloqueante do lucide |
+| `node scripts/transition-validation.mjs --reset-local-fixtures` | Aprovado no candidato cd6ceaa; expansão e restrição dos pacotes separados, clientes anteriores, views e recuperação sem reabrir JSONs |
+| `node scripts/local-validation.mjs` | Duas regressões SQL e quatro cenários Playwright aprovados, inclusive concorrência de preços, papéis cumulativos e isolamento |
+| `supabase/tests/papeis_associacoes.sql` ampliado | Conjunto de quatro papéis mantém gestão administrativa; admin altera conjunto de outro vínculo; usuário comum não altera outro vínculo; último admin não pode ser removido nem pela RPC de conjuntos. Fixtures fictícias e ROLLBACK |
+| `node scripts/mock-validation.mjs`; `npx playwright test backup.spec.mjs` | Build compartilhado, 5 cenários simulados e 1 de backup aprovados |
+| `node scripts/prepare-role-artifacts.mjs cd6ceaaadef716685223eb7b6c7f0e8a2ac24823` | 210 arquivos; manifesto gerado e reconferido. SHA-256 `480eaceb316fbe416f2313b698e1a9d947393192adef16ed15ddcc3a946c716a` |
+| Dry-run remoto de A, CLI 3.0.0 com `--skip-vault --dry-run` | Somente `20261114200000_expansao_compativel.sql`; nenhuma migração aplicada |
+
+Leitura remota reconfirmou: uma única conta correspondente, confirmada; um único vínculo para ela e um único espaço. UUIDs resolvidos apenas em memória e suprimidos da saída, sem gravar dados pessoais. `hub_set_roles` ausente; 11 migrações, até `20261114181046`; nenhuma migração de papéis. Edge `hub-workspaces` ACTIVE v1, `verify_jwt=true`, código remoto baixado apenas por leitura para recuperação. API Vercel reconfirmou o domínio no deployment `dpl_G22ENmxVFTwmJXB7w4S1fHw9zQMU`, READY/production, SHA `304922f`. Nenhuma sessão, credencial ou dado pessoal de produção foi usado nos testes.
+
+O [roteiro](publicacao-papeis.md) registra comandos preparados, hashes atualizados (os anteriores a papéis cumulativos não são candidatos de publicação), critérios por fase e recuperações. Depois de D usar pacote cumulativo com views e Edge `roles`/`role`, preservando RLS/revogações. Não executados: apply remoto, deploy Edge, merge/frontend, atribuição real e verificação do conjunto persistido real (dependem do rollout autorizado). Próxima entrega proposta: Administração → Equipe com seleção múltipla, em PR separado. Resultados do head final de testes/documentação e seus checks são registrados no corpo do PR sem alterar novamente os artefatos da aplicação.
+
+## Evidências históricas
+
+As seções abaixo registram rodadas anteriores e seus SHAs. A regra atual reserva aceite/lead Ganho à Administração e soma papéis por vínculo; declarações anteriores de aceite pelo Comercial ou de papel único não descrevem o candidato atual.
+
 ## Homologação preparada em 15/11/2026
 
 Candidato de aplicação/artefatos validado: **`b4737477f5e2ac308a004d82c8aa5be112780400`**, base main `304922f4e13f22181e12032f31ea75e6eccec4be`. A rodada começou na branch `feat/papeis-recorte-mensal`, árvore limpa e head `14e0ae3`, conferido no Git e no PR #13. Não houve rebase ou alteração da base nesta rodada. O commit posterior que registra estas evidências é somente documental; conferir seu head e checks no corpo do PR.

@@ -1,6 +1,6 @@
 # Homologação dos papéis pelos sócios
 
-Proposta para aprovação, sem atribuição de papéis reais. Conferida contra `hub_can`, RLS, privilégios de coluna, views, RPCs e `hub-workspaces` do PR #13. O papel vale para um membro em um espaço; não há isolamento por responsável dentro do mesmo espaço e a pessoa pode acumular papéis no mesmo vínculo. As permissões dos papéis são somadas.
+Matriz implementada, com publicação ainda não autorizada. Há aprovação explícita para um único vínculo existente receber `admin`, `commercial`, `operations` e `finance`, após a restrição. Identificadores desse vínculo ficam exclusivamente na operação privada; não inserir e-mail ou UUID em Git, artefatos ou logs do CI. Nenhuma atribuição real foi aplicada. Conferida contra `hub_can`, RLS, privilégios de coluna, views, RPCs e `hub-workspaces` do PR #13. Não há isolamento por responsável dentro do mesmo espaço; permissões dos papéis no vínculo são somadas.
 
 | Consulta ou ação | Administração (`admin`) | Comercial (`commercial`) | Operação (`operations`) | Financeiro (`finance`) |
 | --- | --- | --- | --- | --- |
@@ -29,7 +29,7 @@ Proposta para aprovação, sem atribuição de papéis reais. Conferida contra `
 | `hub_projects`, `hub_activities` | Projeto escreve admin/operations. Atividade consulta pelo espaço; escrita muda conforme vínculo ao projeto. Campos protegidos e operações de ciclo ficam nas RPCs. |
 | `hub_receivables`, `hub_receipts`, `hub_expenses`, `hub_finance_audit` | Só admin/finance; grants restringem escrita direta. Auditoria não admite edição/exclusão. |
 | `hub_proposals_visible`, `hub_projects_visible` | Barreira de segurança e autorização explícita por espaço. Admin/finance recebem JSON completo. Outros recebem só `title`, `scope`, `services`, `validity`, `version`, `decisionAt`. Condições, preços, evidências/eventos não passam pela lista. |
-| `hub_save_proposal` / implementação privada | Guarda comercial; valores atuais lidos depois do lock do lead. Chaves `setup`, `monthly`, `terms` enviadas por Comercial são recusadas. Só admin reúne escrita comercial e acesso financeiro. |
+| `hub_save_proposal` / implementação privada | Guarda comercial; valores atuais lidos depois do lock do lead. Alteração de `setup`, `monthly`, `terms` e registro de aceite exigem admin, inclusive quando a pessoa acumula commercial e finance. |
 | `hub_open_project`, `hub_accept_delivery`, `hub_open_support` | Guarda de escrita em Projetos antes de qualquer ação da implementação privada. |
 | `hub_forecast`, `hub_receive`, `hub_reverse_receipt` | Guarda financeira antes da implementação privada. |
 | `hub_save_triage`, `hub_save_meeting`, `hub_dashboard` | Invoker: RLS do usuário, incluindo isolamento. Dashboard comercial não confere acesso financeiro. |
@@ -44,10 +44,10 @@ Campos livres permitidos (escopo, título, serviços e histórico comercial) nã
 ## Decisões pendentes, reunidas
 
 1. Aprovar ou alterar a matriz, com edição de preços e registro do aceite exclusivos de Administração e consulta dos valores pelo Financeiro.
-2. Aprovar leitura comercial e operacional compartilhada no espaço, sem recorte por responsável; preencher a combinação de papéis de cada pessoa.
-3. Informar os vínculos e papéis reais por espaço; confirmar pelo menos um administrador por espaço e quem fará o provisionamento. O backfill admin é compatibilidade temporária, não homologação das alçadas.
+2. Confirmar a leitura compartilhada no espaço e os demais conjuntos. Papéis cumulativos já implementados; o único conjunto real aprovado contém os quatro papéis.
+3. Informar os outros vínculos/papéis por espaço, caso existam no futuro. Não inferir atribuições além do único vínculo aprovado. O backfill admin é compatibilidade temporária.
 4. Revisar informações financeiras em campos livres e decidir se a distribuição pública dos materiais estáticos é aceitável.
-5. Aprovar responsável, janela e critérios operacionais de cada fase, com artefato compatível de recuperação guardado antes da revogação.
+5. Autorizar explicitamente o rollout coordenado do PR #13 (banco, Edge, merge/frontend, restrição e atribuição aprovada), com responsável/janela e recuperação. A aprovação do conjunto de um vínculo não autoriza publicar o PR.
 
 Preencher a tabela abaixo em registro privado; não colocar nomes, e-mails ou identificadores reais no Git. Linhas vazias não autorizam alteração. `hub_set_roles` associa um usuário Auth já existente; não cria a conta Auth nem envia convite.
 
@@ -56,3 +56,7 @@ Preencher a tabela abaixo em registro privado; não colocar nomes, e-mails ou id
 | A preencher fora do Git | A preencher | A preencher | Pendente | Pendente |
 
 Roteiro: [publicação e recuperação](publicacao-papeis.md). Evidências automatizadas: [validação](validacao-papeis.md). Nenhum papel real foi atribuído nesta preparação.
+
+## Próxima entrega proposta
+
+PR separado para **Administração → Equipe**: listar os vínculos do próprio espaço para quem tem admin, editar papéis com seleção múltipla e enviar o conjunto completo a `hub_set_roles`. Mostrar os papéis atuais, tratar recusa do último administrador e impedir autoelevação de usuários comuns; testar também isolamento e alterações concorrentes. Não criar listagem ampla nem editar membros diretamente para contornar a RPC. A interface ainda não existe nesta entrega.
