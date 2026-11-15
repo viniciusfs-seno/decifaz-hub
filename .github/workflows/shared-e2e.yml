@@ -23,5 +23,10 @@ jobs:
           node-version: '24'
           cache: npm
       - run: npm ci
+      - run: npm run check
+      - run: npm test
+      - run: npm run build
       - run: npx playwright install --with-deps chromium
-      - run: npm run test:e2e -- shared-finance.spec.mjs
+      - run: npm run test:e2e -- shared-finance.spec.mjs central-knowledge.spec.mjs
+      - name: Regressão do modo local
+        run: VITE_HUB_MODE=local VITE_SUPABASE_URL= VITE_SUPABASE_PUBLISHABLE_KEY= npm run test:e2e -- backup.spec.mjs

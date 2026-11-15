@@ -1,7 +1,7 @@
 begin;
 insert into auth.users(id) values('00000000-0000-4000-8000-000000000061'),('00000000-0000-4000-8000-000000000062');
 insert into public.hub_workspaces(id,name) values('00000000-0000-4000-8000-000000000063','Fixture');
-insert into public.hub_members values('00000000-0000-4000-8000-000000000063','00000000-0000-4000-8000-000000000061');
+insert into public.hub_members(workspace_id,user_id,role) values('00000000-0000-4000-8000-000000000063','00000000-0000-4000-8000-000000000061','admin');
 insert into public.hub_leads(workspace_id,id,name) values('00000000-0000-4000-8000-000000000063','00000000-0000-4000-8000-000000000064','Fixture');
 set local role authenticated;
 select set_config('request.jwt.claim.sub','00000000-0000-4000-8000-000000000061',true);

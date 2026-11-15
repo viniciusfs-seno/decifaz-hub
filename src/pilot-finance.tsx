@@ -24,8 +24,8 @@ export function loadFinance(client:SupabaseClient,workspace:string){
  ])
 }
 
-export function SharedFinance({client,workspace,projects,forecasts,receipts,expenses,audit,busy,write,initialMonth}:{
- client:SupabaseClient;workspace:string;projects:SharedProject[];forecasts:Forecast[];receipts:Receipt[];expenses:Expense[];audit:Audit[];initialMonth?:string;busy:boolean;write:Write
+export function SharedFinance({client,workspace,projects,forecasts,receipts,expenses,audit,busy,write,month,setMonth}:{
+ client:SupabaseClient;workspace:string;projects:SharedProject[];forecasts:Forecast[];receipts:Receipt[];expenses:Expense[];audit:Audit[];month:string;setMonth:(month:string)=>void;busy:boolean;write:Write
 }){
  const [project,setProject]=useState('')
  const [kind,setKind]=useState(kinds[0])
@@ -34,15 +34,13 @@ export function SharedFinance({client,workspace,projects,forecasts,receipts,expe
  const [received,setReceived]=useState(day())
  const [amount,setAmount]=useState('')
  const [receiptId,setReceiptId]=useState(uid)
- const [month,setMonth]=useState(initialMonth??day().slice(0,7))
  const [overdueOnly,setOverdueOnly]=useState(false)
  const [reverseId,setReverseId]=useState('')
  const [reason,setReason]=useState('')
  const summary=financeMetrics(forecasts,receipts,expenses,day(),month)
  const {outstanding}=summary
- const inMonth=(date:string)=>!month||date.slice(0,7)===month
- const shownForecasts=forecasts.filter(item=>inMonth(item.due_on)&&(!overdueOnly||(item.due_on<day()&&outstanding(item)>0)))
- const shownReceipts=receipts.filter(item=>inMonth(item.received_on))
+ const shownForecasts=summary.scope.forecasts.filter(item=>!overdueOnly||(item.due_on<day()&&outstanding(item)>0))
+ const shownReceipts=summary.scope.receipts
  const current=forecasts.find(item=>key(item)===charge)
  const selected=projects.find(item=>item.proposal_id===project)
  const value=kind==='Implantação'?selected?.approved.setup:selected?.approved.monthly
@@ -51,12 +49,10 @@ export function SharedFinance({client,workspace,projects,forecasts,receipts,expe
  function exportReport(){
   const rows=[['Registro','Descrição','Data','Valor','Situação']]
   const format=(amount:number)=>amount.toFixed(2).replace('.',',')
-  for(const item of forecasts.filter(item=>inMonth(item.due_on)))rows.push(['Receita prevista',label(item.proposal_id)+' · '+item.kind,dateLabel(item.due_on),format(item.amount),''])
+  for(const item of summary.scope.forecasts)rows.push(['Receita prevista',label(item.proposal_id)+' · '+item.kind,dateLabel(item.due_on),format(item.amount),''])
   for(const item of shownReceipts)rows.push(['Recebimento',label(item.proposal_id)+' · '+item.kind,dateLabel(item.received_on),format(item.amount),item.reversed_at?'Estornado':'Realizado'])
-  for(const item of expenses){
-   if(inMonth(item.due_on))rows.push(['Despesa prevista',item.title,dateLabel(item.due_on),format(item.amount),''])
-   if(item.paid_on&&item.paid_amount!==null&&inMonth(item.paid_on))rows.push(['Despesa paga',item.title,dateLabel(item.paid_on),format(item.paid_amount),'Realizado'])
-  }
+  for(const item of summary.scope.expenses)rows.push(['Despesa prevista',item.title,dateLabel(item.due_on),format(item.amount),''])
+  for(const item of summary.scope.payments)rows.push(['Despesa paga',item.title,dateLabel(item.paid_on!),format(item.paid_amount!), 'Realizado'])
   const url=URL.createObjectURL(new Blob(['\uFEFF',financeCsv(rows)],{type:'text/csv;charset=utf-8'}))
   const link=document.createElement('a')
   link.href=url

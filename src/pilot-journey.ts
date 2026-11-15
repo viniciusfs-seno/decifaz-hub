@@ -52,15 +52,15 @@ type ProposalRow = {id:string; lead_id:string; series_id:string; version:number;
  record:Omit<Proposal,'id'|'leadId'|'seriesId'|'version'|'meetingId'|'status'>}
 
 export async function loadProposals(client:SupabaseClient, workspace:string) {
- const {data,error}=await client.from('hub_proposals').select('id,lead_id,series_id,version,meeting_id,status,record')
+ const {data,error}=await client.from('hub_proposals_visible').select('id,lead_id,series_id,version,meeting_id,status,record')
   .eq('workspace_id',workspace).order('version',{ascending:false}).order('id').returns<ProposalRow[]>()
  return {error,data:data?.map((row):Proposal=>({...row.record,id:row.id,leadId:row.lead_id,seriesId:row.series_id,
   version:row.version,meetingId:row.meeting_id??undefined,status:row.status}))}
 }
 
-export function saveProposal(client:SupabaseClient, workspace:string, proposal:Proposal, decision?:{status:string;date:string;note:string}) {
+export function saveProposal(client:SupabaseClient, workspace:string, proposal:Proposal, decision?:{status:string;date:string;note:string}, financial=true) {
  const {id,leadId,seriesId,version,meetingId,title,scope,validity,setup,monthly,services,terms}=proposal
  return client.rpc('hub_save_proposal',{w:workspace,l:leadId,p:id,s:seriesId??id,v:version,m:meetingId||null,
-  body:decision?null:{title,scope,validity,setup,monthly,services,terms},decision:decision?.status??null,
+  body:decision?null:{title,scope,validity,services,...(financial?{setup,monthly,terms}:{})},decision:decision?.status??null,
   occurred:decision?.date??null,evidence:decision?.note??null})
 }

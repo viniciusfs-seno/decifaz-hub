@@ -7,8 +7,8 @@ export const activityStatuses=['Pendente','Em andamento','Concluída','Cancelada
 type Activity={id:string;title:string;owner:string;due_on:string|null;status:string;support:boolean;project_proposal_id:string}
 type Write=(operation:()=>PromiseLike<{error:unknown;data:unknown}>)=>Promise<boolean>
 
-export function ProjectSupport({client,workspace,revision,busy,write,project,projectName}:{
- client:SupabaseClient;workspace:string;revision:number;busy:boolean;write:Write;project?:string;projectName:(id:string)=>string
+export function ProjectSupport({client,workspace,revision,busy,write,project,projectName,readOnly=false}:{
+ client:SupabaseClient;workspace:string;revision:number;busy:boolean;write:Write;readOnly?:boolean;project?:string;projectName:(id:string)=>string
 }){
  const [result,setResult]=useState<{rows:Activity[];error:boolean}>()
  const [title,setTitle]=useState('')
@@ -25,7 +25,7 @@ export function ProjectSupport({client,workspace,revision,busy,write,project,pro
   return ()=>{current=false}
  },[client,workspace,project,revision])
  const content=<>
-  {project&&<form className="fields" onSubmit={async event=>{
+  {project&&!readOnly&&<form className="fields" onSubmit={async event=>{
    event.preventDefault()
    if(busy||saving||!title.trim()||!owner.trim()||!due)return
    setSaving(true)
@@ -35,13 +35,13 @@ export function ProjectSupport({client,workspace,revision,busy,write,project,pro
    <Field label="Título do chamado" value={title} on={setTitle} required/>
    <Field label="Responsável pelo chamado" value={owner} on={setOwner} required/>
    <Field label="Prazo do chamado" type="date" value={due} on={setDue} required/>
-   <button className="button" disabled={busy||saving}>Abrir chamado</button>
+   <button className="button" disabled={readOnly||busy||saving}>Abrir chamado</button>
   </form>}
   {!result?<p role="status">Carregando atividades…</p>:result.error?<p role="alert">Não foi possível carregar as atividades.</p>:
    result.rows.length?<ul>{result.rows.map(row=><li key={row.id}>
     <b>{row.title}</b> · {row.support?'Suporte':'Pós-venda'} · {!project&&projectName(row.project_proposal_id)+' · '}
     {row.owner||'Sem responsável'} · {dateLabel(row.due_on??'')} {row.due_on&&row.due_on<day()&&activityStatuses.slice(0,2).includes(row.status)&&'· Atrasada'}
-    <label>Situação de {row.title}<select value={row.status} disabled={busy||saving} onChange={async event=>{
+    <label>Situação de {row.title}<select value={row.status} disabled={readOnly||busy||saving} onChange={async event=>{
      const status=event.target.value
      setSaving(true)
      try{if(await write(()=>client.from('hub_activities').update({status}).eq('workspace_id',workspace)

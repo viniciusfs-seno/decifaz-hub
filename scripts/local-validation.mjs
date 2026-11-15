@@ -1,0 +1,23 @@
+import {spawnSync} from 'node:child_process'
+import {readFileSync} from 'node:fs'
+// Never persist or print the local service key. Never accept a remote URL.
+const shell=process.platform==='win32'
+const status=spawnSync('npx',['--yes','supabase@3.0.0','status','-o','env'],{encoding:'utf8',shell})
+if(status.status!==0)throw Error('Inicie o Supabase local antes dos testes.')
+const values=Object.fromEntries(status.stdout.split(/\r?\n/).flatMap(line=>{
+ const match=line.match(/^([A-Z_]+)="(.*)"$/)
+ return match?[[match[1],match[2]]]:[]
+}))
+if(values.API_URL!=='http://127.0.0.1:54321')throw Error('Somente a pilha local é permitida.')
+const env={...process.env,HUB_REAL_E2E:'1',VITE_HUB_MODE:'shared',VITE_SUPABASE_URL:values.API_URL,
+ VITE_SUPABASE_PUBLISHABLE_KEY:values.PUBLISHABLE_KEY,HUB_TEST_ADMIN_KEY:values.SECRET_KEY||values.SERVICE_ROLE_KEY}
+if(!env.VITE_SUPABASE_PUBLISHABLE_KEY||!env.HUB_TEST_ADMIN_KEY)throw Error('Chaves locais indisponíveis.')
+for(const name of ['financeiro_jornada.sql','papeis_associacoes.sql']){
+ const sql=spawnSync('docker',['exec','-i','supabase_db_decifaz-hub-e2e','psql','-U','postgres','-v','ON_ERROR_STOP=1'],{
+  input:readFileSync(new URL('../supabase/tests/'+name,import.meta.url)),encoding:'utf8',shell,
+ })
+ if(sql.status!==0){process.stderr.write(sql.stderr);process.exit(sql.status??1)}
+ console.log('SQL '+name+': passou; fixtures revertidas.')
+}
+const result=spawnSync('npx',['playwright','test','shared-real.spec.mjs','roles-real.spec.mjs','concurrency-real.spec.mjs'],{env,stdio:'inherit',shell})
+process.exit(result.status??1)

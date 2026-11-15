@@ -18,6 +18,8 @@ jobs:
       VITE_SUPABASE_URL: http://127.0.0.1:54321
     steps:
       - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
       - uses: actions/setup-node@v4
         with:
           node-version: '24'
@@ -35,6 +37,10 @@ jobs:
           set +a
           export VITE_SUPABASE_PUBLISHABLE_KEY="${PUBLISHABLE_KEY:?Chave publicável local ausente}"
           export HUB_TEST_ADMIN_KEY="${SECRET_KEY:-${SERVICE_ROLE_KEY:?Chave administrativa local ausente}}"
-          npm run test:e2e -- shared-real.spec.mjs
+          docker exec -i supabase_db_decifaz-hub-e2e psql -U postgres -v ON_ERROR_STOP=1 < supabase/tests/financeiro_jornada.sql
+          docker exec -i supabase_db_decifaz-hub-e2e psql -U postgres -v ON_ERROR_STOP=1 < supabase/tests/papeis_associacoes.sql
+          npm run test:e2e -- shared-real.spec.mjs roles-real.spec.mjs concurrency-real.spec.mjs
+      - name: Validar transição e recuperação com versões anteriores
+        run: node scripts/transition-validation.mjs --reset-local-fixtures
       - if: always()
         run: supabase stop --no-backup

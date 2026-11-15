@@ -21,7 +21,7 @@ test('membros compartilham chamados e lançamentos financeiros com isolamento',a
  async function account(member){
   const email=randomUUID()+'@example.com',password=randomUUID()
   const {user}=await checked(admin.auth.admin.createUser({email,password,email_confirm:true}))
-  if(member)await checked(admin.from('hub_members').insert({workspace_id:workspace,user_id:user.id}))
+  if(member)await checked(admin.from('hub_members').insert({workspace_id:workspace,user_id:user.id,role:'admin'}))
   const client=createClient(endpoint,key,options)
   const {session}=await checked(client.auth.signInWithPassword({email,password}))
   return {client,session}
@@ -95,6 +95,7 @@ test('membros compartilham chamados e lançamentos financeiros com isolamento',a
  await expect(page.getByRole('row').filter({has:proposalButton})).toContainText('Aceita')
  await proposalButton.click()
  await quote.getByRole('button',{name:'Abrir projeto a partir do aceite'}).click()
+ await expect(page.getByRole('dialog').getByRole('button',{name:'Salvar projeto',exact:true})).toBeVisible()
  await expect(page.getByRole('dialog').getByRole('paragraph').filter({hasText:/^Escopo de teste$/})).toBeVisible()
  const saved=await checked(second.client.from('hub_projects').select('proposal_id,lead_id').eq('workspace_id',workspace).single())
  const proposal=saved.proposal_id
@@ -195,7 +196,7 @@ test('link mágico do e-mail local abre o Hub e mantém a sessão após recarreg
  if(error||!user)throw new Error('Falha ao criar a conta de teste.')
  const space=await admin.from('hub_workspaces').insert({id:workspace,name:'Decifaz Link Mágico'})
  if(space.error)throw space.error
- const member=await admin.from('hub_members').insert({workspace_id:workspace,user_id:user.id})
+ const member=await admin.from('hub_members').insert({workspace_id:workspace,user_id:user.id,role:'admin'})
  if(member.error)throw member.error
 
  await page.goto('/')

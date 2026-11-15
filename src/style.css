@@ -112,3 +112,4 @@ button:focus-visible,a:focus-visible,select:focus-visible,input:focus-visible,te
 .pilot-fields,.pilot-fields label,.pilot li label{display:grid;gap:8px}
 .pilot-fields{margin-block:14px}
 .pilot li{margin-block:8px;overflow-wrap:anywhere}
+.pilot fieldset,dialog fieldset{min-width:0;margin:0;padding:0;border:0}

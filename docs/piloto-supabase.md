@@ -14,7 +14,7 @@ VITE_SUPABASE_PUBLISHABLE_KEY=sb_publishable_...
 
 Essas variáveis são públicas no bundle. Use a chave publicável. Senha do banco e chaves administrativas pertencem ao ambiente de administração.
 
-Aplique as migrations e disponibilize a função Edge `hub-workspaces`. No Supabase Auth, inclua a URL exata da prévia na lista de redirecionamentos e configure a entrega de e-mail para os destinatários do piloto. Para cada participante, crie ou convide a conta pelo Supabase Auth e associe seu ID de usuário ao espaço em `public.hub_members`. Os espaços ficam em `public.hub_workspaces`. O formulário de login solicita um link para uma conta existente.
+Aplique as migrations conforme as [fases de publicação e recuperação](publicacao-papeis.md) e disponibilize somente a função Edge `hub-workspaces`. No Supabase Auth, inclua a URL exata da prévia na lista de redirecionamentos e configure a entrega de e-mail para os destinatários do piloto. Para cada participante, crie ou convide a conta pelo Supabase Auth e associe seu ID ao espaço com um papel explícito. Após a restrição, use a RPC administrativa `hub_set_role`; novos vínculos não têm papel padrão. O primeiro administrador de um espaço deve ser provisionado administrativamente com `role='admin'` explícito. Os espaços ficam em `public.hub_workspaces`. O formulário de login solicita um link para uma conta existente.
 
 A função Edge recebe a sessão do usuário e lista os espaços que ele pode acessar. As consultas e gravações passam pela Data API com o token do usuário e são limitadas pelas políticas de RLS.
 
