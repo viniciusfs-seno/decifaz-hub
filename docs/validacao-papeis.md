@@ -1,6 +1,6 @@
 # Validação de papéis e relatórios
 
-Entrega baseada na branch do PR #12 (`8357a4a`), que estava aberto e sem merge na conferência inicial. O trabalho começou com a árvore limpa e segue em `feat/papeis-recorte-mensal`. Nenhuma alteração local anterior foi removida.
+O #13 agora tem base `main`, em `304922f4e13f22181e12032f31ea75e6eccec4be`, após os squash merges do #14 e do #12. O trabalho começou com a árvore limpa e segue em `feat/papeis-recorte-mensal`. Nenhuma alteração local anterior foi removida. O PR permanece em rascunho; suas fases de publicação ainda não foram executadas.
 
 ## Implementado
 
@@ -40,17 +40,39 @@ O teste gera builds reais do frontend anterior do #12 (`8357a4ac49b1d29fa0589768
 
 Na regressão de concorrência, a primeira sessão PostgreSQL, autenticada como Administração, bloqueia o lead e altera implantação, mensalidade e condições, sem confirmar a transação. A segunda sessão, como Comercial, inicia a RPC; o teste observa sua espera por bloqueio em `pg_stat_activity`. Após o commit da primeira, Comercial salva o escopo preservando os três valores mais recentes. Não há espera fixa usada como prova de concorrência.
 
-## Evidência remota desta revisão
+## Evidência anterior à integração
 
-Os checks do #12 foram conferidos no SHA `8357a4ac49b1d29fa0589768018f827234ccc896`: [Interface compartilhada aprovada](https://github.com/viniciusfs-seno/decifaz-hub/actions/runs/43633658802) e [Supabase local e navegador aprovado](https://github.com/viniciusfs-seno/decifaz-hub/actions/runs/43633658833). O check Vercel também está aprovado. Não havia reviews ou threads de revisão registradas. O #12 permanece aberto, sem merge; o #13 continua baseado nele. As instruções do #14 foram lidas diretamente na branch `docs/padrao-de-pull-requests`, ainda aberta.
+Antes dos merges, os checks do #12 foram conferidos no SHA `8357a4ac49b1d29fa0589768018f827234ccc896`: [Interface compartilhada aprovada](https://github.com/viniciusfs-seno/decifaz-hub/actions/runs/43633658802) e [Supabase local e navegador aprovado](https://github.com/viniciusfs-seno/decifaz-hub/actions/runs/43633658833). O check Vercel estava aprovado e não havia reviews ou threads bloqueantes. As instruções do #14 foram lidas em sua branch antes de integrar o padrão à main.
 
 Código validado localmente e no CI: **`f7de4eb225dec85bc254c74728085fa4e924f49f`**. A validação não reutiliza o sucesso da implementação anterior. Atualizações posteriores exclusivamente documentais não alteram os arquivos executados por esses testes; o corpo do PR identifica também o head documental atual.
 
 - [Interface compartilhada — aprovado, execução 23](https://github.com/viniciusfs-seno/decifaz-hub/actions/runs/43710846248): tipagem, 17 testes unitários, build compartilhado, 5 cenários simulados e 1 cenário do modo local.
 - [Supabase local e navegador — aprovado, execução 19](https://github.com/viniciusfs-seno/decifaz-hub/actions/runs/43710846213): inicialização limpa, duas regressões SQL, 4 cenários reais e o cenário de transição/recuperação, com os builds anteriores fixados por SHA.
-- **Não executados:** migrações em produção, deploy de Edge, deploy de frontend, merge e atribuição de papéis reais. Permanecem para revisão.
+- **Não executados para o #13:** migrações em produção, deploy de Edge/frontend, merge e atribuição de papéis reais. Permanecem para revisão.
 
 A execução inicial desta revisão detectou uma referência permanente à função temporária em um checkout limpo. A configuração agora é instalada somente durante o teste, preservada e restaurada byte a byte; o executor recusa sobrescrever uma fixture já existente ou uma alteração concorrente na configuração. A subida normal sem a fixture e os workflows acima passaram após a correção.
+
+## Integração do padrão e da entrega comercial
+
+- #14 integrado em `3206234a70c5080f459facc8a329fae85aac5741`. Checks do head `3bdb3d0` aprovados antes do merge; diff limitado a AGENTS, CONTRIBUTING e template. Na main: [Interface aprovada](https://github.com/viniciusfs-seno/decifaz-hub/actions/runs/43713998564), [Supabase aprovado](https://github.com/viniciusfs-seno/decifaz-hub/actions/runs/43713998612) e [deploy Vercel concluído](https://vercel.com/vinicius-ferreiras-projects-84ef88fb/decifaz-hub/Fg5zSGURErbZcM4RasPfYX8wKLgW).
+- #12 integrado em `304922f4e13f22181e12032f31ea75e6eccec4be`, após verificar diff e merge limpo contra a main com o #14. Na main: [Interface aprovada](https://github.com/viniciusfs-seno/decifaz-hub/actions/runs/43714245700), [Supabase aprovado](https://github.com/viniciusfs-seno/decifaz-hub/actions/runs/43714245643) e [deploy Vercel concluído](https://vercel.com/vinicius-ferreiras-projects-84ef88fb/decifaz-hub/G22ENmxVFTwmJXB7w4S1fHw9zQMU). O emissor Vercel registrou `success`, descrição `Deployment has completed`, no commit de integração.
+- A página pública `https://decifaz-hub.vercel.app/` respondeu HTTP 200 no Chromium automatizado e exibiu título, campo E-mail e botão Enviar link de acesso, sem alertas. Nenhum formulário foi enviado. Evidência local: `.validation/producao-login.png`. A jornada autenticada usa os checks existentes, sem criar dados ou sessões de produção.
+- Limite da verificação: o conector Vercel retornou 403/404 para projeto, deployments e alias; a CLI informou login expirado. Portanto, o SHA do deploy concluído da main está confirmado pelo check Vercel, mas a associação interna exata entre alias e deployment não foi atestada pela API. Essa conferência permanece pendente de acesso ao projeto; não foi substituída por uma alegação de equivalência de assets.
+
+## Reorganização e revalidação do #13
+
+O head remoto anterior `48ff670c6ce19f47d22d5f817bb9a86970dc2f65` foi preservado na tag `validation/pr13-before-main-48ff670`, conferida com `git ls-remote`. A tag mantém acessíveis também os snapshots `8357a4a` e `e129208` usados pela regressão de transição. O PR foi retargetado para main e os quatro commits próprios foram reaplicados:
+
+| Antes | Após rebase |
+| --- | --- |
+| e129208 | ef4c754 |
+| 7ed9c1b | 6f917b1 |
+| f7de4eb | f8a41a0 |
+| 48ff670 | d2a8b6e |
+
+`git range-diff 8357a4a..archive/pr13-before-main-48ff670 origin/main..HEAD` marcou os quatro patches com `=`. A comparação de árvores entre o head antigo e o reaplicado mostrou somente os três arquivos integrados pelo #14. O diff contra main não volta a adicionar Central Comercial ou Base de Conhecimento. O envio usou `--force-with-lease` contra o head remoto anterior exato.
+
+SHA reaplicado e revalidado local e remotamente: **`d2a8b6ed23780ec56aaca7c0c51b31a08ab138ee`**, base `304922f`. Os comandos da tabela local foram repetidos: tipagem, 17 testes unitários, builds padrão/compartilhado e dos snapshots históricos, duas regressões SQL e 11 cenários Playwright. [Interface compartilhada aprovada, execução 27](https://github.com/viniciusfs-seno/decifaz-hub/actions/runs/43715023231) e [Supabase local e navegador aprovado, execução 23](https://github.com/viniciusfs-seno/decifaz-hub/actions/runs/43715023514) confirmam o novo SHA. Atualizações posteriores somente documentais não mudam os artefatos de aplicação identificados no roteiro de publicação; o corpo do PR registra também o head documental e seus checks.
 
 ## Pendente de revisão
 
@@ -58,6 +80,6 @@ A execução inicial desta revisão detectou uma referência permanente à funç
 - Definir os papéis dos membros reais: a migração preserva todos os membros existentes como Administração até revisão explícita.
 - Atribuição de papéis disponível por RPC administrativa; não há nova tela de gestão de membros nesta entrega.
 - Revisar os campos livres existentes antes de atribuir papéis restritos. A migração protege campos financeiros estruturados; não interpreta preços eventualmente escritos em escopo, título, serviços ou histórico.
-- Revisão do PR e dos checks remotos. Não houve merge, migração remota, publicação de Edge Function nem deploy de produção.
+- Revisão do #13 e aprovação das fases de publicação. Não houve merge desse PR, migração de papéis em produção ou publicação de sua Edge/frontend. #14 e #12 foram integrados conforme autorização desta etapa.
 - `vercel.json` desabilita deploy automático somente de `feat/papeis-recorte-mensal`, conforme a [configuração Git da Vercel](https://vercel.com/docs/project-configuration/git-configuration). As demais branches mantêm a configuração padrão; a regra não bloqueia uma publicação futura após merge aprovado.
-- Aprovar o [roteiro de publicação e recuperação](publicacao-papeis.md). A ordem técnica é expansão do banco, Edge com papel, frontend com views, revogação/ativação e só então atribuição dos papéis homologados. Não houve execução remota. Produção e domínio continuam fora dos testes e da validação desta entrega.
+- Aprovar o [roteiro de publicação e recuperação](publicacao-papeis.md), com artefatos identificados por objetos Git e critérios para avançar. A ordem é expansão do banco, Edge com papel, frontend com views, revogação/ativação e atribuição dos papéis homologados. Nenhuma dessas fases foi executada remotamente. Apenas a tela pública de acesso foi conferida em produção; todos os testes autenticados continuam locais/fictícios.

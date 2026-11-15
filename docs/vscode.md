@@ -10,7 +10,7 @@ npm.cmd ci
 npm.cmd run dev
 ```
 
-Se já tiver clonado, abra a pasta existente e use `git status` antes de atualizar. Com a árvore limpa, execute `git switch main` e `git pull --ff-only`. Se quiser continuar a entrega de central e conhecimento antes do merge, use `git fetch origin` e `git switch --track origin/feat/central-conhecimento-relatorios` uma vez.
+Se já tiver clonado, abra a pasta existente e use `git status` antes de atualizar. Com a árvore limpa, execute `git switch main` e `git pull --ff-only`. Central e Conhecimento já foram integrados pelo #12. Para continuar a validação de papéis do #13, use `git fetch origin` e selecione `feat/papeis-recorte-mensal`, agora baseada na main. Preserve alterações locais antes de trocar de branch.
 
 Abra a URL mostrada pelo Vite. O modo local padrão usa dados fictícios. Para testar o modo compartilhado, use uma pilha Supabase local e configure as variáveis a partir de `.env.example`. Nas mudanças de código, rode `npm.cmd run check`, `npm.cmd test` e `npm.cmd run build`.
 
@@ -18,7 +18,7 @@ No VS Code, instale a extensão oficial [Codex](https://developers.openai.com/co
 
 ## Prompt de continuidade
 
-A continuação de permissões está na branch `feat/papeis-recorte-mensal`, baseada no PR #12. Antes de atualizar, preserve alterações locais. Banco, Edge e frontend seguem o [roteiro de expansão, restrição e recuperação](publicacao-papeis.md); não publique todas as migrações pendentes de uma vez. Para repetir os testes de navegador, instale o Chromium com `npx playwright install chromium`, execute `node scripts/local-validation.mjs` com a pilha local iniciada e `node scripts/mock-validation.mjs` para a API simulada. O teste `node scripts/transition-validation.mjs --reset-local-fixtures` recria somente a pilha fictícia local e percorre versões anteriores. Execute as suítes em sequência, pois usam a mesma porta do Vite. Veja `docs/validacao-papeis.md` para a evidência da entrega.
+A continuação de permissões está na branch `feat/papeis-recorte-mensal`, baseada na main após a integração dos PRs #14 e #12. Antes de atualizar, preserve alterações locais. Banco, Edge e frontend seguem o [roteiro de expansão, restrição e recuperação](publicacao-papeis.md); não publique todas as migrações pendentes de uma vez. Para repetir os testes de navegador, instale o Chromium com `npx playwright install chromium`, execute `node scripts/local-validation.mjs` com a pilha local iniciada e `node scripts/mock-validation.mjs` para a API simulada. O teste `node scripts/transition-validation.mjs --reset-local-fixtures` recria somente a pilha fictícia local e percorre versões anteriores. Execute as suítes em sequência, pois usam a mesma porta do Vite. Veja `docs/validacao-papeis.md` para a evidência da entrega.
 
 ```text
 Continue o Decifaz Hub neste repositório. Confira git status, a branch, os últimos commits e o estado do PR de central e conhecimento. Leia README.md, docs/vscode.md e docs/papeis-e-permissoes.md. Preserve alterações locais.

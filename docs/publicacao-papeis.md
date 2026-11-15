@@ -1,12 +1,12 @@
 # Publicação e recuperação dos papéis
 
-Este é um roteiro para revisão. Nenhuma etapa remota foi executada. Os testes usam apenas a pilha fictícia `decifaz-hub-e2e`, em `127.0.0.1:54321`.
+Este é um roteiro para revisão da publicação dos papéis. #14 e #12 foram integrados e seus deploys automáticos concluíram pelo check Vercel. Nenhuma fase de banco, Edge ou frontend do #13 foi publicada. Os testes autenticados usam apenas a pilha fictícia `decifaz-hub-e2e`, em `127.0.0.1:54321`.
 
 ## Dependências e integração
 
-1. Revisar e integrar #14, que define o padrão documental e é independente. O merge pode disparar o deploy habitual da main.
-2. Revisar e integrar #12, que ainda usa os JSONs brutos. Os checks devem corresponder a `8357a4ac49b1d29fa0589768018f827234ccc896`, ou ser refeitos se o commit mudar. Seu merge também pode publicar o frontend; confirmar o resultado antes de continuar.
-3. Depois do merge do #12, retargetar #13 para `main` e conferir o diff. Em merge squash, pode ser necessário atualizar a branch para excluir os commits equivalentes do #12. Preservar alterações locais e repetir checks se mudar o código ou a base.
+1. #14 integrado por squash em `3206234a70c5080f459facc8a329fae85aac5741`; padrão disponível na main.
+2. #12 integrado por squash em `304922f4e13f22181e12032f31ea75e6eccec4be`; essa é a base comercial da publicação. O frontend ainda usa os JSONs brutos.
+3. #13 retargetado para `main`, com os quatro commits próprios reaplicados sobre `304922f`. O `git range-diff` confirmou equivalência dos quatro patches; a diferença de árvore para o head anterior contém somente os três arquivos do #14. O head anterior está preservado na tag remota `validation/pr13-before-main-48ff670`, também necessária para obter os snapshots históricos usados no teste de transição. Consultar o SHA revalidado e os checks em `validacao-papeis.md`.
 4. Manter #13 em rascunho até homologar a matriz e definir quem receberá cada papel real. Não fazer seu merge antes das etapas de expansão e Edge abaixo: o frontend publicado pela main já dependerá das views e do campo `role`.
 
 ## Publicação em fases
@@ -23,6 +23,20 @@ Não executar todas as migrações pendentes em uma única publicação. Prepara
 | E: papéis | Nenhuma mudança de privilégios | Atribuir papéis homologados pela RPC administrativa | Testar permitido, negado e isolamento com cada perfil |
 
 Antes da expansão, atualizar integrações administrativas de provisionamento para informar `role` explicitamente. Na expansão, o `DEFAULT 'admin'` existe somente durante o preenchimento das linhas anteriores e é removido na mesma transação. O trigger rejeita qualquer papel restrito antes da restrição, inclusive se o vínculo for criado por uma chave administrativa. A etapa D revoga os SELECTs, verifica os privilégios efetivos e só então ativa a atribuição restrita, tudo na mesma transação.
+
+### Artefatos e critérios de avanço
+
+As identidades abaixo são objetos Git estáveis, independentes de diferenças de quebra de linha no Windows. Conferir com `git rev-parse HEAD:caminho` no candidato aprovado. Qualquer alteração desses objetos exige nova validação e atualização do manifesto.
+
+| Fase | Artefato a revisar e guardar | Identidade Git | Verificação para avançar |
+| --- | --- | --- | --- |
+| A | Checkout de release baseado em `304922f`, acrescido somente da migração `supabase/migrations/20261114200000_expansao_compativel.sql` | blob `d5fe4f7107736b95af2e2765a555432f214df836` | Dry-run contém apenas a expansão; contagem/vínculos preservados; role dos antigos é admin; DEFAULT ausente; papel omitido/nulo negado; atribuição restrita bloqueada; frontend anterior continua operando |
+| B | `supabase/functions/hub-workspaces/index.ts`, com a versão npm fixada no import | blob `63a0f3f0bef0933b41db7425c3ed57610053a119` | Publicar explicitamente apenas hub-workspaces; JWT, isolamento, 401/403 e campo role aprovados em homologação; conferir versão efetivamente publicada |
+| C | Fonte do frontend, lockfile, index e assets públicos; build da Vercel com variáveis publicáveis do ambiente de destino | árvore src `1d1d4a1a8472fd5aaaf194fbf4e737b23e2e4d1d`; lock `ee6c395f322f0d66dd6f98169551dbbce7d02e13`; public `bc7091340e344480f1188609cad8f970e1dd7c24`; index `c0006be2babc98fb5f79cd825e3468cc0f0a61d5` | Checks do SHA a integrar verdes; registrar deployment ID/URL imutável, SHA e manifest de assets; confirmar acesso e módulos com views antes de D; guardar esse build para recuperação |
+| D | Migrações `20261114210000_papeis.sql` e `20261114220000_visible_scope_execute.sql` | blobs `97f8789983897666b0f31410584b82cd77e854a8` e `6118f21119f7aa4efe24504c05673fc280c8ca43` | Dry-run só da restrição; verificação dos privilégios brutos false para authenticated; SELECT protegido retorna 42501; views continuam funcionais; marca hardened ativada atomicamente |
+| E | Mapeamento aprovado de pessoas para papéis, mantido fora do Git; execução administrativa pela RPC | Decisão dos sócios, ainda pendente | Matriz homologada; cada vínculo novo tem papel explícito; último administrador preservado; registrar resultado/auditoria sem credenciais |
+
+Não publicar `dist/` produzido por `mock-validation.mjs` ou pelos snapshots locais: esses builds incorporam configuração publicável fictícia/local. A imagem temporária de login e os artefatos locais são evidência de teste, não um pacote de produção. A confirmação de deployment ID/alias na etapa C exige acesso funcional à Vercel; um check GitHub verde, isoladamente, não comprova qual deployment está associado ao domínio.
 
 A sessão do navegador antigo pode continuar aberta após D, mas suas consultas brutas serão negadas. Solicitar recarga para a versão compatível. Não restaurar SELECT bruto para acomodar abas antigas.
 
