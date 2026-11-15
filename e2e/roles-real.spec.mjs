@@ -19,7 +19,7 @@ test('matriz real: tabelas, RPCs, Edge, JSON financeiro, membros legados e isola
    const email=uuid()+'@example.invalid',password=uuid()
    const {user}=await checked(admin.auth.admin.createUser({email,password,email_confirm:true}))
    users.push(user.id)
-   if(role!=='outsider')await checked(admin.from('hub_members').insert({workspace_id:w,user_id:user.id,...(role==='admin'?{}:{role})}))
+   if(role!=='outsider')await checked(admin.from('hub_members').insert({workspace_id:w,user_id:user.id,role}))
    const client=createClient(endpoint,key,options)
    const {session}=await checked(client.auth.signInWithPassword({email,password}))
    users[users.length-1]={id:user.id,role,client,session}
@@ -46,6 +46,9 @@ test('matriz real: tabelas, RPCs, Edge, JSON financeiro, membros legados e isola
   await checked(admin.from('hub_receipts').insert({...foreignCharge,id:uuid(),received_on:'2026-11-01',amount:5}))
   await checked(admin.from('hub_expenses').insert({workspace_id:other,id:uuid(),title:'Despesa externa',due_on:'2026-11-01',amount:10}))
   const today=new Intl.DateTimeFormat('sv-SE',{timeZone:'America/Fortaleza'}).format(new Date())
+  const outsiderId=users.find(user=>user.role==='outsider').id
+  expect((await admin.from('hub_members').insert({workspace_id:w,user_id:outsiderId})).error?.code).toBe('23502')
+  expect((await admin.from('hub_members').insert({workspace_id:w,user_id:outsiderId,role:null})).error?.code).toBe('23502')
   for(const {role,client,session,id} of users){
    const member=role!=='outsider',finance=['admin','finance'].includes(role),commercial=['admin','commercial'].includes(role),operations=['admin','operations'].includes(role)
    expect((await checked(client.from('hub_members').select('role').eq('workspace_id',w))).map(r=>r.role)).toEqual(member?[role]:[])

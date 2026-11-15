@@ -10,3 +10,5 @@ dist/
 /supabase/.temp/
 /supabase/.branches/
 *.tsbuildinfo
+/.validation/
+/supabase/functions/hub-workspaces-legacy-test/

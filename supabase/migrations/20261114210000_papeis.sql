@@ -1,23 +1,6 @@
 begin;
 
--- Existing memberships retain their previous access. New invitations must use
--- the administrator RPC and explicitly choose the least privileged role.
-alter table public.hub_members add column role text not null default 'admin'
- check (role in ('admin','commercial','operations','finance'));
-
-create function public.hub_can(w uuid, module text, writing boolean default false)
-returns boolean language sql stable security definer set search_path='' as $$
- select exists(select 1 from public.hub_members where workspace_id=w and user_id=auth.uid()
- and case module
- when 'commercial' then not writing or role in ('admin','commercial')
- when 'projects' then not writing or role in ('admin','operations')
- when 'finance' then role in ('admin','finance')
- when 'admin' then role='admin'
- else false end);
-$$;
-revoke all on function public.hub_can(uuid,text,boolean) from public,anon;
-grant execute on function public.hub_can(uuid,text,boolean) to authenticated;
-
+-- Contract: apply only after Edge and a views-compatible frontend are live.
 create function public.hub_set_role(w uuid,u uuid,r text)
 returns boolean language plpgsql security definer set search_path='' as $$
 begin
@@ -72,12 +55,13 @@ returns jsonb language sql stable security invoker set search_path='' as $$
  (select coalesce(jsonb_object_agg(key,value),'{}'::jsonb) from jsonb_each(body)
  where key in ('title','scope','services','validity','version','decisionAt')) end;
 $$;
-revoke all on function hub_private.visible_scope(uuid,jsonb) from public,anon,authenticated;
-create view public.hub_proposals_visible with (security_barrier=true) as
+revoke all on function hub_private.visible_scope(uuid,jsonb) from public,anon;
+grant execute on function hub_private.visible_scope(uuid,jsonb) to authenticated;
+create or replace view public.hub_proposals_visible with (security_barrier=true) as
  select workspace_id,id,lead_id,series_id,version,meeting_id,status,
  hub_private.visible_scope(workspace_id,record) as record from public.hub_proposals
  where public.hub_can(workspace_id,'commercial');
-create view public.hub_projects_visible with (security_barrier=true) as
+create or replace view public.hub_projects_visible with (security_barrier=true) as
  select workspace_id,proposal_id,lead_id,owner,due_on,status,deliverables,delivery,
  hub_private.visible_scope(workspace_id,approved) as approved from public.hub_projects
  where public.hub_can(workspace_id,'projects');
@@ -95,20 +79,29 @@ begin
   m:=case when f.proname in ('forecast','receive','reverse_receipt') then 'finance'
      when f.proname='save_proposal' then 'commercial' else 'projects' end;
   guard:=format(E'begin\n if not public.hub_can(w,%L,true) then return false; end if;\n',m);
-  if f.proname='save_proposal' then
-   guard:=guard || $g$
- if body is not null and not public.hub_can(w,'finance') then
-  -- Commercial can change scope without reading or altering agreed prices.
-  if body ?| array['setup','monthly','terms'] then return false; end if;
-  body:=body || coalesce((select jsonb_build_object('setup',record->'setup','monthly',record->'monthly','terms',record->'terms')
-   from public.hub_proposals where workspace_id=w and lead_id=l and series_id=s order by version desc limit 1),'{"setup":0,"monthly":0,"terms":""}'::jsonb);
- end if;
- $g$;
-  end if;
   definition:=pg_get_functiondef(f.oid);
   definition:=regexp_replace(definition,'\mbegin\M',guard,'i');
+  if f.proname='save_proposal' then
+   -- The lead lock and current-version read already precede this branch.
+   definition:=replace(definition,' if decision is null then', $g$
+ if decision is null and body is not null and not public.hub_can(w,'finance') then
+  if body ?| array['setup','monthly','terms'] then return false; end if;
+  body:=body || case when curr.id is null then '{"setup":0,"monthly":0,"terms":""}'::jsonb
+   else jsonb_build_object('setup',curr.record->'setup','monthly',curr.record->'monthly','terms',curr.record->'terms') end;
+ end if;
+ if decision is null then$g$);
+  end if;
   execute definition;
  end loop;
 end;
 $$;
+-- Activation and revocation are atomic. The membership trigger also checks
+-- the actual privileges on every restricted-role assignment.
+do $$ begin
+ if has_column_privilege('authenticated','public.hub_proposals','record','SELECT')
+ or has_column_privilege('authenticated','public.hub_projects','approved','SELECT') then
+  raise exception 'JSON privileges must be revoked before activation';
+ end if;
+end $$;
+update hub_private.access_release set hardened=true where singleton;
 commit;
