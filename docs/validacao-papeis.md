@@ -113,3 +113,7 @@ SHA reaplicado e revalidado local e remotamente: **`d2a8b6ed23780ec56aaca7c0c51b
 - Revisão do #13 e aprovação das fases de publicação. Não houve merge desse PR, migração de papéis em produção ou publicação de sua Edge/frontend. #14 e #12 foram integrados conforme autorização desta etapa.
 - `vercel.json` desabilita deploy automático somente de `feat/papeis-recorte-mensal`, conforme a [configuração Git da Vercel](https://vercel.com/docs/project-configuration/git-configuration). As demais branches mantêm a configuração padrão; a regra não bloqueia uma publicação futura após merge aprovado.
 - Aprovar o [roteiro de publicação e recuperação](publicacao-papeis.md), com artefatos identificados por objetos Git e critérios para avançar. A ordem é expansão do banco, Edge com papel, frontend com views, revogação/ativação e atribuição dos papéis homologados. Nenhuma dessas fases foi executada remotamente. Apenas a tela pública de acesso foi conferida em produção; todos os testes autenticados continuam locais/fictícios.
+
+## Papéis acumuláveis e alçada de aceite
+
+O candidato atualizado exige regenerar os artefatos. As evidências anteriores se referem aos SHAs daquela rodada. A regressão desta revisão testa papéis cumulativos, bloqueio de autoelevação, resposta da Edge e bloqueio do aceite e da transição direta para Ganho sem Administração.

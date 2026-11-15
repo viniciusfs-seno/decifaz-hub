@@ -11,3 +11,12 @@ test('matriz frontend nega desconhecidos e separa escrita por módulo',()=>{
  }
  assert.equal(can(undefined,'finance'),false)
 })
+
+test('papéis acumulam permissões por módulo',()=>{
+ assert.equal(can(['commercial','operations'],'commercial',true),true)
+ assert.equal(can(['commercial','operations'],'projects',true),true)
+ assert.equal(can(['commercial','operations'],'finance'),false)
+ assert.equal(can(['commercial','finance'],'finance',true),true)
+ assert.equal(can(['commercial','finance'],'projects',true),false)
+ assert.equal(can([],'commercial'),false)
+})

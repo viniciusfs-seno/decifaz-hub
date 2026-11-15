@@ -1,4 +1,4 @@
-import {can,type Role} from './access'
+import {can,hasRole,type Role} from './access'
 import {Knowledge} from './secondary'
 import {CommercialCenter} from './commercial-center'
 import {useEffect,useState,type FormEvent} from 'react'
@@ -17,7 +17,7 @@ const url=import.meta.env.VITE_SUPABASE_URL
 const key=import.meta.env.VITE_SUPABASE_PUBLISHABLE_KEY
 const client=url&&key?.startsWith('sb_publishable_')?createClient(url,key):null
 
-type Workspace={id:string;name:string;role:Role}
+type Workspace={id:string;name:string;role:Role;roles?:Role[]}
 type Lead=PilotLead
 type Interaction={id:string;body:string;created_at:string}
 type Task={id:string;title:string;status:string;due_on:string|null;owner:string}
@@ -74,7 +74,9 @@ function SharedCrm(){
  }
  const [spaces,setSpaces]=useState<Workspace[]>([])
  const [workspace,setWorkspace]=useState('')
- const role=spaces.find(space=>space.id===workspace)?.role
+ const membership=spaces.find(space=>space.id===workspace)
+ const role=membership?.roles??membership?.role
+ const administrator=hasRole(role,'admin')
  const [moduleErrors,setModuleErrors]=useState<string[]>([])
  const [leads,setLeads]=useState<Lead[]>([])
  const [selected,setSelected]=useState('')
@@ -275,7 +277,7 @@ function SharedCrm(){
     save={(triage,updatedLead)=>write(()=>saveTriage(client!,workspace,triage,updatedLead),()=>setDraft({...draft,name:updatedLead.name,segment:updatedLead.segment,city:updatedLead.city}))}/>}
    {can(role,'commercial',true)&&lead&&editor==='meeting'&&<MeetingEditor data={meetingContext} item={meeting} leadId={lead.id} lockLead close={()=>setEditor(null)}
     save={(item,follow,advance)=>write(()=>saveMeeting(client!,workspace,item,follow,advance))}/>}
-   {proposalModal&&<ProposalEditor readOnly={!can(role,'commercial',true)} financial={can(role,'finance')} key={proposalModal.id??proposalModal.meetingId??'new'} data={commercialData}
+   {proposalModal&&<ProposalEditor readOnly={!can(role,'commercial',true)} financial={can(role,'finance')} canSetPrices={administrator} canAccept={administrator} key={proposalModal.id??proposalModal.meetingId??'new'} data={commercialData}
     item={proposals.find(item=>item.id===proposalModal.id)} leadId={proposalModal.leadId} meetingId={proposalModal.meetingId}
     open={id=>setProposalModal({id})} close={()=>setProposalModal(undefined)}
     project={can(role,'projects',true)?item=>{
@@ -283,7 +285,7 @@ function SharedCrm(){
      if(projects.some(project=>project.proposal_id===item.id))show()
      else void write(()=>client!.rpc('hub_open_project',{w:workspace,p:item.id}),show)
     }:undefined} projectExists={id=>projects.some(project=>project.proposal_id===id)}
-    save={(item,decision)=>write(()=>saveProposal(client!,workspace,item,decision,can(role,'finance')))}/>}
+    save={(item,decision)=>write(()=>saveProposal(client!,workspace,item,decision,administrator))}/>}
    {activeProject&&page==='projetos'&&<SharedProjectEditor readOnly={!can(role,'projects',true)} key={activeProject.proposal_id} item={activeProject}
     close={()=>setProjectId('')} accept={values=>write(()=>client!.rpc('hub_accept_delivery',{
      w:workspace,p:activeProject.proposal_id,c:values.checks,d:values.date,e:values.reference,t:values.title,o:values.owner,due:values.due,

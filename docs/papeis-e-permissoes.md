@@ -11,7 +11,7 @@ A matriz usa a expansão `20261114200000_expansao_compativel.sql` e a restriçã
 | Operação | Consulta | Consulta e edição | Sem acesso |
 | Financeiro | Consulta | Consulta | Consulta e edição |
 
-Os valores persistidos dos papéis são `admin`, `commercial`, `operations` e `finance`. A expansão preenche os membros existentes como `admin` e remove o DEFAULT na mesma transação. Novos vínculos sem papel ou com papel nulo falham; o provisionamento administrativo e todas as fixtures posteriores à expansão informam o papel explicitamente. Papéis restritos ficam bloqueados até que a leitura bruta seja revogada. Após a restrição, convites devem usar a RPC `hub_set_role(w,u,r)`, disponível somente para Administração no próprio espaço. A RPC serializa alterações e impede remover o último administrador. Não há concessão de escrita direta em `hub_members` para usuários autenticados.
+Os valores persistidos dos papéis são `admin`, `commercial`, `operations` e `finance`. A expansão preenche os membros existentes como `admin` e remove o DEFAULT na mesma transação. Novos vínculos sem papel ou com papel nulo falham; o provisionamento administrativo e todas as fixtures posteriores à expansão informam o papel explicitamente. Papéis restritos ficam bloqueados até que a leitura bruta seja revogada. Após a restrição, convites devem usar a RPC `hub_set_roles(w,u,r)`, disponível somente para Administração no próprio espaço. O parâmetro `r` é uma lista explícita de papéis que substitui o conjunto anterior. Permissões acumulam por espaço. A RPC original de papel único permanece disponível e também substitui o conjunto inteiro. A RPC serializa alterações e impede remover o último administrador. Não há concessão de escrita direta em `hub_members` para usuários autenticados.
 
 `hub_can` verifica o usuário autenticado e o espaço, sem aceitar um usuário arbitrário. As políticas de tabelas distinguem consulta e escrita. Atividades comerciais usam a permissão Comercial; atividades vinculadas a projetos usam Projetos. As RPCs com `security definer` verificam a permissão antes de executar a implementação existente. As RPCs de triagem e reunião mantêm `security invoker` e estão sujeitas ao RLS.
 
@@ -32,3 +32,5 @@ node scripts/mock-validation.mjs
 ```
 
 O executor local obtém as chaves pelo status da CLI, mantém os valores na memória e recusa qualquer endpoint diferente de `http://127.0.0.1:54321`. Não use `db push`, `functions deploy` ou variáveis de produção durante a validação. Os workflows de PR executam as mesmas suítes. Veja `docs/validacao-papeis.md` para resultados e pendências desta entrega.
+
+Somente Administração pode definir preços e condições, registrar o aceite da proposta ou mover um lead para Ganho. Comercial pode registrar a evidência no histórico. O acúmulo de Comercial e Financeiro permite consultar preços, sem permissão para editá-los ou registrar o aceite. A Edge retorna `roles` com todos os papéis e `role` para compatibilidade.

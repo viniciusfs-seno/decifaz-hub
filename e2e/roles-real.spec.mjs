@@ -102,7 +102,7 @@ test('matriz real: tabelas, RPCs, Edge, JSON financeiro, membros legados e isola
    expect(await checked(client.rpc('hub_set_role',{w:other,u:id,r:'admin'}))).toBe(false)
    const response=await fetch(endpoint+'/functions/v1/hub-workspaces',{method:'POST',headers:{apikey:key,Authorization:'Bearer '+session.access_token,'Content-Type':'application/json'},body:'{}'})
    expect(response.status).toBe(member?200:403)
-   if(member)expect((await response.json()).workspaces).toEqual([{id:w,name:'Papéis fictícios',role}])
+   if(member)expect((await response.json()).workspaces).toEqual([{id:w,name:'Papéis fictícios',role,roles:[role]}])
   }
   const sales=users.find(u=>u.role==='commercial')
   const ops=users.find(u=>u.role==='operations')
@@ -137,6 +137,23 @@ test('matriz real: tabelas, RPCs, Edge, JSON financeiro, membros legados e isola
   await page.getByRole('button',{name:'Salvar rascunho',exact:true}).click()
   await expect(page.getByRole('dialog')).toHaveCount(0)
   expect((await checked(admin.from('hub_proposals').select('record').eq('workspace_id',w).eq('id',revision).single())).record).toMatchObject({scope:'Escopo comercial revisado',setup:150,monthly:25,terms:'Condição reservada'})
+  const assign=users[0].client
+  expect(await checked(assign.rpc('hub_set_roles',{w,u:sales.id,r:[]}))).toBe(false)
+  expect(await checked(assign.rpc('hub_set_roles',{w,u:sales.id,r:['commercial','unknown']}))).toBe(false)
+  expect(await checked(assign.rpc('hub_set_roles',{w,u:sales.id,r:['operations','finance','commercial','finance']}))).toBe(true)
+  expect(await checked(sales.client.rpc('hub_can',{w,module:'projects',writing:true}))).toBe(true)
+  expect(await checked(sales.client.rpc('hub_can',{w,module:'finance',writing:true}))).toBe(true)
+  expect(await checked(sales.client.rpc('hub_can',{w,module:'admin',writing:true}))).toBe(false)
+  expect(await checked(sales.client.rpc('hub_set_roles',{w,u:sales.id,r:['admin']}))).toBe(false)
+  const combined=await fetch(endpoint+'/functions/v1/hub-workspaces',{method:'POST',headers:{apikey:key,Authorization:'Bearer '+sales.session.access_token,'Content-Type':'application/json'},body:'{}'})
+  expect((await combined.json()).workspaces[0].roles).toEqual(['commercial','finance','operations'])
+  const decision={...args,p:revision,v:2,body:null,occurred:today,evidence:'Confirmação fictícia'}
+  expect(await checked(sales.client.rpc('hub_save_proposal',{...decision,decision:'Enviada'}))).toBe(true)
+  expect(await checked(sales.client.rpc('hub_save_proposal',{...decision,decision:'Aceita'}))).toBe(false)
+  await checked(admin.from('hub_leads').update({stage:'Negociação'}).eq('workspace_id',w).eq('id',l))
+  expect((await sales.client.from('hub_leads').update({stage:'Ganho'}).eq('workspace_id',w).eq('id',l)).error?.code).toBe('42501')
+  expect(await checked(assign.rpc('hub_save_proposal',{...decision,decision:'Aceita'}))).toBe(true)
+  expect((await checked(sales.client.from('hub_leads').select('stage').eq('workspace_id',w).eq('id',l).single())).stage).toBe('Ganho')
  }finally{
   // Keep business fixtures in the disposable local stack; remove auth accounts.
   for(const user of users)await admin.auth.admin.deleteUser(typeof user==='string'?user:user.id)

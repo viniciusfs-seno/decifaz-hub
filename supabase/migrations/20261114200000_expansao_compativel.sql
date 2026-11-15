@@ -3,14 +3,19 @@ begin;
 alter table public.hub_members add column role text not null default 'admin'
  check (role in ('admin','commercial','operations','finance'));
 alter table public.hub_members alter column role drop default;
+alter table public.hub_members add column extra_roles text[] not null default '{}' check (
+ coalesce(array_ndims(extra_roles),1)=1
+ and extra_roles <@ array['admin','commercial','operations','finance']::text[]
+ and array_position(case when coalesce(array_ndims(extra_roles),1)=1 then extra_roles else '{}'::text[] end,null) is null and not (role=any(extra_roles))
+);
 create function public.hub_can(w uuid, module text, writing boolean default false)
 returns boolean language sql stable security definer set search_path='' as $$
  select exists(select 1 from public.hub_members where workspace_id=w and user_id=auth.uid()
  and case module
- when 'commercial' then not writing or role in ('admin','commercial')
- when 'projects' then not writing or role in ('admin','operations')
- when 'finance' then role in ('admin','finance')
- when 'admin' then role='admin'
+ when 'commercial' then not writing or (array[role] || extra_roles) && array['admin','commercial']
+ when 'projects' then not writing or (array[role] || extra_roles) && array['admin','operations']
+ when 'finance' then (array[role] || extra_roles) && array['admin','finance']
+ when 'admin' then 'admin'=any(array[role] || extra_roles)
  else false end);
 $$;
 revoke all on function public.hub_can(uuid,text,boolean) from public,anon;
@@ -23,7 +28,7 @@ revoke all on hub_private.access_release from public,anon,authenticated;
 create function hub_private.guard_member_role() returns trigger
 language plpgsql security definer set search_path='' as $$
 begin
- if new.role<>'admin' and (
+ if (new.role<>'admin' or cardinality(new.extra_roles)>0) and (
   not coalesce((select hardened from hub_private.access_release where singleton),false)
   or has_column_privilege('authenticated','public.hub_proposals','record','SELECT')
   or has_column_privilege('authenticated','public.hub_projects','approved','SELECT')
@@ -32,7 +37,7 @@ begin
 end;
 $$;
 revoke all on function hub_private.guard_member_role() from public,anon,authenticated;
-create trigger hub_member_role_release before insert or update of role on public.hub_members
+create trigger hub_member_role_release before insert or update of role, extra_roles on public.hub_members
 for each row execute function hub_private.guard_member_role();
 create view public.hub_proposals_visible with (security_barrier=true) as
 select workspace_id,id,lead_id,series_id,version,meeting_id,status,record from public.hub_proposals

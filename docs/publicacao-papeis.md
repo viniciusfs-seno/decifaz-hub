@@ -35,10 +35,10 @@ Não executar todas as migrações pendentes em uma única publicação. Prepara
 | --- | --- | --- | --- |
 | Estado anterior | Histórico até `20261114181046` | #12 e Edge anterior | Membros existentes acessam o espaço |
 | A: expansão | Aplicar somente `20261114200000` | Frontend/Edge anteriores continuam válidos | Vínculos preservados, todos os membros anteriores com `admin`, views disponíveis, novos vínculos exigem papel explícito |
-| B: Edge | Manter expansão | Publicar apenas `hub-workspaces` compatível com `role` | JWT, espaços e papel conferidos; frontend anterior continua funcionando |
+| B: Edge | Manter expansão | Publicar apenas `hub-workspaces` compatível com `roles` e `role` | JWT, espaços e papel conferidos; frontend anterior continua funcionando |
 | C: frontend | Manter expansão | Publicar frontend que consulta as views; merge do #13 pode disparar essa publicação | CRM, propostas, projetos e Financeiro conferidos; registrar SHA/URL e guardar o artefato compatível para recuperação |
 | D: restrição | Aplicar `20261114210000` e `20261114220000` | Manter Edge com `role` e frontend com views | SELECT de `record` e `approved` retorna `42501`; consultas pelas views continuam funcionando |
-| E: papéis | Nenhuma mudança de privilégios | Atribuir papéis homologados pela RPC administrativa | Testar permitido, negado e isolamento com cada perfil |
+| E: papéis | Nenhuma mudança de privilégios | Atribuir conjuntos homologados pela RPC `hub_set_roles` | Testar permitido, negado e isolamento com cada perfil |
 
 Antes da expansão, atualizar integrações administrativas de provisionamento para informar `role` explicitamente. Na expansão, o `DEFAULT 'admin'` existe somente durante o preenchimento das linhas anteriores e é removido na mesma transação. O trigger rejeita qualquer papel restrito antes da restrição, inclusive se o vínculo for criado por uma chave administrativa. A etapa D revoga os SELECTs, verifica os privilégios efetivos e só então ativa a atribuição restrita, tudo na mesma transação.
 
@@ -48,8 +48,8 @@ As identidades abaixo são objetos Git estáveis, independentes de diferenças d
 
 | Fase | Artefato a revisar e guardar | Identidade Git | Verificação para avançar |
 | --- | --- | --- | --- |
-| A | Checkout de release baseado em `304922f`, acrescido somente da migração `supabase/migrations/20261114200000_expansao_compativel.sql` | blob `d5fe4f7107736b95af2e2765a555432f214df836` | Dry-run contém apenas a expansão; contagem/vínculos preservados; role dos antigos é admin; DEFAULT ausente; papel omitido/nulo negado; atribuição restrita bloqueada; frontend anterior continua operando |
-| B | `supabase/functions/hub-workspaces/index.ts`, com a versão npm fixada no import | blob `63a0f3f0bef0933b41db7425c3ed57610053a119` | Publicar explicitamente apenas hub-workspaces; JWT, isolamento, 401/403 e campo role aprovados em homologação; conferir versão efetivamente publicada |
+| A | Checkout de release baseado em `304922f`, acrescido somente da migração `supabase/migrations/20261114200000_expansao_compativel.sql` | hash do manifesto do candidato | Dry-run contém apenas a expansão; contagem/vínculos preservados; role dos antigos é admin; DEFAULT ausente; papel omitido/nulo negado; atribuição restrita bloqueada; frontend anterior continua operando |
+| B | `supabase/functions/hub-workspaces/index.ts`, com a versão npm fixada no import | hash do manifesto do candidato | Publicar explicitamente apenas hub-workspaces; JWT, isolamento, 401/403 e campo role aprovados em homologação; conferir versão efetivamente publicada |
 | C | Fonte do frontend, lockfile, index e assets públicos; build da Vercel com variáveis publicáveis do ambiente de destino | árvore src `1d1d4a1a8472fd5aaaf194fbf4e737b23e2e4d1d`; lock `ee6c395f322f0d66dd6f98169551dbbce7d02e13`; public `bc7091340e344480f1188609cad8f970e1dd7c24`; index `c0006be2babc98fb5f79cd825e3468cc0f0a61d5` | Checks do SHA a integrar verdes; registrar deployment ID/URL imutável, SHA e manifest de assets; confirmar acesso e módulos com views antes de D; guardar esse build para recuperação |
 | D | Migrações `20261114210000_papeis.sql` e `20261114220000_visible_scope_execute.sql` | blobs `97f8789983897666b0f31410584b82cd77e854a8` e `6118f21119f7aa4efe24504c05673fc280c8ca43` | Dry-run só da restrição; verificação dos privilégios brutos false para authenticated; SELECT protegido retorna 42501; views continuam funcionais; marca hardened ativada atomicamente |
 | E | Mapeamento aprovado de pessoas para papéis, mantido fora do Git; execução administrativa pela RPC | Decisão dos sócios, ainda pendente | Matriz homologada; cada vínculo novo tem papel explícito; último administrador preservado; registrar resultado/auditoria sem credenciais |
@@ -78,3 +78,5 @@ npx playwright test backup.spec.mjs
 ```
 
 O teste de transição gera builds dos frontends anteriores a partir dos SHAs fixados, usa a Edge anterior real em um endpoint local temporário e percorre os dois caminhos de recuperação. Os artefatos e a função temporária não entram no Git; o executor remove a função ao terminar. Os segredos administrativos ficam apenas na memória. Não publique a função `hub-workspaces-legacy-test`; publique explicitamente somente `hub-workspaces` na etapa B.
+
+Gere novamente os artefatos e o manifesto para o commit com papéis acumuláveis. Para manter todos os papéis de uma associação ao atualizá-la, envie o conjunto completo à RPC administrativa.

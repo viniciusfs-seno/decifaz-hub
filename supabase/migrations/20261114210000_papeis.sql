@@ -1,22 +1,46 @@
 begin;
 
 -- Contract: apply only after Edge and a views-compatible frontend are live.
-create function public.hub_set_role(w uuid,u uuid,r text)
+create function public.hub_set_roles(w uuid,u uuid,r text[])
 returns boolean language plpgsql security definer set search_path='' as $$
+declare chosen text[];
 begin
  -- Serialize role changes so concurrent demotions cannot remove every admin.
  perform 1 from public.hub_workspaces where id=w for update;
  if not public.hub_can(w,'admin',true) then return false; end if;
- if r is null or r not in ('admin','commercial','operations','finance') then return false; end if;
- if r<>'admin' and exists(select 1 from public.hub_members where workspace_id=w and user_id=u and role='admin')
- and (select count(*) from public.hub_members where workspace_id=w and role='admin')<=1 then return false; end if;
- insert into public.hub_members(workspace_id,user_id,role) values(w,u,r)
- on conflict(workspace_id,user_id) do update set role=excluded.role;
+ if r is null or coalesce(array_ndims(r),0)<>1 then return false; end if;
+ if array_position(r,null) is not null or not (r <@ array['admin','commercial','operations','finance']::text[]) then return false; end if;
+ select array_agg(distinct value order by value) into chosen from unnest(r) as roles(value);
+ if not ('admin'=any(chosen)) and exists(select 1 from public.hub_members where workspace_id=w and user_id=u and 'admin'=any(array[role] || extra_roles))
+ and (select count(*) from public.hub_members where workspace_id=w and 'admin'=any(array[role] || extra_roles))<=1 then return false; end if;
+ insert into public.hub_members(workspace_id,user_id,role,extra_roles) values(w,u,chosen[1],coalesce(chosen[2:],'{}'))
+ on conflict(workspace_id,user_id) do update set role=excluded.role,extra_roles=excluded.extra_roles;
  return true;
 end;
 $$;
+revoke all on function public.hub_set_roles(uuid,uuid,text[]) from public,anon;
+grant execute on function public.hub_set_roles(uuid,uuid,text[]) to authenticated;
+
+-- Single-role compatibility; this replaces the entire set.
+create function public.hub_set_role(w uuid,u uuid,r text)
+returns boolean language sql security invoker set search_path='' as $$
+ select public.hub_set_roles(w,u,array[r]);
+$$;
 revoke all on function public.hub_set_role(uuid,uuid,text) from public,anon;
 grant execute on function public.hub_set_role(uuid,uuid,text) to authenticated;
+
+create function hub_private.guard_lead_won()
+returns trigger language plpgsql security invoker set search_path='' as $$
+begin
+ if new.stage='Ganho' and old.stage is distinct from new.stage and auth.uid() is not null
+  and not public.hub_can(new.workspace_id,'admin',true)
+ then raise insufficient_privilege using message='Somente Administração pode marcar o lead como Ganho'; end if;
+ return new;
+end;
+$$;
+revoke all on function hub_private.guard_lead_won() from public,anon,authenticated;
+create trigger hub_lead_won_guard before update of stage on public.hub_leads
+ for each row execute function hub_private.guard_lead_won();
 
 -- Replace every broad member policy, including finance audit history.
 do $$
@@ -84,7 +108,8 @@ begin
   if f.proname='save_proposal' then
    -- The lead lock and current-version read already precede this branch.
    definition:=replace(definition,' if decision is null then', $g$
- if decision is null and body is not null and not public.hub_can(w,'finance') then
+ if decision='Aceita' and not public.hub_can(w,'admin',true) then return false; end if;
+ if decision is null and body is not null and not public.hub_can(w,'admin',true) then
   if body ?| array['setup','monthly','terms'] then return false; end if;
   body:=body || case when curr.id is null then '{"setup":0,"monthly":0,"terms":""}'::jsonb
    else jsonb_build_object('setup',curr.record->'setup','monthly',curr.record->'monthly','terms',curr.record->'terms') end;
