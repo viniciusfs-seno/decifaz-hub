@@ -1,5 +1,7 @@
 # Papéis e permissões
 
+Veja a [matriz detalhada para aprovação dos sócios](homologacao-papeis.md), com alçadas, correspondência às superfícies protegidas, limitações e tabela privada de atribuição a preencher.
+
 A matriz usa a expansão `20261114200000_expansao_compativel.sql` e a restrição `20261114210000_papeis.sql`, em validação exclusivamente local. Continua sujeita à revisão antes de atribuir papéis reais ou migrar produção. Siga o [roteiro de publicação e recuperação](publicacao-papeis.md); não aplique as duas fases em uma publicação única.
 
 | Papel | Comercial | Projetos e suporte | Financeiro |

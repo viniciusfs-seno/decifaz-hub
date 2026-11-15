@@ -11,6 +11,24 @@ Este é um roteiro para revisão da publicação dos papéis. #14 e #12 foram in
 
 ## Publicação em fases
 
+### Preparação offline e conferência remota (15/11/2026)
+
+Executar `node scripts/prepare-role-artifacts.mjs <SHA-aprovado>` gera `.validation/role-release/<SHA>/manifest.json` e seis pastas separadas: `A-expansao`, `B-edge`, `C-frontend`, `D-restricao`, `recuperacao-antes-D` e `recuperacao-depois-D`. O manifesto identifica candidato, baseline e SHA-256 de cada arquivo. Nova execução verifica o manifesto existente sem sobrescrever arquivos. Os pacotes não contêm `.env`, `.temp`, segredos, vínculos reais nem `dist`.
+
+A contém config/função anteriores e o histórico da main acrescido somente de expansão. D contém o histórico da main, expansão e restrições, para comparação com o histórico remoto após A; não é autorização para aplicar todas as fases juntas. B e as recuperações não carregam migrações. C contém fontes e lockfile; o build publicável depende das variáveis do destino e deve ser produzido/guardado na fase C. O teste de transição aplica os SQLs das pastas A/D preparadas, não uma seleção implícita de todas as migrações pendentes. Os snapshots históricos continuam exercitando os clientes anteriores e o frontend de recuperação.
+
+A configuração incluída é **local**: não substituir a configuração remota inteira por `config.toml`. Na fase B, a configuração específica de `hub-workspaces` deve ter **`verify_jwt=false`** (opção de publicação `--no-verify-jwt`); a função faz `getClaims` e valida o JWT no próprio código. Preservar as demais configurações remotas. Guardar código e configuração da Edge anterior para recuperação antes de D.
+
+Consultas remotas exclusivamente de leitura executadas nesta preparação:
+
+```sh
+npx --yes supabase@3.0.0 projects list --output json
+npx --yes supabase@3.0.0 functions list --project-ref lnteuryqkabnpcixguxh --output json
+npx --yes supabase@3.0.0 db query --remote=lnteuryqkabnpcixguxh --read-only "select version, name from supabase_migrations.schema_migrations order by version"
+```
+
+Projeto `decifaz-hub` ativo, PostgreSQL `17.11.0.019`. Histórico remoto: 11 versões, correspondentes ao histórico local até `20261114181046`; nenhuma versão de expansão/restrição registrada. Edge `hub-workspaces` ACTIVE, versão 1, `verify_jwt=true`, digest remoto `0e0ca94110e0f268158bc392f800322a889375a079fbf9896f38dd9b943fe28f`. Isso confirma versões/histórico, não equivalência integral de schema ou código remoto. Nenhuma mutação remota foi feita. Repetir a leitura e o dry-run do artefato autorizado imediatamente antes de cada publicação; mudanças posteriores invalidam esta fotografia.
+
 Não executar todas as migrações pendentes em uma única publicação. Preparar dois artefatos de migração revisados: **expansão** contém o histórico até `20261114200000_expansao_compativel.sql`; **restrição** acrescenta `20261114210000_papeis.sql` e `20261114220000_visible_scope_execute.sql`. Usar checkouts de release separados, conferir o dry-run contra o histórico remoto e aplicar apenas o artefato autorizado. Não remover migrações do checkout de desenvolvimento nem marcar uma versão como aplicada sem executá-la. Essas migrações do #13 ainda não publicadas foram reorganizadas; bancos locais que receberam a versão anterior devem ser recriados apenas se contiverem dados fictícios descartáveis.
 
 | Etapa | Banco | Edge/frontend | Condição para avançar |

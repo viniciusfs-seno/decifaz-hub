@@ -28,7 +28,9 @@ test('publicação em fases e rollback mantêm versões compatíveis e fecham JS
   return page
  }
  function migration(file){
-  sql(readFileSync('supabase/migrations/'+file,'utf8')+"\nnotify pgrst,'reload schema';")
+  if(!process.env.HUB_ROLE_ARTIFACTS)throw Error('Artefatos separados ausentes.')
+  const phase=file.startsWith('20261114200000')?'A-expansao':'D-restricao'
+  sql(readFileSync(process.env.HUB_ROLE_ARTIFACTS+'/'+phase+'/supabase/migrations/'+file,'utf8')+"\nnotify pgrst,'reload schema';")
  }
  const owner=await account(),sales=await account(),missing=await account()
  try{

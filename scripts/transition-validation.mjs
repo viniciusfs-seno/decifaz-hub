@@ -15,6 +15,8 @@ if(values.API_URL!=='http://127.0.0.1:54321')throw Error('Somente a pilha local 
 const env={...process.env,HUB_TRANSITION_E2E:'1',HUB_REAL_E2E:'1',VITE_HUB_MODE:'shared',VITE_SUPABASE_URL:values.API_URL,
  VITE_SUPABASE_PUBLISHABLE_KEY:values.PUBLISHABLE_KEY,HUB_TEST_ADMIN_KEY:values.SECRET_KEY||values.SERVICE_ROLE_KEY}
 if(!env.VITE_SUPABASE_PUBLISHABLE_KEY||!env.HUB_TEST_ADMIN_KEY)throw Error('Chaves locais ausentes.')
+run(process.execPath,['scripts/prepare-role-artifacts.mjs'])
+env.HUB_ROLE_ARTIFACTS=resolve('.validation/role-release',run('git',['rev-parse','HEAD']).trim())
 for(const [name,sha] of [['previous','8357a4ac49b1d29fa0589768018f827234ccc896'],['bridge','e1292085040722023f1331a24139620c2df25ca4']]){
  const directory=resolve('.validation',name)
  mkdirSync(directory,{recursive:true})
