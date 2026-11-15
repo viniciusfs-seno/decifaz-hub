@@ -1,6 +1,12 @@
 # Histórico de alterações de papéis
 
-Entrega separada em rascunho, baseada na main com #15 publicado (`cd0efb81ab70c4ac2b18f18df8a2184c2f7b2f09`). A migração `20261115220000_historico_papeis.sql` foi aplicada somente na pilha fictícia local. Não publicar esta branch nem aplicar sua migração remota antes de revisão/autorização própria.
+O #16 foi autorizado e publicado em 15/11/2026. Candidato `5900004f4c987e4a94caefe0f8915abf7de78fe0`, base `cd0efb8`, squash merge **`464dfa3f80579dcc18dc739a5d0e6884f5ffa16f`**. Aplicada somente `20261115220000_historico_papeis.sql` após dry-run exclusivo, antes do merge/frontend.
+
+Deployment confirmado na API para `decifaz-hub.vercel.app`: **`dpl_4sNsxK4xhjjuYv76ZNKxfaeyBdY5`**, READY/production, no SHA de integração. [URL imutável](https://decifaz-be8da0ver-vinicius-ferreiras-projects-84ef88fb.vercel.app). [Interface main](https://github.com/viniciusfs-seno/decifaz-hub/actions/runs/43746375630) e [Supabase main](https://github.com/viniciusfs-seno/decifaz-hub/actions/runs/43746375478) aprovados.
+
+Tabela/RLS/trigger/grants verificados; helper privado e corpo igual ao testado após normalizar CRLF. Resumo de papéis, vínculos e revisões dos três membros inalterado. Zero eventos artificiais/backfill em produção. Chromium confirmou login público, sem enviar formulário ou criar sessão Auth real; mutações/eventos de teste foram exclusivamente locais/CI. Um problema de transporte binário no PowerShell impediu a primeira montagem da cópia operacional; corrigido antes de aplicar, sem reparar/reverter histórico remoto. Cópia válida em `.validation/rollout16-valid`.
+
+Convites é outra entrega, em rascunho, descrita em [convites.md](convites.md); sua migração e frontend não foram publicados. O roteiro abaixo registra os critérios do rollout do histórico e sua recuperação, sem autorizar publicar Convites.
 
 ## Registro e consistência
 
@@ -36,14 +42,14 @@ node scripts/transition-validation.mjs --reset-local-fixtures
 
 Nesta rodada local passaram tipagem, 18 testes unitários, builds padrão/compartilhado, quatro regressões SQL, sete cenários reais, cinco simulados e backup. A transição/recuperação e os checks do commit final são conferidos antes da entrega do PR. A primeira repetição da fixture identificou uma contagem global que incluía outros testes; a contagem foi corrigida para os dois espaços fictícios da própria fixture, sem reduzir as asserções de segurança.
 
-## Publicação futura e recuperação
+## Publicação e recuperação
 
-1. Após aprovação própria, reconferir head/base/checks e o histórico remoto (baseline esperado até `20261115210000`). Em cópia operacional, dry-run deve apontar somente `20261115220000_historico_papeis.sql`, sem seeds, include-all ou reaplicação de migrações anteriores.
+1. Reconferir autorização, head/base/checks e histórico remoto (antes do #16, até `20261115210000`; depois, `20261115220000`). No rollout autorizado, o dry-run apontou somente `20261115220000_historico_papeis.sql`, sem seeds/include-all.
 2. Aplicar a migração aditiva. Verificar tabela, trigger, grants/RLS e corpos das funções, sem alterar papéis/vínculos reais como teste. Regressões mutantes continuam locais/CI. Sem mudanças de frontend/Edge necessárias para começar a registrar os eventos.
 3. Validar operação administrativa quando houver mudança real aprovada e conferir seu evento; não criar mudanças artificiais em produção. Confirmar que não houve backfill e manter as restrições financeiras do #13 e o controle de revisão do #15.
 
-Migração falha: sua transação reverte e a versão #15 continua vigente. Depois de instalada, não remover ou editar os eventos para recuperar o app. Corrigir de forma aditiva, mantendo a auditoria; se o registro falhar, a gravação dos papéis deve falhar de forma atômica. Voltar frontend para #15 mantém a trigger ativa. Não desabilitar a trigger para contornar erro, zerar revisões ou reabrir JSONs. A branch tem deploy automático desabilitado em `vercel.json` e este PR não autoriza merge/deploy/migração remota.
+Migração falha: sua transação reverte e a versão #15 continua vigente. Depois de instalada, não remover ou editar os eventos para recuperar o app. Corrigir de forma aditiva, mantendo a auditoria; se o registro falhar, a gravação dos papéis deve falhar de forma atômica. Voltar frontend para #15 mantém a trigger ativa. Não desabilitar a trigger para contornar erro, zerar revisões ou reabrir JSONs. A antiga branch de histórico continua com deploy automático desabilitado em `vercel.json`; main publicou após merge conforme esperado.
 
 ## Próximo passo: Convites
 
-Fluxo administrativo por espaço, papéis completos explicitamente aprovados, aceite por conta verificada, expiração e revogação. Convite pendente não concede vínculo/acesso; aceitação deve ser idempotente e conferir destino, prazo e estado no servidor. Chave administrativa fica somente no servidor; evitar e-mail/token em logs e CI. Definir a política de reenvio, vínculo já existente e quem pode revogar antes da implementação. Nenhum convite ou envio de e-mail é feito nesta entrega.
+Implementado para revisão em [convites.md](convites.md): gestão administrativa, sete dias, aceite verificado/transacional/idempotente, expiração e revogação. Pendente não concede vínculo/acesso; vínculo existente preserva papéis. E-mail validado apenas no Mailpit local, sem envio real. Publicação/configuração de produção continuam para revisão posterior.

@@ -1,12 +1,13 @@
 import {useEffect,useState,type FormEvent} from 'react'
 import type {SupabaseClient} from '@supabase/supabase-js'
 import type {Role} from './access'
+import {InviteManager,type InviteMailer} from './invites'
 
 type Member={user_id:string;email:string;roles:Role[];revision:string}
 type SaveResult={status:'saved'|'conflict';roles:Role[];revision:string}|{status:'rejected'|'missing'}
 const options:[Role,string][]=[['admin','Administração'],['commercial','Comercial'],['operations','Operação'],['finance','Financeiro']]
 
-export function Team({client,workspace,onSaved}:{client:SupabaseClient;workspace:string;onSaved:()=>Promise<void>}){
+export function Team({client,workspace,onSaved,sendInviteLink}:{client:SupabaseClient;workspace:string;onSaved:()=>Promise<void>;sendInviteLink:InviteMailer}){
  const [members,setMembers]=useState<Member[]>([])
  const [loading,setLoading]=useState(true)
  const [error,setError]=useState('')
@@ -25,6 +26,7 @@ export function Team({client,workspace,onSaved}:{client:SupabaseClient;workspace
  },[client,workspace,revision])
  return <section className="team-members" aria-labelledby="team-heading">
   <h1 id="team-heading">Equipe</h1><p>Administração · Papéis no espaço atual</p>
+  <InviteManager client={client} workspace={workspace} sendLink={sendInviteLink}/>
   <p>Selecione todos os papéis de cada integrante. Ao salvar, o conjunto anterior será substituído. O espaço precisa manter pelo menos uma pessoa com Administração.</p>
   <button className="button compact" disabled={loading} onClick={()=>refresh(n=>n+1)}>Atualizar equipe</button>
   {loading&&<p role="status">Carregando equipe…</p>}

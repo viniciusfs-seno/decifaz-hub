@@ -114,3 +114,4 @@ button:focus-visible,a:focus-visible,select:focus-visible,input:focus-visible,te
 .pilot li{margin-block:8px;overflow-wrap:anywhere}
 .pilot fieldset,dialog fieldset{min-width:0;margin:0;padding:0;border:0}
 .team-members form{margin-block:1rem}.team-members h2{overflow-wrap:anywhere}.team-roles{display:flex;flex-wrap:wrap;gap:1rem;margin:1rem 0}.team-roles label{display:flex;align-items:center;gap:.5rem}.team-roles input{width:auto}
+.invite-mail{display:flex;gap:.5rem;align-items:center;margin-block:1rem}.invite-mail input[type=checkbox]{width:auto;flex:none}.invite-email{overflow-wrap:anywhere}
