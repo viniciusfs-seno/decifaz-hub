@@ -55,4 +55,4 @@ A regressão do Chromium com Supabase local percorre o cadastro do estabelecimen
 
 O cenário comercial também valida a prioridade após a triagem, a evolução do funil ao registrar o diagnóstico e a persistência da atividade de acompanhamento. A proposta do teste é aberta pela reunião realizada.
 
-Para continuar no editor, consulte o [guia de VS Code e prompt de continuidade](docs/vscode.md). A [matriz proposta de papéis](docs/papeis-e-permissoes.md) descreve os limites de acesso para a próxima fase.
+Para continuar no editor, consulte o [guia de VS Code e prompt de continuidade](docs/vscode.md). A [matriz de papéis](docs/papeis-e-permissoes.md) foi implementada em uma migração em validação local. A produção continua fora desta entrega. Consulte os [resultados e pendências](docs/validacao-papeis.md) antes de revisar a publicação.

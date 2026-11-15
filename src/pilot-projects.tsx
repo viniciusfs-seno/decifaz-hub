@@ -14,7 +14,7 @@ export type SharedProject={
 export type ProjectUpdate=Pick<SharedProject,'owner'|'due_on'|'status'|'deliverables'>
 
 export function loadProjects(client:SupabaseClient,workspace:string){
- return client.from('hub_projects').select('proposal_id,lead_id,owner,due_on,status,deliverables,approved,delivery')
+ return client.from('hub_projects_visible').select('proposal_id,lead_id,owner,due_on,status,deliverables,approved,delivery')
   .eq('workspace_id',workspace).order('due_on').order('proposal_id').returns<SharedProject[]>()
 }
 
@@ -28,7 +28,7 @@ export function SharedProjects({projects,leads,open}:{projects:SharedProject[];l
  </Page>
 }
 
-export function SharedProjectEditor({item,close,save,accept,children}:{item:SharedProject;close:()=>void;save:(values:ProjectUpdate)=>Promise<boolean>;accept:(values:DeliveryAcceptance)=>Promise<boolean>;children?:ReactNode}){
+export function SharedProjectEditor({item,close,save,accept,children,readOnly=false}:{item:SharedProject;close:()=>void;save:(values:ProjectUpdate)=>Promise<boolean>;accept:(values:DeliveryAcceptance)=>Promise<boolean>;children?:ReactNode;readOnly?:boolean}){
  const [draft,setDraft]=useState<ProjectUpdate>({owner:item.owner,due_on:item.due_on,status:item.status,deliverables:item.deliverables})
  const [saving,setSaving]=useState(false)
  const [error,setError]=useState('')
@@ -62,10 +62,10 @@ export function SharedProjectEditor({item,close,save,accept,children}:{item:Shar
   }finally{setSaving(false)}
  }
  return <Dialog title={approved.title} subtitle={'Proposta aprovada · v'+approved.version} onClose={close} wide>
-  <Form onClose={close} onSave={()=>void submit()} label={saving?'Salvando…':'Salvar projeto'} error={error}>
+  <fieldset disabled={readOnly}><Form onClose={close} onSave={()=>void submit()} label={saving?'Salvando…':'Salvar projeto'} error={error}>
    <h3>Escopo aprovado</h3><p className="details-line">{approved.scope}</p>
    {approved.services.length>0&&<p>{approved.services.join(' · ')}</p>}
-   <p>Implantação {money(approved.setup)} · Mensalidade {money(approved.monthly)}</p>
+   {approved.setup!==undefined&&<p>Implantação {money(approved.setup)} · Mensalidade {money(approved.monthly)}</p>}
    {approved.terms&&<p className="details-line">{approved.terms}</p>}
    <div className="fields">
     <Field label="Responsável" value={draft.owner} on={owner=>setDraft({...draft,owner})}/>
@@ -87,7 +87,7 @@ export function SharedProjectEditor({item,close,save,accept,children}:{item:Shar
     <button className="button primary" type="button" disabled={saving} onClick={()=>void confirm()}>Confirmar aceite da entrega</button>
    </>}
   </section>
-  {children}
+  </fieldset>{children}
  </Dialog>
 }
 
