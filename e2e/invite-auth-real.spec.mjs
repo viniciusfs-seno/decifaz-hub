@@ -96,6 +96,7 @@ test('Auth: retorno canônico conserva convite; cadastro direto verificado não 
   expect(new URL(invited.page.url()).searchParams.get('convite')===invitation.id).toBe(true)
   expect(await checked(service.from('hub_members').select('workspace_id').eq('user_id',invited.id))).toHaveLength(0)
   await invited.page.getByRole('button',{name:'Aceitar convite',exact:true}).click()
+  await expect(invited.page.getByRole('article',{name:'Convite de Homologação Auth fictícia'})).toContainText('Aceito')
   await expect(invited.page.getByText('Homologação Auth fictícia',{exact:true})).toBeVisible()
   expect(await checked(service.from('hub_members').select('workspace_id').eq('user_id',invited.id))).toHaveLength(1)
   const direct=await authRequest(randomUUID()+'@example.com',canonical+'/')
