@@ -17,7 +17,7 @@ async function client(page,context,f){
  return createClient(f.api,f.publicKey,{auth:{persistSession:false,autoRefreshToken:false},global:{headers:{Authorization:'Bearer '+token},fetch:(url,options)=>{const headers=new Headers(options.headers);headers.set('Cookie',cookie);return fetch(url,{...options,headers})}}})
 }
 const checked=async op=>{const {data,error}=await op;if(error)throw Error('Operação fictícia recusada: '+error.code);return data}
-async function capture(page,name,project){await mkdir('.validation/external-captures',{recursive:true});await page.screenshot({path:'.validation/external-captures/'+name+'-'+project+'.png',fullPage:true})}
+async function capture(page,name,project){await expect(page.getByText(/^Carregando/)).toHaveCount(0);await mkdir('.validation/external-captures',{recursive:true});await page.screenshot({path:'.validation/external-captures/'+name+'-'+project+'.png',fullPage:true})}
 
 test('HTTPS externo: Auth, duas sessões, navegação, apresentação e autorização',async({page,context,browser},info)=>{
  const anonymous=await browser.newContext();try{
@@ -31,7 +31,7 @@ test('HTTPS externo: Auth, duas sessões, navegação, apresentação e autoriza
  expect(await page.evaluate(()=>location.origin===new URL(document.baseURI).origin&&!location.hash.includes('access_token='))).toBe(true)
  const f=await(await context.request.get(origin+'/__review/fixtures')).json(),admin=await client(page,context,f)
  const noSession=await context.request.post(origin+'/__supabase/functions/v1/hub-workspaces',{data:{}});expect(noSession.status()).toBe(401)
- await capture(page,'dashboard',info.project.name)
+ await expect(page.getByRole('button',{name:'Organizar meu dia',exact:true})).toBeVisible();await capture(page,'dashboard',info.project.name)
  await page.getByRole('button',{name:'Organizar meu dia',exact:true}).click();await expect(page.getByRole('heading',{name:'Agenda operacional',exact:true})).toBeVisible();await expect(page.getByRole('button',{name:'Hoje',exact:true})).toHaveAttribute('aria-pressed','true')
  await page.getByRole('button',{name:'Limpar filtros da agenda',exact:true}).click();await capture(page,'agenda',info.project.name)
  await page.getByRole('button',{name:'Acompanhar implantação do cardápio',exact:true}).click()
