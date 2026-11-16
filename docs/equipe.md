@@ -57,3 +57,6 @@ Antes do frontend, falha de uma migração reverte sua própria transação; man
 
 - Convites: fluxo administrativo no servidor, escopo por espaço, conjunto explícito aprovado, expiração/revogação e idempotência. Associar somente a conta verificada ao aceitar; tratar separadamente Auth e banco, sem expor chave administrativa ou registrar e-mails/tokens no CI. Nenhum convite será enviado nesta entrega.
 - Histórico: implementado no servidor em [PR separado para revisão](historico-papeis.md), sem publicação. Cobre gravações legadas/revisadas, sem registrar conflitos/recusas como alterações efetivas.
+## Estado dos vínculos
+
+A proposta de desativação/reativação, ainda fora de produção, está em [desativacao-integrantes.md](desativacao-integrantes.md): confirmação por espaço, revisão compartilhada com papéis, proteção do último administrador ativo, histórico transacional e roteiro de publicação/recuperação.

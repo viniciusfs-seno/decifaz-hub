@@ -5,7 +5,8 @@
       "feat/papeis-recorte-mensal": false,
       "feat/administracao-equipe": false,
       "feat/historico-papeis": false,
-      "feat/convites-equipe": false
+      "feat/convites-equipe": false,
+      "feat/desativacao-integrantes": false
     }
   }
 }

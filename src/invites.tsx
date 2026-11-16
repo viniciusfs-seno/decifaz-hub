@@ -97,7 +97,7 @@ export function InviteInbox({client,onAccepted}:{client:SupabaseClient;onAccepte
    if(data.status==='accepted'){
     setNotice(data.outcome==='existing_member'?'Você já integra o espaço. Seus papéis foram preservados; mudanças devem ser feitas pela Administração em Equipe.':'Convite aceito. Seu acesso foi concedido.')
     await onAccepted(data.workspace_id)
-   }else setError(data.status==='issuer_unavailable'?'A Administração que concedeu este convite não está mais ativa. Solicite um novo convite.':'Convite indisponível. Confira o destinatário, a validade e se houve revogação.')
+   }else setError(data.status==='inactive_member'?'Seu vínculo está desativado. Solicite a reativação à Administração em Equipe. Este convite não restaura o acesso.':data.status==='issuer_unavailable'?'A Administração que concedeu este convite não está mais ativa. Solicite um novo convite.':'Convite indisponível. Confira o destinatário, a validade e se houve revogação.')
    refresh(n=>n+1)
   }catch{setError('Não foi possível concluir o aceite. Atualize os convites para conferir o resultado antes de tentar novamente.')}
   finally{setBusy(false)}

@@ -18,7 +18,7 @@ do $$ declare w uuid:='00000000-0000-4000-8000-000000001554'; begin
  if not exists(select 1 from public.hub_list_members(w) where user_id='00000000-0000-4000-8000-000000001552' and roles=array['finance','operations']) then raise exception 'Conjunto não persistido';end if;
  if (select revision from public.hub_list_members(w) where user_id='00000000-0000-4000-8000-000000001552')<>'1' then raise exception 'RPC legada não avançou revisão';end if;
  if (public.hub_update_member_roles(w,'00000000-0000-4000-8000-000000001552',array['commercial'],1)->>'status')<>'saved' then raise exception 'Gravação revisada negada';end if;
- if public.hub_update_member_roles(w,'00000000-0000-4000-8000-000000001552',array['finance'],1) <> '{"status":"conflict","roles":["commercial"],"revision":"2"}'::jsonb then raise exception 'Conflito não retornou conjunto vigente';end if;
+ if public.hub_update_member_roles(w,'00000000-0000-4000-8000-000000001552',array['finance'],1) <> '{"status":"conflict","roles":["commercial"],"revision":"2","active":true}'::jsonb then raise exception 'Conflito não retornou conjunto/estado vigente';end if;
  -- ABA: even changing back to the old set invalidates an older editor.
  if not public.hub_set_roles(w,'00000000-0000-4000-8000-000000001552',array['finance','operations']) then raise exception 'Compatibilidade legada perdida';end if;
  if (public.hub_update_member_roles(w,'00000000-0000-4000-8000-000000001552',array['commercial'],1)->>'status')<>'conflict' then raise exception 'ABA aceito';end if;
