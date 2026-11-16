@@ -61,7 +61,7 @@ create trigger hub_proposal_catalog before insert or update of record on public.
 create function hub_private.triage_catalog_guard() returns trigger language plpgsql security definer set search_path='' as $$
 declare label text; prior jsonb:='[]';begin
  if auth.uid() is null then return new;end if;
- if tg_op='UPDATE' then prior:=coalesce(old.record->'services','[]');end if;
+ if tg_op='UPDATE' then prior:=coalesce(old.record->'services','[]');else select record->'services' into prior from public.hub_triages where workspace_id=new.workspace_id and lead_id=new.lead_id;end if;
  for label in select jsonb_array_elements_text(coalesce(new.record->'services','[]')) loop
   if not (prior ? label) and not exists(select 1 from public.hub_solutions where workspace_id=new.workspace_id and name=label and active) then
    raise exception 'Selecione uma solução ativa do catálogo' using errcode='22023';end if;
