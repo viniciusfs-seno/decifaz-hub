@@ -14,6 +14,7 @@ export function ClientPresentation({lead,meeting,solutions,proposals,financial}:
  return <section className="card panel client-presentation"><h2>Visão para o cliente</h2><p>Escolha o conteúdo e abra uma janela limpa para apresentar. Notas internas, respostas, histórico e condições comerciais ficam fora dela.</p><div className="team-roles">{rows.map(s=><label key={s.id}><input type="checkbox" checked={chosen.includes(s.id)} onChange={e=>setChosen(e.target.checked?[...chosen,s.id]:chosen.filter(i=>i!==s.id))}/>{s.name}</label>)}</div>
   {financial&&<fieldset><legend>Valores opcionais · seleção explícita</legend>{quotes.map(p=><label className="checkline" key={p.id}><input type="checkbox" checked={prices.includes(p.id)} onChange={e=>setPrices(e.target.checked?[...prices,p.id]:prices.filter(id=>id!==p.id))}/>Mostrar valores de {p.title} · v{p.version}</label>)}</fieldset>}
   <button type="button" className="button primary" disabled={!chosen.length&&!prices.length} onClick={open}>Abrir visão do cliente</button>{error&&<p role="alert">{error}</p>}
+  <p className="muted">Na videochamada externa, use “Compartilhar tela” e escolha a janela “Decifaz · Apresentação”. Evite compartilhar a ficha interna. A prévia abaixo é local e não transmite para outros participantes pelo Hub.</p>
   <MeetingPresentation meetings={meeting?[meeting]:[]} leads={[lead]}/>
  </section>
 }

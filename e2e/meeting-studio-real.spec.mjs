@@ -32,5 +32,9 @@ test('Reunião: pauta persistida, roteiro, apresentação limpa, captura e cance
   await dialog.getByRole('button',{name:'Selecionar tela para prévia'}).click();await expect(dialog.getByRole('button',{name:'Encerrar prévia'})).toBeVisible()
   await dialog.getByRole('button',{name:'Encerrar prévia'}).click();expect(await page.evaluate(()=>window.captureStopped)).toBe(true)
   await page.evaluate(()=>window.captureDeny=true);await dialog.getByRole('button',{name:'Selecionar tela para prévia'}).click();await expect(dialog.getByRole('alert')).toContainText('captura não foi iniciada')
+  await dialog.getByRole('button',{name:'Fechar',exact:true}).click()
+  await page.evaluate(()=>Object.defineProperty(navigator.mediaDevices,'getDisplayMedia',{configurable:true,value:undefined}))
+  await page.getByRole('button',{name:'Editar reunião',exact:true}).click()
+  await expect(dialog.getByText('Este navegador ou endereço não permite captura de tela.',{exact:false})).toBeVisible()
  }finally{await f.cleanup()}
 })
