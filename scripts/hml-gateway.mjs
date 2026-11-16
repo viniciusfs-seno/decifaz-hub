@@ -16,7 +16,7 @@ export function createGateway({origin,password,root,fixture,publicKey,sha='test'
  const storageKey='sb-'+new URL(origin).hostname.split('.')[0]+'-auth-token'
  const allowed=/^\/(auth\/v1\/(?:token|otp|verify|user|logout|signup|settings|recover)(?:\?|$)|rest\/v1\/|functions\/v1\/hub-workspaces(?:\?|$))/
  const server=createServer(async(req,res)=>{
-  res.setHeader('Cache-Control','no-store');res.setHeader('X-Content-Type-Options','nosniff');res.setHeader('X-Frame-Options','DENY');res.setHeader('Referrer-Policy','no-referrer')
+  res.setHeader('Cache-Control','no-store');res.setHeader('X-Content-Type-Options','nosniff');res.setHeader('X-Frame-Options','DENY');res.setHeader('Referrer-Policy','strict-origin')
   res.setHeader('Permissions-Policy','display-capture=(self),camera=(),microphone=()')
   res.setHeader('Content-Security-Policy',"default-src 'self'; script-src 'self' 'unsafe-inline'; style-src 'self' 'unsafe-inline'; img-src 'self' data:; connect-src 'self'; object-src 'none'; base-uri 'self'; frame-ancestors 'none'")
   const send=(status,body,type='text/html; charset=utf-8')=>{res.statusCode=status;res.setHeader('Content-Type',type);res.end(body)}
@@ -93,8 +93,8 @@ if(process.argv[1]&&fileURLToPath(import.meta.url)===resolve(process.argv[1])){
  const root=resolve('.validation/hml-dist'),build=spawnSync('npx',['vite','build','--outDir',root],{env,encoding:'utf8',shell})
  if(build.status!==0)throw Error('Build de homologação recusado')
  const fixture=await commercialFixture({VITE_SUPABASE_URL:values.API_URL,VITE_SUPABASE_PUBLISHABLE_KEY:values.PUBLISHABLE_KEY,HUB_TEST_ADMIN_KEY:values.SECRET_KEY||values.SERVICE_ROLE_KEY})
- const foreign=await fixture.admin.from('hub_leads').insert({workspace_id:fixture.other,name:'Registro isolado fictício',segment:'Teste',city:'Fortaleza',stage:'Novo',profile:{}})
- if(foreign.error)throw Error('Falha na fixture de isolamento')
+ const foreign=await fixture.admin.from('hub_leads').insert({workspace_id:fixture.other,name:'Registro isolado fictício',segment:'Teste',city:'Fortaleza',stage:'Identificado',profile:{}})
+ if(foreign.error){await fixture.cleanup();throw Error('Falha na fixture de isolamento')}
  const sha=spawnSync('git',['rev-parse','HEAD'],{encoding:'utf8'}).stdout.trim(),expires=Date.now()+86400000
  const server=createGateway({origin,password,root,fixture,publicKey:values.PUBLISHABLE_KEY,sha,expires})
  await new Promise(r=>server.listen(4195,'127.0.0.1',r))

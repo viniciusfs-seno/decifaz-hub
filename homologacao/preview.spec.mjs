@@ -1,11 +1,12 @@
 import {test,expect} from '@playwright/test'
 import {createClient} from '@supabase/supabase-js'
 import {mkdir,writeFile} from 'node:fs/promises'
+import {weekStart} from '../src/management-data.ts'
 
 const origin=process.env.HUB_HML_PREVIEW_URL,password=process.env.HUB_HML_REVIEW_PASSWORD
 test.beforeEach(async({page})=>{
  if(!/^https:\/\/[a-z0-9-]+\.trycloudflare\.com$/.test(origin??'')||!password)throw Error('Prévia HTTPS protegida não configurada')
- await page.goto('/');await page.getByLabel('Senha de revisão').fill(password);await page.getByRole('button',{name:'Entrar na homologação'}).click()
+ await page.goto('/');await page.getByLabel('Senha de revisão').fill(password);await page.getByRole('button',{name:'Entrar na homologação'}).click();await expect(page.getByRole('heading',{name:'Escolha um perfil fictício'})).toBeVisible()
 })
 async function persona(page,name){await page.goto('/__review/persona/'+name);await expect(page.getByRole('navigation')).toBeVisible()}
 async function nav(page,name){const toggle=page.getByRole('button',{name:'Abrir navegação',exact:true});if(await toggle.isVisible())await toggle.click();await page.getByRole('navigation').getByRole('button',{name,exact:true}).click()}
@@ -13,7 +14,7 @@ async function client(page,context,f){
  const token=await page.evaluate(()=>Object.entries(localStorage).filter(([k])=>k.endsWith('-auth-token')).map(([,v])=>JSON.parse(v)).find(v=>v.access_token)?.access_token)
  if(!token)throw Error('Sessão fictícia ausente')
  const cookies=await context.cookies(origin),cookie=cookies.map(c=>c.name+'='+c.value).join('; ')
- return createClient(f.api,f.publicKey,{auth:{persistSession:false,autoRefreshToken:false},global:{headers:{Authorization:'Bearer '+token},fetch:(url,options)=>fetch(url,{...options,headers:{...options.headers,Cookie:cookie}})}})
+ return createClient(f.api,f.publicKey,{auth:{persistSession:false,autoRefreshToken:false},global:{headers:{Authorization:'Bearer '+token},fetch:(url,options)=>{const headers=new Headers(options.headers);headers.set('Cookie',cookie);return fetch(url,{...options,headers})}}})
 }
 const checked=async op=>{const {data,error}=await op;if(error)throw Error('Operação fictícia recusada: '+error.code);return data}
 async function capture(page,name,project){await mkdir('.validation/external-captures',{recursive:true});await page.screenshot({path:'.validation/external-captures/'+name+'-'+project+'.png',fullPage:true})}
@@ -25,13 +26,13 @@ test('HTTPS externo: Auth, duas sessões, navegação, apresentação e autoriza
  const health=await(await context.request.get(origin+'/__health')).json()
  if(process.env.HUB_HML_EXPECTED_SHA)expect(health.candidate).toBe(process.env.HUB_HML_EXPECTED_SHA)
  // The link/token never enters the test logs: the protected gateway performs the Mailpit redirect.
- await page.goto('/__review/auth-start/admin')
+ await page.goto('/__review/auth-start/'+(info.project.name==='webkit-celular'?'segunda':'admin'))
  await expect(page.getByRole('navigation')).toBeVisible()
  expect(await page.evaluate(()=>location.origin===new URL(document.baseURI).origin&&!location.hash.includes('access_token='))).toBe(true)
  const f=await(await context.request.get(origin+'/__review/fixtures')).json(),admin=await client(page,context,f)
- const noSession=await context.request.get(origin+'/__supabase/functions/v1/hub-workspaces');expect(noSession.status()).toBe(401)
+ const noSession=await context.request.post(origin+'/__supabase/functions/v1/hub-workspaces',{data:{}});expect(noSession.status()).toBe(401)
  await capture(page,'dashboard',info.project.name)
- await nav(page,'Agenda operacional');await capture(page,'agenda',info.project.name)
+ await page.getByRole('button',{name:'Organizar meu dia',exact:true}).click();await expect(page.getByRole('heading',{name:'Agenda operacional',exact:true})).toBeVisible();await capture(page,'agenda',info.project.name)
  await page.getByRole('button',{name:'Acompanhar implantação do cardápio',exact:true}).click()
  await page.getByRole('dialog').getByRole('button',{name:'Fechar',exact:true}).click()
  await nav(page,'Captação e CRM');await page.getByRole('button',{name:'Café Horizonte · fictício',exact:true}).click()
@@ -52,11 +53,11 @@ test('HTTPS externo: Auth, duas sessões, navegação, apresentação e autoriza
  await nav(page,'Catálogo de soluções');await capture(page,'catalogo',info.project.name)
  await nav(page,'Indicadores');const download=page.waitForEvent('download');await page.getByRole('button',{name:'Exportar indicadores CSV'}).click();let csv='';for await(const part of await(await download).createReadStream())csv+=part.toString();expect(csv).toContain('Conversão: denominador');await capture(page,'indicadores',info.project.name)
  await nav(page,'Revisão semanal');await capture(page,'fechamento',info.project.name)
- const theme=page.getByRole('button',{name:/tema escuro/i});if(await theme.isVisible())await theme.click();await capture(page,'tema',info.project.name)
+ const theme=page.getByRole('button',{name:'Ativar tema escuro',exact:true});await theme.click();await expect(page.locator('html')).toHaveAttribute('data-theme','dark');await capture(page,'tema',info.project.name)
  expect(await checked(admin.from('hub_leads').select('id').eq('workspace_id',f.other))).toEqual([])
  const secondContext=await browser.newContext({viewport:info.project.use.viewport}),second=await secondContext.newPage()
  try{
-  await second.goto(origin);await second.getByLabel('Senha de revisão').fill(password);await second.getByRole('button',{name:'Entrar na homologação'}).click();await persona(second,'comercial')
+  await second.goto(origin);await second.getByLabel('Senha de revisão').fill(password);await second.getByRole('button',{name:'Entrar na homologação'}).click();await expect(second.getByRole('heading',{name:'Escolha um perfil fictício'})).toBeVisible();await persona(second,'comercial')
   const restricted=await client(second,secondContext,f)
   expect((await restricted.from('hub_proposals').select('record')).error?.code).toBe('42501')
   expect((await restricted.from('hub_projects').select('approved')).error?.code).toBe('42501')
@@ -86,9 +87,9 @@ test('HTTPS externo: jornada comercial completa persistida até fechamento',asyn
  await persona(page,'admin')
  const f=await(await context.request.get(origin+'/__review/fixtures')).json(),workspace=f.workspace
  const secondContext=await browser.newContext(),secondPage=await secondContext.newPage()
- await secondPage.goto(origin);await secondPage.getByLabel('Senha de revisão').fill(password);await secondPage.getByRole('button',{name:'Entrar na homologação'}).click();await persona(secondPage,'segunda')
+ await secondPage.goto(origin);await secondPage.getByLabel('Senha de revisão').fill(password);await secondPage.getByRole('button',{name:'Entrar na homologação'}).click();await expect(secondPage.getByRole('heading',{name:'Escolha um perfil fictício'})).toBeVisible();await persona(secondPage,'segunda')
  const second={client:await client(secondPage,secondContext,f)}
- const stamp=Date.now().toString(36),solutionTitle='Automação consultiva '+stamp,leadTitle='Cliente fictício '+stamp,projectTitle='Projeto fictício '+stamp
+ const stamp=Date.now().toString(36),solutionTitle='Automação consultiva '+stamp,leadTitle='Cliente fictício '+stamp,projectTitle='Projeto fictício '+stamp,followupTitle='Apresentar proposta '+stamp
  try{
 
  await page.getByRole('navigation').getByRole('button',{name:'Catálogo de soluções',exact:true}).click()
@@ -133,7 +134,7 @@ test('HTTPS externo: jornada comercial completa persistida até fechamento',asyn
  await quote.getByLabel(/^Participantes/).fill('Equipe e cliente')
  await quote.getByLabel(/^Situação/).selectOption('Realizada')
  await quote.getByLabel(/^Resumo do diagnóstico/).fill('Diagnóstico fictício de automação')
- await quote.getByLabel('Próxima ação',{exact:true}).fill('Apresentar proposta')
+ await quote.getByLabel('Próxima ação',{exact:true}).fill(followupTitle)
  await quote.getByLabel('Responsável pelo acompanhamento').fill('Equipe E2E')
  await quote.getByLabel('Prazo do acompanhamento').fill(today)
  await quote.getByLabel('Criar atividade de acompanhamento ao salvar').check()
@@ -142,8 +143,8 @@ test('HTTPS externo: jornada comercial completa persistida até fechamento',asyn
  await expect(quote).toHaveCount(0)
  await expect(row).toContainText('Diagnóstico realizado')
  const followup=await checked(second.client.from('hub_activities').select('title,owner,due_on')
-  .eq('workspace_id',workspace).eq('title','Apresentar proposta').single())
- expect(followup).toEqual({title:'Apresentar proposta',owner:'Equipe E2E',due_on:today})
+  .eq('workspace_id',workspace).eq('title',followupTitle).single())
+ expect(followup).toEqual({title:followupTitle,owner:'Equipe E2E',due_on:today})
  await page.getByRole('button',{name:'Criar proposta',exact:true}).click()
  await expect(quote.getByText('Diagnóstico fictício de automação',{exact:true})).toBeVisible()
  await quote.getByLabel(/^Título/).fill(projectTitle)
@@ -165,7 +166,7 @@ test('HTTPS externo: jornada comercial completa persistida até fechamento',asyn
  await quote.getByLabel('Escopo e entregáveis').fill('Escopo de teste\nMapear atendimento\nAjustes versão 2')
  await quote.getByRole('button',{name:'Salvar rascunho',exact:true}).click()
  await expect(quote).toHaveCount(0)
- const versions=await checked(second.client.from('hub_proposals_visible').select('version,record').eq('workspace_id',workspace).eq('record->>title',projectTitle).order('version'))
+ const versions=await checked(second.client.from('hub_proposals_visible').select('id,version,record').eq('workspace_id',workspace).eq('record->>title',projectTitle).order('version'))
  expect(versions.map(v=>v.version)).toEqual([1,2])
  expect(versions[0].record.scope).not.toContain('Ajustes versão 2')
  expect(versions[1].record.catalog_snapshot[0].name).toBe(solutionTitle)
@@ -185,7 +186,7 @@ test('HTTPS externo: jornada comercial completa persistida até fechamento',asyn
  await quote.getByRole('button',{name:'Abrir projeto a partir do aceite'}).click()
  await expect(page.getByRole('dialog').getByRole('button',{name:'Salvar projeto',exact:true})).toBeVisible()
  await expect(page.getByRole('dialog').getByRole('paragraph').filter({hasText:/Ajustes versão 2/})).toBeVisible()
- const saved=await checked(second.client.from('hub_projects').select('proposal_id,lead_id').eq('workspace_id',workspace).eq('approved->>title',projectTitle).single())
+ const saved=await checked(second.client.from('hub_projects').select('proposal_id,lead_id').eq('workspace_id',workspace).eq('proposal_id',versions[1].id).single())
  const proposal=saved.proposal_id
  const lead=await checked(second.client.from('hub_leads').select('stage').eq('workspace_id',workspace).eq('id',saved.lead_id).single())
  expect(lead.stage).toBe('Ganho')
@@ -208,6 +209,7 @@ test('HTTPS externo: jornada comercial completa persistida até fechamento',asyn
  await page.getByRole('button',{name:'Adicionar ao plano do fechamento'}).click()
  await page.getByRole('button',{name:'Salvar fechamento semanal'}).click()
  await expect(page.getByText('Fechamento salvo com suas ações na mesma transação.')).toBeVisible()
- expect(await checked(second.client.from('hub_weekly_closures').select('actions').eq('workspace_id',workspace))).toHaveLength(1)
+ const closure=await checked(second.client.from('hub_weekly_closures').select('actions').eq('workspace_id',workspace).eq('week_start',weekStart(today)).single())
+ expect(closure.actions.some(a=>a.lead_id===saved.lead_id&&a.title==='Retorno do projeto da jornada')).toBe(true)
  }finally{await secondContext.close()}
 })

@@ -51,14 +51,15 @@ try{
  for(const [i,version] of versions.entries()){
   const phase=join(root,'phase-'+version),dir=join(phase,'supabase');mkdirSync(join(dir,'migrations'),{recursive:true});copyFileSync('supabase/config.toml',join(dir,'config.toml'))
   for(const file of files.filter(file=>file.slice(0,14)<=version))copyFileSync(join('supabase/migrations',file),join(dir,'migrations',file))
-  const dry=cli(['db','push','--local','--skip-vault','--dry-run','--yes','--workdir',phase])
-  const report=dry.split(/\r?\n/).flatMap(l=>{try{return[JSON.parse(l)]}catch{return[]}}).find(o=>o.migrations)
+  const dry=cli(['db','push','--local','--skip-vault','--dry-run','--yes','--workdir',phase,'--output-format','stream-json'])
+  const report=dry.split(/\r?\n/).flatMap(l=>{try{const o=JSON.parse(l);return[o.type==='result'?o.data:o]}catch{return[]}}).find(o=>o.migrations)
   if(report?.migrations.length!==1||!report.migrations[0].startsWith(version))throw Error('Dry-run não contém somente '+version)
   cli(['db','push','--local','--skip-vault','--yes','--workdir',phase])
-  const previous=[evidence.baseline,'feat/hub-operacional','feat/reuniao-apresentacao'][i]
+  const operational='44afc1d7aa54228b3402f78159d22e1150cc8f55',catalog='137d1432a1549bde5686038830851738b57c4e44',meeting='bd4265474c62162d41f515cca7544588bb255f7c'
+  const previous=[evidence.baseline,operational,meeting][i]
   await verify(previous,'anterior-apos-'+version)
-  if(i===0)await verify('feat/hub-operacional','operacional')
-  if(i===1){await verify('feat/catalogo-compartilhado','catalogo');await verify('feat/reuniao-apresentacao','reuniao-catalogo')}
+  if(i===0)await verify(operational,'operacional')
+  if(i===1){await verify(catalog,'catalogo');await verify(meeting,'reuniao-catalogo')}
   if(i===2)await verify(candidate,'integrado')
   if(digest()!==before)throw Error('Migração alterou registros anteriores')
   evidence.phases.push({version,onlyPendingMigration:true,previousFrontend:previous,preserved:true,sha256:createHash('sha256').update(readFileSync(join('supabase/migrations',files.find(f=>f.startsWith(version))))).digest('hex')})
