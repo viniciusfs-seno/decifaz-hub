@@ -27,7 +27,7 @@ test('Equipe: duas sessões serializam revisão; duas telas exigem revisão expl
   await page.addInitScript(session=>localStorage.setItem('sb-127-auth-token',JSON.stringify(session)),person.session)
   await page.goto('http://127.0.0.1:4181')
   await page.getByRole('button',{name:'Equipe',exact:true}).click()
-  await expect(page.getByRole('form')).toHaveCount(3)
+  await expect(page.getByRole('form',{name:/^Papéis de /})).toHaveCount(3)
   return page
  }
  try{

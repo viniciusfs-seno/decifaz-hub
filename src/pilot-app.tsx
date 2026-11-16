@@ -1,6 +1,7 @@
 import {can,hasRole,type Role} from './access'
 import {Knowledge} from './secondary'
 import {Team} from './team'
+import {InviteInbox} from './invites'
 import {CommercialCenter} from './commercial-center'
 import {useEffect,useState,type FormEvent} from 'react'
 import {createClient,type Session} from '@supabase/supabase-js'
@@ -17,6 +18,11 @@ import {fullLead,fullTriage,leadColumns,loadMeetings,loadMetrics,loadProposals,s
 const url=import.meta.env.VITE_SUPABASE_URL
 const key=import.meta.env.VITE_SUPABASE_PUBLISHABLE_KEY
 const client=url&&key?.startsWith('sb_publishable_')?createClient(url,key):null
+const inviteMailClient=url&&key?.startsWith('sb_publishable_')?createClient(url,key,{auth:{persistSession:false,autoRefreshToken:false,detectSessionInUrl:false,storageKey:'decifaz-invite-mail'}}):null
+async function sendInviteLink(email:string,id:string){
+ const {error}=await inviteMailClient!.auth.signInWithOtp({email,options:{shouldCreateUser:true,emailRedirectTo:new URL('/?convite='+id,location.origin).href}})
+ if(error)throw Error('Envio indisponível')
+}
 
 type Workspace={id:string;name:string;role:Role;roles?:Role[]}
 type Lead=PilotLead
@@ -30,6 +36,7 @@ export default function PilotApp(){
  const [email,setEmail]=useState('')
  const [sent,setSent]=useState(false)
  const [busy,setBusy]=useState(false)
+ const [invited,setInvited]=useState(()=>new URLSearchParams(location.search).has('convite'))
  useEffect(()=>{
   if(!client)return
   const {data}=client.auth.onAuthStateChange((_event,next)=>setSession(next))
@@ -39,7 +46,9 @@ export default function PilotApp(){
   event.preventDefault()
   setBusy(true)
   setError('')
-  const {error}=await client!.auth.signInWithOtp({email:email.trim(),options:{shouldCreateUser:false,emailRedirectTo:new URL('/',location.origin).href}})
+  const destination=new URL('/',location.origin)
+  if(invited&&new URLSearchParams(location.search).has('convite'))destination.search=location.search
+  const {error}=await client!.auth.signInWithOtp({email:email.trim(),options:{shouldCreateUser:invited,emailRedirectTo:destination.href}})
   setSent(!error)
   if(error)setError('Não foi possível solicitar o link. Confira o endereço e tente novamente.')
   setBusy(false)
@@ -48,17 +57,17 @@ export default function PilotApp(){
  if(session===undefined)return <main><p role="status">Carregando sessão…</p></main>
  if(session)return <SharedCrm key={session.user.id}/>
  return <main className="pilot-login"><img className="brand-logo" src={import.meta.env.BASE_URL+'identidade/assinatura-horizontal-escuro-selo.svg'} alt="Decifaz"/><h1>Decifaz Hub</h1><p>Entre com o e-mail autorizado para acessar o CRM compartilhado.</p>
-  <form className="card panel pilot-fields" onSubmit={signIn}><label>E-mail<input required type="email" autoComplete="email" value={email} onChange={e=>setEmail(e.target.value)}/></label><button className="button primary" disabled={busy}>Enviar link de acesso</button></form>
+  <form className="card panel pilot-fields" onSubmit={signIn}><label>E-mail<input required type="email" autoComplete="email" value={email} onChange={e=>setEmail(e.target.value)}/></label><label className="invite-mail"><input type="checkbox" checked={invited} onChange={e=>setInvited(e.target.checked)}/>Recebi um convite</label><button className="button primary" disabled={busy}>Enviar link de acesso</button></form>
   {sent&&<p role="status">Confira seu e-mail para entrar.</p>}{error&&<p role="alert">{error}</p>}
  </main>
 }
 
 const sections=[['dashboard','Dashboard',LayoutDashboard],['agenda','Agenda operacional',CalendarDays],['central','Central comercial',ListTodo],['conhecimento','Base de conhecimento',BookOpen],['crm','Captação e CRM',Users],['triagem','Triagem comercial',ClipboardList],['propostas','Propostas comerciais',FileCheck2],['projetos','Projetos e entregas',FolderKanban],['financeiro','Financeiro',Wallet]] as const
-type Section=typeof sections[number][0]|'equipe'
+type Section=typeof sections[number][0]|'equipe'|'convites'
 
 function SharedCrm(){
  const [reportMonth,setReportMonth]=useState(day().slice(0,7))
- const [page,setPage]=useState<Section>('dashboard')
+ const [page,setPage]=useState<Section>(()=>new URLSearchParams(location.search).has('convite')?'convites':'dashboard')
  const [menu,setMenu]=useState(false)
  const [dark,setDark]=useState(()=>{try{return localStorage.getItem('decifaz-theme')==='dark'}catch{return false}})
  const [showForm,setShowForm]=useState(false)
@@ -74,14 +83,15 @@ function SharedCrm(){
   window.scrollTo(0,0)
  }
  const [spaces,setSpaces]=useState<Workspace[]>([])
- async function refreshMemberships(){
+ async function refreshMemberships(preferred?:string){
   const {data,error}=await client!.functions.invoke<{workspaces:Workspace[]}>('hub-workspaces',{body:{}})
-  if(error||!data?.workspaces.length){setSpaces([]);setError('Papéis salvos, mas seu acesso não pôde ser atualizado. Recarregue a página.');throw Error('Não foi possível atualizar seu acesso.')}
+  if(error||!data?.workspaces.length){setSpaces([]);setError(preferred?'Convite aceito, mas seu acesso não pôde ser atualizado. Recarregue a página.':'Papéis salvos, mas seu acesso não pôde ser atualizado. Recarregue a página.');throw Error('Não foi possível atualizar seu acesso.')}
   setSpaces(previous=>data.workspaces.map(space=>{
    const current=previous.find(item=>item.id===space.id)
    return current&&current.name===space.name&&current.role===space.role&&JSON.stringify(current.roles)===JSON.stringify(space.roles)?current:space
   }))
-  setNotice('Papéis salvos. Seu acesso foi atualizado.')
+  if(preferred){setWorkspace(preferred);setError('');setNotice('Acesso atualizado. Alterações de papéis existentes devem ser feitas pela Administração em Equipe.');const clean=new URL(location.href);clean.searchParams.delete('convite');history.replaceState(null,'',clean.href)}
+  else setNotice('Papéis salvos. Seu acesso foi atualizado.')
  }
  const [workspace,setWorkspace]=useState('')
  const membership=spaces.find(space=>space.id===workspace)
@@ -118,7 +128,8 @@ function SharedCrm(){
   let current=true
   void client!.functions.invoke<{workspaces:Workspace[]}>('hub-workspaces',{body:{}}).then(({data,error})=>{
    if(!current)return
-   if(error||!data?.workspaces.length){setError(error?.context?.status===403?'Esta conta ainda não faz parte do espaço de trabalho.':'Não foi possível acessar o CRM compartilhado.');return}
+   if(error?.context?.status===403){setSpaces([]);setWorkspace('');setPage('convites');setReady(true);return}
+   if(error||!data?.workspaces.length){setError('Não foi possível acessar o CRM compartilhado.');return}
    setSpaces(data.workspaces)
    setWorkspace(data.workspaces[0].id)
   })
@@ -214,13 +225,13 @@ function SharedCrm(){
  const commercialData:Data={version:1,leads:leads.map(fullLead),triages:triages.map(fullTriage),meetings:proposalMeetings,activities:[],proposals,projects:[],finance:[],team:[...new Set(leads.map(item=>item.profile.owner).filter((owner):owner is string=>Boolean(owner)))]}
  const meetingContext={...commercialData,leads:lead?[lead]:[],team:[]}
  const activeProject=projects.find(item=>item.proposal_id===projectId)
- const pageLabel=page==='equipe'?'Administração / Equipe':sections.find(([id])=>id===page)?.[1]
+ const pageLabel=page==='convites'?'Meus convites':page==='equipe'?'Administração / Equipe':sections.find(([id])=>id===page)?.[1]
  const signOut=()=>void client!.auth.signOut().then(({error})=>{if(error)setError('Não foi possível sair. Tente novamente.')})
  return <div className="app">
   {menu&&<button className="mobile-scrim" aria-label="Fechar navegação" onClick={()=>setMenu(false)}/>}
   <aside className={'sidebar '+(menu?'open':'')}>
-   <button className="brand" onClick={()=>go('dashboard')}><img className="brand-logo" src={import.meta.env.BASE_URL+'identidade/assinatura-horizontal-escuro-selo.svg'} alt="Decifaz"/><small>Hub · Portal interno</small></button>
-   <nav aria-label="Navegação principal"><div className="nav-group"><h2>Comercial</h2>{sections.filter(([id])=>id!=='financeiro'||can(role,'finance')).map(([id,label,Icon])=><button key={id} aria-current={page===id?'page':undefined} onClick={()=>go(id)}><Icon size={17}/><span>{label}</span></button>)}</div>{administrator&&<div className="nav-group"><h2>Administração</h2><button aria-current={page==='equipe'?'page':undefined} onClick={()=>go('equipe')}><Users size={17}/><span>Equipe</span></button></div>}</nav>
+   <button className="brand" onClick={()=>go(workspace?'dashboard':'convites')}><img className="brand-logo" src={import.meta.env.BASE_URL+'identidade/assinatura-horizontal-escuro-selo.svg'} alt="Decifaz"/><small>Hub · Portal interno</small></button>
+   <nav aria-label="Navegação principal">{workspace&&<div className="nav-group"><h2>Comercial</h2>{sections.filter(([id])=>id!=='financeiro'||can(role,'finance')).map(([id,label,Icon])=><button key={id} aria-current={page===id?'page':undefined} onClick={()=>go(id)}><Icon size={17}/><span>{label}</span></button>)}</div>}{administrator&&<div className="nav-group"><h2>Administração</h2><button aria-current={page==='equipe'?'page':undefined} onClick={()=>go('equipe')}><Users size={17}/><span>Equipe</span></button></div>}<div className="nav-group"><h2>Acesso</h2><button aria-current={page==='convites'?'page':undefined} onClick={()=>go('convites')}><Users size={17}/><span>Meus convites</span></button></div></nav>
   </aside>
   <div className="workspace"><header className="topbar">
    <div className="crumb"><button className="icon mobile-menu" aria-label="Abrir navegação" onClick={()=>setMenu(!menu)}><Menu size={21}/></button><span>Decifaz Hub</span><span className="slash">/</span><b>{pageLabel}</b></div>
@@ -232,8 +243,9 @@ function SharedCrm(){
   {moduleErrors.map(label=><p role="alert" key={label}>{label}: não foi possível carregar. Os demais módulos continuam disponíveis.</p>)}
   {notice&&<p role="status">{notice}</p>}
   {!ready&&!error&&<p role="status">Carregando o CRM…</p>}
-  {ready&&<>
-   {page==='equipe'&&(administrator?<Team key={workspace} client={client!} workspace={workspace} onSaved={refreshMemberships}/>:<p role="alert">Seu papel não permite gerir a equipe deste espaço.</p>)}
+  {page==='convites'&&<InviteInbox client={client!} onAccepted={refreshMemberships}/>}
+  {ready&&workspace&&<>
+   {page==='equipe'&&(administrator?<Team key={workspace} client={client!} workspace={workspace} onSaved={refreshMemberships} sendInviteLink={sendInviteLink}/>:<p role="alert">Seu papel não permite gerir a equipe deste espaço.</p>)}
    {spaces.length>1&&<label>Espaço de trabalho<select disabled={busy} value={workspace} onChange={e=>{setReady(false);setError('');setLeads([]);setProjectId('');setWorkspace(e.target.value);select()}}>{spaces.map(space=><option key={space.id} value={space.id}>{space.name}</option>)}</select></label>}
    {page==='dashboard'&&metrics&&<PilotDashboard metrics={metrics} finance={finance} proposals={proposals} month={reportMonth} setMonth={setReportMonth} openFinance={()=>go('financeiro')} leads={commercialData.leads} projects={projects}/>}
    {page==='central'&&<CommercialCenter key={workspace} client={client!} workspace={workspace} revision={revision}
