@@ -19,4 +19,11 @@ do $$ declare w uuid:='00000000-0000-4000-8000-000000004010';start_on date:=date
  begin insert into public.hub_weekly_closures(workspace_id,week_start,revision,summary,decisions,actions,actor_id) values(w,start_on-7,1,'Direto','','[]',auth.uid());raise exception 'Escrita direta aceita';exception when insufficient_privilege then null;end;
  if has_function_privilege('anon','public.hub_close_week(uuid,date,bigint,text,text,jsonb)','execute') then raise exception 'Anon executa fechamento';end if;
 end $$;
+reset role;
+insert into public.hub_activities(workspace_id,id,lead_id,title) values('00000000-0000-4000-8000-000000004010','00000000-0000-4000-8000-000000004030','00000000-0000-4000-8000-000000004020','Atividade sem responsável ou prazo');
+set local role authenticated;
+do $$ declare w uuid:='00000000-0000-4000-8000-000000004010';begin
+ begin perform public.hub_close_week(w,date_trunc('week',now() at time zone 'America/Fortaleza')::date,1,'Plano incompleto','','[{"activity_id":"00000000-0000-4000-8000-000000004030"}]');raise exception 'Fechou com ação incompleta';exception when invalid_parameter_value then null;end;
+ if (select count(*) from public.hub_weekly_closure_history where workspace_id=w)<>1 then raise exception 'Ação incompleta criou revisão';end if;
+end $$;
 rollback;

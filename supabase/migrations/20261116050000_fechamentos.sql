@@ -30,6 +30,7 @@ declare current_row public.hub_weekly_closures%rowtype; a jsonb; aid uuid; actua
   select jsonb_build_object('id',id,'title',title,'owner',owner,'due',due_on,'status',status,'lead_id',lead_id,'project_id',project_proposal_id)
    into actual from public.hub_activities where workspace_id=w and id=aid;
   if actual is null then raise exception 'Atividade fora do espaço' using errcode='42501';end if;
+  if nullif(btrim(actual->>'owner'),'') is null or actual->>'due' is null then raise exception 'Defina responsável e prazo da atividade antes de incluí-la' using errcode='22023';end if;
   if not exists(select 1 from jsonb_array_elements(snapshot) x where x->>'id'=aid::text) then snapshot:=snapshot||jsonb_build_array(actual);end if;
  end loop;
  insert into public.hub_weekly_closures(workspace_id,week_start,revision,summary,decisions,actions,actor_id)
