@@ -1,6 +1,25 @@
 import {test,expect} from '@playwright/test'
 import {operationalFixture,checked} from './helpers/operational-fixture.mjs'
 import {weekStart} from '../src/management-data.ts'
+
+test('Fechamento: permite retirar ação selecionada que perdeu responsável',async({page})=>{
+ test.skip(process.env.HUB_REAL_E2E!=='1','Requer Supabase local.')
+ const f=await operationalFixture()
+ try{
+  const [activity]=await checked(f.owner.client.from('hub_activities').select('id').eq('workspace_id',f.workspace).eq('title','Enviar diagnóstico revisado'))
+  await checked(f.owner.client.rpc('hub_close_week',{w:f.workspace,start_on:weekStart(f.today),expected_revision:0,summary_text:'Revisão fictícia',decision_text:'',planned:[{activity_id:activity.id}]}))
+  await checked(f.admin.from('hub_activities').update({owner:''}).eq('id',activity.id))
+  await page.addInitScript(s=>localStorage.setItem('sb-127-auth-token',JSON.stringify(s)),f.owner.session)
+  await page.goto('/');await page.getByRole('navigation').getByRole('button',{name:'Revisão semanal',exact:true}).click()
+  await page.getByText('Incluir atividades existentes no fechamento',{exact:true}).click()
+  const selected=page.getByLabel(/Enviar diagnóstico revisado · Sem responsável/)
+  await expect(selected).toBeChecked();await expect(selected).toBeEnabled();await selected.uncheck();await expect(selected).toBeDisabled()
+  await page.getByRole('button',{name:'Salvar fechamento semanal'}).click()
+  await expect(page.getByText('Fechamento salvo com suas ações na mesma transação.')).toBeVisible()
+  const closure=await checked(f.owner.client.from('hub_weekly_closures').select('actions').eq('workspace_id',f.workspace).single())
+  expect(closure.actions).toEqual([])
+ }finally{await f.cleanup()}
+})
 test('Gerencial: período/CSV, fechamento concorrente, ações atômicas, histórico e autorização',async({page,browser})=>{
  test.skip(process.env.HUB_REAL_E2E!=='1','Requer Supabase local.');test.setTimeout(90000)
  const f=await operationalFixture(),context=await browser.newContext(),other=await context.newPage()
