@@ -60,7 +60,22 @@ A prévia exige a migração local atualizada e fica em `http://127.0.0.1:4190/_
 
 Cobertura nova: virada UTC/Fortaleza, limites dos sete dias, filtros/vazio e deduplicação; revisão em duas telas e chamadas concorrentes, ação persistida com vínculos derivados; atualização do dashboard e agenda em outra sessão; JSON financeiro negado; espaço externo negado; sessão anterior à desativação sem acesso e preservação do outro espaço. As regressões existentes cobrem cadastro → triagem → reunião → proposta → aceite explícito → projeto → entrega → pós-venda, preços concorrentes, último admin, auditoria e convites antigos.
 
-Resultados e SHA da validação estão no PR vinculado a esta branch, com checks associados ao commit exato. Ambos os workflows continuam obrigatórios para promover o rascunho a revisão.
+Código validado: `36a376997be9241b24d4071ab69084c992fc9429`. A revisão seguinte atualiza o teste da Central para abrir o painel de dados básicos antes de conferir seus campos; não altera o código do produto. O SHA final e seus dois checks ficam registrados no [PR #19](https://github.com/viniciusfs-seno/decifaz-hub/pull/19), sem confundir evidência de um commit anterior com aprovação do head.
+
+| Verificação local | Resultado |
+|---|---|
+| Tipagem | Aprovada |
+| Testes unitários | 20/20 |
+| Builds demo e compartilhado | Aprovados; avisos já existentes de `use client` do Lucide |
+| SQL com fixtures revertidas | 7 arquivos aprovados |
+| Playwright com Supabase real local | 14/14 |
+| Playwright de interface simulada | 5/5, incluindo o teste atualizado da ficha expansível |
+| Playwright de backup da demo | 1/1 |
+| Transição/recuperação dos papéis | 1/1; pilha restaurada com todas as migrações |
+| Migração de vínculos anteriores ao #18 | Dois vínculos e três eventos preservados, sem mudança de papéis/revisões/atores/horários |
+| Capturas | 13 geradas e inspecionadas, com fixtures iguais nas duas versões |
+
+O primeiro CI de interface apontou apenas o seletor antigo `Editar estabelecimento`; o teste foi atualizado para verificar a jornada, abrir `Editar dados do estabelecimento` e conferir o nome, sem remover a verificação de navegação. Os [checks do PR](https://github.com/viniciusfs-seno/decifaz-hub/pull/19/checks) distinguem essa execução do head corrigido. Ambos os workflows continuam obrigatórios para promover o rascunho a revisão.
 
 ## Capturas comparativas
 
