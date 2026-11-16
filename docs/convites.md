@@ -101,6 +101,12 @@ Configuração reconferida por leitura: SMTP próprio ativo, host/remetente/usu�
 
 Os três vínculos reais e suas revisões continuam com o mesmo digest agregado anterior à homologação, sem eventos artificiais. A publicação pode seguir o roteiro autorizado após conferir os checks do head final. Não atribuir papéis à conta de teste como efeito da publicação; as provas mutantes de convite/aceite permanecem locais/CI. A sequência completa (convite → confirmação → aceite explícito → vínculo + evento únicos) está coberta pelos testes fictícios descritos acima, inclusive o retorno com parâmetro no hostname canônico simulado.
 
+### Revalidação do candidato e fuso dos testes
+
+O workflow [43777576650](https://github.com/viniciusfs-seno/decifaz-hub/actions/runs/43777576650), do complemento documental `e55e742`, falhou em `shared-real.spec.mjs:88` ao registrar envio de proposta. Reprodução local com navegador em UTC produziu a mesma falha: entre 00h e 03h UTC, o formulário assumia o dia seguinte ao dia comercial que o SQL valida em `America/Fortaleza`. A mensagem visível recusava a data, corretamente segundo a regra do servidor. As cinco regressões SQL e os testes de Convites passaram nessa execução.
+
+O Playwright agora declara `timezoneId: 'America/Fortaleza'`, alinhando o ambiente da jornada à referência comercial já usada pelas fixtures e pelo banco. A asserção original, as regras SQL e o código do produto foram preservados; não foram adicionados retry ou espera para esconder a falha. Isso fixa o ambiente dos testes, não muda os valores padrão de datas para navegadores de usuários em outros fusos. Fora do fuso comercial, a escolha de data precisa respeitar a regra do servidor; eventual unificação dos padrões do produto deve ser tratada separadamente. O head final e seus checks ficam no PR.
+
 ## Operação de convites após a ativação
 
 1. **Criar:** Administração → Equipe → Novo convite; informar e-mail, selecionar um ou mais papéis e escolher se solicita link de acesso. Criar convite mantém Pendente até o aceite verificado. Conferir papéis antes de enviar; para mudar um pendente, revogar e emitir outro.
