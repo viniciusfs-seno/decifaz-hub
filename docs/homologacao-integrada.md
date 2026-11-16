@@ -63,6 +63,18 @@ Depois do merge de cada base, retarget do próximo PR para `main`. Se o merge pr
 
 Após cada integração autorizada: esperar Vercel terminar, conferir deployment/SHA no domínio principal e checks autenticados; não reutilizar evidência da prévia como prova do deployment de produção.
 
+### Atualização dos dependentes após squash
+
+Executar em worktree novo, preservando o checkout de trabalho e uma referência local/remota do head antigo. A sequência abaixo é um roteiro para uma futura autorização, não foi executada em produção:
+
+1. Antes do merge #19, guardar `44afc1d` e o head vigente de #20; conferir os cinco commits exclusivos de #20: `64d3fff`, `bc0cfa2`, `6d5973e`, `38f39c4`, `137d143`. Após o squash #19, criar branch sobre a nova `origin/main` e reaplicar esses commits em ordem. Comparar árvores e `git range-diff` com `44afc1d..137d143`, resolver conflitos preservando ambas as entregas. Atualizar a branch #20 apenas com `--force-with-lease=refs/heads/feat/catalogo-compartilhado:<head-remoto-conferido>`, mudar base do PR para main e esperar ambos os workflows do novo SHA.
+2. Após #20, repetir para #21 com somente `3f3c093`, `2c9018b`, `bd42654`, comparando com `137d143..bd42654`; os merges de sincronização não devem reaplicar catálogo. Guardar o head remoto antes da reescrita e usar lease explícito. Retarget para main, conferir diff só de reunião/apresentação e reexecutar os checks.
+3. Após #21, reaplicar em #22 somente `ce8b2af`, `c7ee2e3` e os commits posteriores de homologação registrados no PR, sem reaplicar o merge `77c51aa`. Comparar o diff final com `bd42654..head-antigo-22`, retarget para main e revalidar tipagem, unitários, builds, SQL, transição e navegadores antes de integrar.
+
+Se main receber trabalho adicional, não assumir que a lista de commits basta: conferir árvore, diff acumulado e conflitos antes do push. Em merge sem squash, preferir preservar a ancestralidade e retarget; não reescrever sem necessidade. As migrações do próximo PR só podem avançar depois das verificações e autorização da fase atual.
+
+Ao encerrar a homologação, parar somente os processos identificados do gateway/túnel e remover a variable `HUB_HML_PREVIEW_URL` e o secret exclusivo `HUB_HML_REVIEW_PASSWORD`. A expiração do gateway já nega acesso mesmo se o túnel continuar vivo. Não remover secrets/variables de outros ambientes.
+
 ## Revisão no celular
 
 1. Abrir a URL de homologação, informar a senha entregue separadamente e escolher Administração fictícia.
@@ -72,3 +84,11 @@ Após cada integração autorizada: esperar Vercel terminar, conferir deployment
 5. Em “Trocar perfil”, escolher Comercial para comparar a ausência de valores/gestão administrativa. Não usar conta nem informação real.
 
 SHA efetivo, links dos checks e artefatos de capturas ficam no corpo atualizado do #22; o relatório de upgrade em `.validation/integrated-upgrade-result.json` registra o SHA exato executado, sem dados pessoais. Disponibilidade/validade da URL devem ser conferidas no momento da entrega.
+
+## Evidências desta rodada
+
+Tipagem, 24 unitários, builds demo/compartilhado, oito arquivos SQL, 19 testes reais com Supabase e cinco de interface simulada aprovados localmente. O ensaio inicial completo foi executado em `e949d29`; o CI reexecuta o roteiro no candidato corrente. O primeiro CI identificou saída textual da CLI no Linux: o ensaio agora exige `stream-json` e lê o envelope estruturado, mantendo a exigência de uma migração por fase. As referências dos frontends anteriores são SHAs completos, disponíveis também no checkout do CI.
+
+A navegação pública foi exercitada em Chromium com Auth/Mailpit, duas sessões, isolamento preenchido, restrições financeiras e desativação/reativação fictícia. No teste integrado, o atalho “Organizar meu dia” é validado com filtro Hoje; os filtros são então limpos para abrir um chamado futuro. A jornada completa confere registros pela API da segunda sessão, snapshots das versões e ação do fechamento na semana correta, sem assumir um espaço vazio. Resultados finais externos, motores, capturas e SHA corrente são os do workflow vinculado no #22, não os de uma execução anterior.
+
+Para encerrar a homologação: parar somente os processos próprios do gateway/túnel, limpar suas fixtures locais e remover `HUB_HML_PREVIEW_URL` e `HUB_HML_REVIEW_PASSWORD` do repositório GitHub. A senha deixa de ser útil quando o gateway expira ou é encerrado. Não reconfigurar nem parar serviços de produção. As capturas do workflow expiram após sete dias; não contêm credenciais ou links de acesso.

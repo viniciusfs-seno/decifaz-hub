@@ -79,6 +79,8 @@ O primeiro CI de interface apontou apenas o seletor antigo `Editar estabelecimen
 
 ## Capturas comparativas
 
+Para a homologação das quatro entregas juntas, consulte o [ambiente HTTPS protegido e roteiro integrado](homologacao-integrada.md). O acesso de loopback acima pertence à validação inicial; a URL vigente e os checks do candidato ficam no #22.
+
 Mesmo conjunto fictício no #18 e nesta implementação, 1440×1000 e 390×844. Geradas por `scripts/operacional-comparacao.mjs`. Animações desabilitadas apenas no navegador da captura.
 
 | Tela | Antes desktop | Depois desktop | Antes celular | Depois celular |

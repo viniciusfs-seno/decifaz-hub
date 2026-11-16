@@ -70,7 +70,7 @@ Fixtures usam somente Supabase local (`127.0.0.1:54321`) e e-mails fictícios; e
 
 Prévia integrada: `node scripts/operacional-preview.mjs`, após iniciar/atualizar somente o Supabase local. URL `http://127.0.0.1:4190/__preview/admin`, com alternância Administração/Comercial/segunda sessão admin e fixtures enriquecidas. Chaves administrativas e senhas fictícias ficam na memória do processo; não são incorporadas ao frontend. O servidor escuta apenas loopback.
 
-Não há backend isolado externo nem túnel HTTPS protegido configurado nesta sessão. Por isso **não há URL HTTPS validada fora desta máquina**; não se substituiu a validação externa por um endereço local. Uma prévia móvel externa exigirá esse ambiente isolado e controle de acesso. As capturas abaixo são a evidência responsiva disponível nesta rodada.
+Na implementação inicial só havia a prévia de loopback. A homologação posterior usa Supabase local isolado e túnel HTTPS protegido: consulte [acesso, testes externos, capturas e roteiro de integração](homologacao-integrada.md). URL, validade, SHA e resultados atuais ficam no #22. As capturas abaixo preservam a referência visual original.
 
 | Tela | Desktop | Celular |
 |---|---|---|
