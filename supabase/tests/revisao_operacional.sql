@@ -24,7 +24,22 @@ do $$ declare w uuid:='00000000-0000-4000-8000-000000003010';s uuid:='00000000-0
  b:=public.hub_review_action(w,'lead',s,'Próxima ação','Equipe fictícia',current_date);
  if a=b then raise exception 'Nova revisão não criou próxima ação';end if;
 end $$;
+reset role;
+insert into public.hub_proposals(workspace_id,id,lead_id,series_id,version,status,record) values
+ ('00000000-0000-4000-8000-000000003010','00000000-0000-4000-8000-000000003030','00000000-0000-4000-8000-000000003020','00000000-0000-4000-8000-000000003030',1,'Aceita','{"title":"Entrega fictícia","setup":500,"monthly":50,"terms":"Reservado"}');
+insert into public.hub_projects(workspace_id,proposal_id,lead_id,approved) values
+ ('00000000-0000-4000-8000-000000003010','00000000-0000-4000-8000-000000003030','00000000-0000-4000-8000-000000003020','{"title":"Entrega fictícia","version":1,"setup":500,"monthly":50,"terms":"Reservado"}');
+set local role authenticated;
+do $$ declare w uuid:='00000000-0000-4000-8000-000000003010';s uuid:='00000000-0000-4000-8000-000000003030';begin
+ perform public.hub_review_action(w,'proposal',s,'Revisar proposta','Comercial fictício',current_date);
+ begin perform public.hub_review_action(w,'project',s,'Revisar projeto','Comercial fictício',current_date);raise exception 'Comercial escreveu em projeto';exception when insufficient_privilege then null;end;
+end $$;
 select set_config('request.jwt.claim.sub','00000000-0000-4000-8000-000000003003',true);
+do $$ declare w uuid:='00000000-0000-4000-8000-000000003010';p uuid:='00000000-0000-4000-8000-000000003030';a uuid;begin
+ a:=public.hub_review_action(w,'project',p,'Revisar entrega','Operação fictícia',current_date);
+ if not exists(select 1 from public.hub_activities where id=a and project_proposal_id=p and lead_id='00000000-0000-4000-8000-000000003020') then raise exception 'Vínculo de projeto não derivado';end if;
+ begin perform public.hub_review_action(w,'proposal',p,'Revisar preço','Operação fictícia',current_date);raise exception 'Operação escreveu proposta';exception when insufficient_privilege then null;end;
+end $$;
 do $$ begin
  begin perform public.hub_review_action('00000000-0000-4000-8000-000000003010','lead','00000000-0000-4000-8000-000000003020','Proibida','Equipe',current_date);raise exception 'Operação escreveu comercial';exception when insufficient_privilege then null;end;
 end $$;
