@@ -1,6 +1,8 @@
 import {can,hasRole,type Role} from './access'
 import {SharedCatalog,loadCatalog,type Solution} from './shared-catalog'
 import {ClientPresentation} from './client-presentation'
+import {ManagementIndicators} from './management-indicators'
+import {WeeklyClosure} from './weekly-closure'
 import {Knowledge} from './secondary'
 import {Team} from './team'
 import {InviteInbox} from './invites'
@@ -71,7 +73,7 @@ const navigation=[
  ['Visão Geral',[['dashboard','Dashboard',LayoutDashboard],['revisao','Revisão semanal',ClipboardList]]],
  ['Comercial',[['central','Central comercial',ListTodo],['crm','Captação e CRM',Users],['triagem','Triagem comercial',ClipboardList],['reunioes','Reuniões e diagnósticos',CalendarDays],['propostas','Propostas comerciais',FileCheck2]]],
  ['Operação',[['agenda','Agenda operacional',CalendarDays],['projetos','Projetos e entregas',FolderKanban]]],
- ['Gestão',[['financeiro','Financeiro',Wallet]]],
+ ['Gestão',[['indicadores','Indicadores',LayoutDashboard],['financeiro','Financeiro',Wallet]]],
  ['Conhecimento',[['conhecimento','Base de conhecimento',BookOpen],['catalogo','Catálogo de soluções',BookOpen]]],
  ['Administração',[['equipe','Equipe',Users]]],
 ] as const
@@ -291,6 +293,8 @@ function SharedCrm(){
    {page==='equipe'&&(administrator?<Team key={workspace} client={client!} workspace={workspace} onSaved={refreshMemberships} sendInviteLink={sendInviteLink}/>:<p role="alert">Seu papel não permite gerir a equipe deste espaço.</p>)}
    {spaces.length>1&&<label>Espaço de trabalho<select disabled={busy} value={workspace} onChange={e=>{setReady(false);setError('');setLeads([]);setProjectId('');setWorkspace(e.target.value);select()}}>{spaces.map(space=><option key={space.id} value={space.id}>{space.name}</option>)}</select></label>}
    {page==='dashboard'&&<OperationalDashboard key={workspace} data={commercialData} entries={entries} projects={projects} errors={moduleErrors} finance={finance} financial={can(role,'finance')} month={reportMonth} setMonth={setReportMonth} openLead={openLead} openProject={openProject} openEntry={openEntry} openAgenda={openAgenda} openFinance={()=>go('financeiro')} addLead={()=>{go('crm');select()}}/>}
+   {page==='revisao'&&<WeeklyClosure revision={revision} client={client!} workspace={workspace} admin={administrator} leads={commercialData.leads} tasks={allActivities} onSaved={()=>reload(v=>v+1)} openLead={openLead}/>}
+   {page==='indicadores'&&<ManagementIndicators data={commercialData} projects={projects} tasks={allActivities} forecasts={finance?.[0].data??[]} receipts={finance?.[1].data??[]} financial={can(role,'finance')&&!!finance} openLead={openLead} openProject={openProject}/>}
    {page==='revisao'&&<OperationalReview data={commercialData} projects={projects} activities={allActivities} busy={busy} allowed={kind=>can(role,kind==='project'?'projects':'commercial',true)} openLead={openLead} openProject={openProject} openProposal={id=>setProposalModal({id})} save={(origin,title,owner,due)=>write(()=>client!.rpc('hub_review_action',{w:workspace,k:origin.kind,s:origin.id,t:title,o:owner,d:due}))}/>}
    {page==='central'&&<CommercialCenter key={workspace} client={client!} workspace={workspace} revision={revision}
     leads={commercialData.leads} meetings={proposalMeetings}

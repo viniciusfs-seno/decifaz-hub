@@ -1,0 +1,22 @@
+begin;
+insert into auth.users(id,email) values('00000000-0000-4000-8000-000000004001','closure-admin@example.invalid');
+insert into public.hub_workspaces(id,name) values('00000000-0000-4000-8000-000000004010','Fechamento fictício');
+insert into public.hub_members(workspace_id,user_id,role) values('00000000-0000-4000-8000-000000004010','00000000-0000-4000-8000-000000004001','admin');
+insert into public.hub_leads(workspace_id,id,name) values('00000000-0000-4000-8000-000000004010','00000000-0000-4000-8000-000000004020','Origem de fechamento');
+create function pg_temp.reject_fictitious_close() returns trigger language plpgsql as $$begin if new.summary='Falha fictícia' then raise check_violation using message='Falha simulada';end if;return new;end $$;
+create trigger fail_fictitious_closure before insert on public.hub_weekly_closure_history for each row execute function pg_temp.reject_fictitious_close();
+set local role authenticated;
+select set_config('request.jwt.claim.sub','00000000-0000-4000-8000-000000004001',true);
+do $$ declare w uuid:='00000000-0000-4000-8000-000000004010';start_on date:=date_trunc('week',now() at time zone 'America/Fortaleza')::date;
+ plan jsonb:='[{"kind":"lead","source":"00000000-0000-4000-8000-000000004020","title":"Ação vinculada","owner":"Equipe fictícia","due":"2026-11-16"}]';r jsonb;begin
+ begin perform public.hub_close_week(w,start_on,0,'Falha fictícia','Decisões',plan);raise exception 'Histórico não abortou transação';exception when check_violation then null;end;
+ if exists(select 1 from public.hub_activities where workspace_id=w) or exists(select 1 from public.hub_weekly_closures where workspace_id=w) then raise exception 'Ação ou fechamento sobreviveu sem histórico';end if;
+ r:=public.hub_close_week(w,start_on,0,'Resumo persistido','Decisões',plan);
+ if r->>'status'<>'saved' or (select count(*) from public.hub_activities where workspace_id=w)<>1 then raise exception 'Fechamento não criou exatamente uma ação';end if;
+ if public.hub_close_week(w,start_on,0,'Obsoleto','',plan)->>'status'<>'conflict' or (select count(*) from public.hub_weekly_closure_history where workspace_id=w)<>1 then raise exception 'Conflito gerou evento';end if;
+ begin perform public.hub_close_week(w,start_on+1,1,'Semana inválida','','[]');raise exception 'Semana não começou segunda';exception when invalid_parameter_value then null;end;
+ begin delete from public.hub_weekly_closure_history where workspace_id=w;raise exception 'Histórico excluído';exception when insufficient_privilege then null;end;
+ begin insert into public.hub_weekly_closures(workspace_id,week_start,revision,summary,decisions,actions,actor_id) values(w,start_on-7,1,'Direto','','[]',auth.uid());raise exception 'Escrita direta aceita';exception when insufficient_privilege then null;end;
+ if has_function_privilege('anon','public.hub_close_week(uuid,date,bigint,text,text,jsonb)','execute') then raise exception 'Anon executa fechamento';end if;
+end $$;
+rollback;
