@@ -37,36 +37,37 @@ grant execute on function public.hub_save_solution(uuid,uuid,text,text,text,text
 
 -- Preserve one non-financial catalogue snapshot inside the existing proposal
 -- record. The existing financial guard/lead lock/versioning RPC is unchanged.
-create function hub_private.proposal_catalog_snapshot() returns trigger language plpgsql security definer set search_path='' as $$
-declare prior jsonb; snapshots jsonb:='[]'; item jsonb; label text; solution public.hub_solutions%rowtype;
-begin
- if auth.uid() is null then return new;end if; -- trusted maintenance/imports; app paths always carry a subject
- if tg_op='UPDATE' then prior:=old.record;else
-  select record into prior from public.hub_proposals where workspace_id=new.workspace_id and lead_id=new.lead_id and series_id=new.series_id and id<>new.id order by version desc limit 1;
- end if;
- for label in select distinct jsonb_array_elements_text(coalesce(new.record->'services','[]')) loop
+
+create function hub_private.catalog_record(w uuid,prior jsonb,body jsonb) returns jsonb language plpgsql security definer set search_path='' as $$
+declare snapshots jsonb:='[]'; item jsonb; label text; solution public.hub_solutions%rowtype;begin
+ for label in select distinct jsonb_array_elements_text(coalesce(body->'services','[]')) loop
   select value into item from jsonb_array_elements(coalesce(prior->'catalog_snapshot','[]')) where value->>'name'=label limit 1;
   if item is null then
-   select * into solution from public.hub_solutions where workspace_id=new.workspace_id and name=label and active;
+   select * into solution from public.hub_solutions where workspace_id=w and name=label and active;
    if not found then
     if coalesce(prior->'services','[]') ? label then item:=jsonb_build_object('name',label,'legacy',true);
     else raise exception 'Selecione uma solução ativa do catálogo' using errcode='22023';end if;
-   else item:=jsonb_build_object('id',solution.id,'name',solution.name,'category',solution.category,'description',solution.description,'scope_items',solution.scope_items,'revision',solution.revision);end if;
+   else
+    select value into item from jsonb_array_elements(coalesce(prior->'catalog_snapshot','[]')) where value->>'id'=solution.id::text limit 1;
+    if item is null then item:=jsonb_build_object('id',solution.id,'name',solution.name,'category',solution.category,'description',solution.description,'scope_items',solution.scope_items,'revision',solution.revision);end if;
+   end if;
   end if;
-  snapshots:=snapshots||jsonb_build_array(item);item:=null;
+  if not exists(select 1 from jsonb_array_elements(snapshots) x where coalesce(x->>'id',x->>'name')=coalesce(item->>'id',item->>'name')) then snapshots:=snapshots||jsonb_build_array(item);end if;
+  item:=null;
  end loop;
- new.record:=new.record||jsonb_build_object('catalog_snapshot',snapshots);return new;
+ return body||jsonb_build_object('catalog_snapshot',snapshots,'services',(select coalesce(jsonb_agg(x->'name'),'[]') from jsonb_array_elements(snapshots) x));
+end $$;
+revoke all on function hub_private.catalog_record(uuid,jsonb,jsonb) from public,anon,authenticated;
+create function hub_private.proposal_catalog_snapshot() returns trigger language plpgsql security definer set search_path='' as $$declare prior jsonb;begin
+ if auth.uid() is null then return new;end if;
+ if tg_op='UPDATE' then prior:=old.record;else select record into prior from public.hub_proposals where workspace_id=new.workspace_id and lead_id=new.lead_id and series_id=new.series_id and id<>new.id order by version desc limit 1;end if;
+ new.record:=hub_private.catalog_record(new.workspace_id,prior,new.record);return new;
 end $$;
 create trigger hub_proposal_catalog before insert or update of record on public.hub_proposals for each row execute function hub_private.proposal_catalog_snapshot();
-create function hub_private.triage_catalog_guard() returns trigger language plpgsql security definer set search_path='' as $$
-declare label text; prior jsonb:='[]';begin
+create function hub_private.triage_catalog_guard() returns trigger language plpgsql security definer set search_path='' as $$declare prior jsonb;begin
  if auth.uid() is null then return new;end if;
- if tg_op='UPDATE' then prior:=coalesce(old.record->'services','[]');else select record->'services' into prior from public.hub_triages where workspace_id=new.workspace_id and lead_id=new.lead_id;end if;
- for label in select jsonb_array_elements_text(coalesce(new.record->'services','[]')) loop
-  if not (prior ? label) and not exists(select 1 from public.hub_solutions where workspace_id=new.workspace_id and name=label and active) then
-   raise exception 'Selecione uma solução ativa do catálogo' using errcode='22023';end if;
- end loop;
- return new;
+ if tg_op='UPDATE' then prior:=old.record;else select record into prior from public.hub_triages where workspace_id=new.workspace_id and lead_id=new.lead_id;end if;
+ new.record:=hub_private.catalog_record(new.workspace_id,prior,new.record);return new;
 end $$;
 create trigger hub_triage_catalog before insert or update of record on public.hub_triages for each row execute function hub_private.triage_catalog_guard();
 commit;
