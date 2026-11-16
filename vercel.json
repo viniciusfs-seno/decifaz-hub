@@ -6,7 +6,8 @@
       "feat/administracao-equipe": false,
       "feat/historico-papeis": false,
       "feat/convites-equipe": false,
-      "feat/desativacao-integrantes": false
+      "feat/desativacao-integrantes": false,
+      "feat/hub-operacional": false
     }
   }
 }
