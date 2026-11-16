@@ -7,7 +7,10 @@
       "feat/historico-papeis": false,
       "feat/convites-equipe": false,
       "feat/desativacao-integrantes": false,
-      "feat/hub-operacional": false
+      "feat/hub-operacional": false,
+      "feat/catalogo-compartilhado": false,
+      "feat/reuniao-apresentacao": false,
+      "feat/indicadores-fechamento": false
     }
   }
 }
