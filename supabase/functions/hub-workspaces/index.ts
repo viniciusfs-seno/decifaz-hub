@@ -26,6 +26,8 @@ Deno.serve(async request => {
  const {data,error} = await client.from('hub_workspaces').select('id,name').order('name')
  if (error) return json({error:'Não foi possível consultar o espaço de trabalho.'}, 500)
  if (!data.length) return json({error:'Conta sem acesso a um espaço de trabalho.'}, 403)
+ // Workspace and own-membership RLS read the current active state, even with an older JWT.
+ // Keep the query compatible with the pre-active schema for historical rollout/rollback.
  const {data:members,error:roleError}=await client.from('hub_members').select('workspace_id,role,extra_roles').eq('user_id',claims.claims.sub)
  if(roleError)return json({error:'Não foi possível consultar as permissões.'},500)
  const workspaces=data.flatMap(space=>{

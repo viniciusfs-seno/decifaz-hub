@@ -3,7 +3,7 @@ import {Knowledge} from './secondary'
 import {Team} from './team'
 import {InviteInbox} from './invites'
 import {CommercialCenter} from './commercial-center'
-import {useEffect,useState,type FormEvent} from 'react'
+import {useEffect,useRef,useState,type FormEvent} from 'react'
 import {createClient,type Session} from '@supabase/supabase-js'
 import {BookOpen, CalendarDays, ClipboardList, FileCheck2, FolderKanban, LayoutDashboard, ListTodo, Menu, Moon, Sun, Users, Wallet} from 'lucide-react'
 import {dateLabel,day,money,stages,type Data,type Meeting,type Proposal} from './domain'
@@ -83,15 +83,22 @@ function SharedCrm(){
   window.scrollTo(0,0)
  }
  const [spaces,setSpaces]=useState<Workspace[]>([])
+ const membershipRequest=useRef(0)
  async function refreshMemberships(preferred?:string){
+  const request=++membershipRequest.current
   const {data,error}=await client!.functions.invoke<{workspaces:Workspace[]}>('hub-workspaces',{body:{}})
-  if(error||!data?.workspaces.length){setSpaces([]);setError(preferred?'Convite aceito, mas seu acesso não pôde ser atualizado. Recarregue a página.':'Papéis salvos, mas seu acesso não pôde ser atualizado. Recarregue a página.');throw Error('Não foi possível atualizar seu acesso.')}
+  if(request!==membershipRequest.current)return
+  if(error?.context?.status===403){
+   clearWorkspaceData();setSpaces([]);setWorkspace('');setPage('convites');setReady(true);setError('');setNotice('Nenhum espaço ativo disponível. Seu vínculo pode ter sido desativado; procure a Administração.');return
+  }
+  if(error||!data?.workspaces.length){setError('Não foi possível atualizar seu acesso. Tente novamente.');throw Error('Não foi possível atualizar seu acesso.')}
   setSpaces(previous=>data.workspaces.map(space=>{
    const current=previous.find(item=>item.id===space.id)
    return current&&current.name===space.name&&current.role===space.role&&JSON.stringify(current.roles)===JSON.stringify(space.roles)?current:space
   }))
-  if(preferred){setWorkspace(preferred);setError('');setNotice('Acesso atualizado. Alterações de papéis existentes devem ser feitas pela Administração em Equipe.');const clean=new URL(location.href);clean.searchParams.delete('convite');history.replaceState(null,'',clean.href)}
-  else setNotice('Papéis salvos. Seu acesso foi atualizado.')
+  const next=data.workspaces.find(space=>space.id===(preferred??workspace))??data.workspaces[0]
+  if(next.id!==workspace){clearWorkspaceData();setWorkspace(next.id);if(!preferred)setPage('dashboard')}
+  if(preferred){setError('');setNotice('Acesso atualizado. Alterações de papéis existentes devem ser feitas pela Administração em Equipe.');const clean=new URL(location.href);clean.searchParams.delete('convite');history.replaceState(null,'',clean.href)}
  }
  const [workspace,setWorkspace]=useState('')
  const membership=spaces.find(space=>space.id===workspace)
@@ -123,6 +130,16 @@ function SharedCrm(){
  const [ready,setReady]=useState(false)
  const [loadedLead,setLoadedLead]=useState('')
  const [revision,reload]=useState(0)
+ function clearWorkspaceData(){
+  setLeads([]);setTriages([]);setFinance(undefined);setProjects([]);setProposals([]);setProposalMeetings([]);setMeetings([]);setMetrics(null)
+  setSelected('');setLoadedLead('');setInteractions([]);setTasks([]);setProjectId('');setProposalModal(undefined);setEditor(null);setMeeting(undefined);setShowForm(false)
+ }
+ useEffect(()=>{
+  const refresh=()=>{void refreshMemberships().catch(()=>{/* erro visível; não encerrar Auth nem outros espaços */})}
+  window.addEventListener('focus',refresh)
+  const timer=window.setInterval(refresh,30000)
+  return ()=>{window.removeEventListener('focus',refresh);window.clearInterval(timer);membershipRequest.current++}
+ },[workspace])
 
  useEffect(()=>{
   let current=true
