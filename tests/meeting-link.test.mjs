@@ -20,3 +20,8 @@ test('backup antigo é compatível e a agenda recebe o link persistido',()=>{
  assert.equal(agendaEntries(restored)[0].callUrl,'https://example.com/sala')
  assert.ok(parseBackup(JSON.stringify({...data,meetings:[{...meeting,callUrl:'javascript:alert(1)'}]})).error)
 })
+test('backup da demo preserva pauta e soluções opcionais do editor reutilizado',()=>{
+ const restored=parseBackup(JSON.stringify({...data,meetings:[{...meeting,agenda:'Pauta fictícia',selectedSolutions:['Automações']}]})).data
+ assert.equal(restored.meetings[0].agenda,'Pauta fictícia')
+ assert.deepEqual(restored.meetings[0].selectedSolutions,['Automações'])
+})
