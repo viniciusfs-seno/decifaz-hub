@@ -33,7 +33,7 @@ jobs:
         run: |
           ss -lntp '( sport = :54321 or sport = :54322 or sport = :54324 )'
           docker ps --format '{{.Names}} {{.Ports}}'
-      - run: supabase start
+      - run: node scripts/start-local-stack.mjs
       - name: Testar com a pilha local
         run: |
           set -a
