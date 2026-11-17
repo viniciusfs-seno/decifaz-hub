@@ -29,6 +29,7 @@ export function Team({client,workspace,onSaved,sendInviteLink}:{client:SupabaseC
  return <section className="team-members" aria-labelledby="team-heading">
   <h1 id="team-heading">Equipe</h1><p>Administração · Papéis no espaço atual</p>
   <InviteManager client={client} workspace={workspace} sendLink={sendInviteLink}/>
+  <details className="card panel team-help"><summary>O que cada papel permite?</summary><dl><dt>Administração</dt><dd>Gerencia a equipe, define preços e registra o aceite comercial.</dd><dt>Comercial</dt><dd>Conduz CRM, triagem, reuniões e escopo das propostas; sem valores protegidos.</dd><dt>Operação</dt><dd>Acompanha projetos, entregas e suporte.</dd><dt>Financeiro</dt><dd>Consulta condições e valores, registra previsões e recebimentos.</dd></dl><p>Os papéis são cumulativos e valem somente neste espaço.</p></details>
   <p>Selecione todos os papéis de cada integrante. Ao salvar, o conjunto anterior será substituído. O espaço precisa manter pelo menos uma pessoa ativa com Administração. Desativar preserva a conta, os papéis e o acesso a outros espaços.</p>
   <button className="button compact" disabled={loading} onClick={()=>refresh(n=>n+1)}>Atualizar equipe</button>
   {loading&&<p role="status">Carregando equipe…</p>}
@@ -79,7 +80,8 @@ function MemberEditor({member,save,changeActive}:{member:Member;save:(roles:Role
  function submit(event:FormEvent){event.preventDefault();void persist()}
  return <><form className="card panel" aria-label={'Papéis de '+member.email} onSubmit={submit}>
   <h2>{member.email}</h2>
-  <p>Estado: <strong>{active?'Ativo':'Desativado'}</strong></p>
+  <p className="member-state" data-active={active}>Estado: <strong>{active?'Ativo':'Desativado'}</strong></p>
+  <p className="view-hint">{active?'Acesso liberado conforme os papéis abaixo.':'Sem acesso a este espaço. Reativar conserva os papéis registrados.'}</p>
   <fieldset disabled={busy||Boolean(conflict)}><legend>{conflict?'Sua seleção desatualizada':'Papéis deste integrante'}</legend>
    <div className="team-roles">{options.map(([role,label])=><label key={role}><input type="checkbox" checked={selected.includes(role)} onChange={e=>{setError('');setNotice('');setSelected(e.target.checked?[...selected,role]:selected.filter(value=>value!==role))}}/>{label}</label>)}</div>
    <button className="button primary" disabled={selected.length===0}>{busy?'Salvando…':'Salvar papéis'}</button>

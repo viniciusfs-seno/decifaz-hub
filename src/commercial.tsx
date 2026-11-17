@@ -1,3 +1,4 @@
+import {useViewState} from './view-state'
 import {meetingLink} from './meeting-link'
 import {MeetingPresentation} from './meeting-presentation'
 import {useState,type ReactNode} from 'react'
@@ -6,16 +7,18 @@ import {active,activityTypes,channels,criteria,dateLabel,day,emptyLead,emptyTria
 import {Choices,Dialog,Empty,Field,Form,Page,Priority,Tag} from './ui'
 
 export function CRM({data,open,add,triage,start}:{data:Data;open:(id:string)=>void;add:()=>void;triage?:boolean;start:(id:string)=>void}){
- const [query,setQuery]=useState('')
- const [stage,setStage]=useState('')
- const [owner,setOwner]=useState('')
- const [priority,setPriority]=useState('')
- const [sort,setSort]=useState('Recentes')
- const [kanban,setKanban]=useState(false)
+ const [query,setQuery]=useViewState('crm-'+String(!!triage)+'-query','')
+ const [stage,setStage]=useViewState('crm-'+String(!!triage)+'-stage','')
+ const [owner,setOwner]=useViewState('crm-'+String(!!triage)+'-owner','')
+ const [priority,setPriority]=useViewState('crm-'+String(!!triage)+'-priority','')
+ const [sort,setSort]=useViewState('crm-'+String(!!triage)+'-sort','Recentes')
+ const [kanban,setKanban]=useViewState('crm-'+String(!!triage)+'-kanban',false)
  const find=(id:string)=>data.triages.find(t=>t.leadId===id)
  const leads=data.leads.filter(l=>norm([l.name,l.segment,l.city,l.region,l.whatsapp,l.instagram].join(' ')).includes(norm(query.trim()))&&(!stage||l.stage===stage)&&(!owner||l.owner===owner)&&(!priority||(grade(find(l.id))?.label??'Sem classificação')===priority)).sort((a,b)=>sort==='Nome'?a.name.localeCompare(b.name,'pt-BR'):sort==='Prazo'?(a.due||'9999').localeCompare(b.due||'9999'):b.created.localeCompare(a.created))
  return <Page title={triage?'Triagem comercial':'Captação e CRM'} description={triage?'Pesquise o estabelecimento e classifique a oportunidade com base em evidências.':'Acompanhe estabelecimentos, responsáveis e próximas ações ao longo do funil.'} actions={<button className="button primary" onClick={add}>＋ Novo lead</button>}>
  <div className="toolbar"><label className="search"><Search size={17}/><input aria-label="Buscar leads" placeholder="Buscar estabelecimento..." value={query} onChange={e=>setQuery(e.target.value)}/></label><select aria-label="Etapa" value={stage} onChange={e=>setStage(e.target.value)}><option value="">Todas as etapas</option>{stages.map(s=><option key={s}>{s}</option>)}</select><select aria-label="Responsável" value={owner} onChange={e=>setOwner(e.target.value)}><option value="">Todos os responsáveis</option>{data.team.map(s=><option key={s}>{s}</option>)}</select><select aria-label="Prioridade" value={priority} onChange={e=>setPriority(e.target.value)}><option value="">Todas as prioridades</option>{['A','B','C','Sem classificação'].map(s=><option key={s}>{s}</option>)}</select><select aria-label="Ordenar" value={sort} onChange={e=>setSort(e.target.value)}>{['Recentes','Nome','Prazo'].map(s=><option key={s}>{s}</option>)}</select>{!triage&&<div className="segmented"><button aria-label="Tabela" aria-pressed={!kanban} onClick={()=>setKanban(false)}><LayoutList size={17}/></button><button aria-label="Kanban" aria-pressed={kanban} onClick={()=>setKanban(true)}><Columns3 size={17}/></button></div>}</div>
+ <div className="view-summary"><p role="status"><b>{leads.length}</b> {leads.length===1?'estabelecimento':'estabelecimentos'}{stage?' · '+stage:''}{owner?' · '+owner:''}</p><button className="text-button" onClick={()=>{setQuery('');setStage('');setOwner('');setPriority('');setSort('Recentes')}}>Limpar filtros do CRM</button></div>
+ {triage&&<p className="view-hint">Rascunhos mostram uma avaliação parcial. A prioridade A, B ou C só é definitiva ao concluir os sete critérios e o encaminhamento.</p>}
  {!leads.length?<div className="card"><Empty detail="Ajuste a busca ou cadastre um estabelecimento."/></div>:kanban?<div className="kanban">{stages.filter(s=>!stage||s===stage).map(s=><section key={s}><h3>{s} <Tag>{leads.filter(l=>l.stage===s).length}</Tag></h3>{leads.filter(l=>l.stage===s).map(l=><button className="card kanban-lead" key={l.id} onClick={()=>open(l.id)}><b>{l.name}</b><small>{l.segment} · {l.city}</small><Priority triage={find(l.id)}/><small>{l.next||'Sem próxima ação'} · {dateLabel(l.due)}</small></button>)}</section>)}</div>:<div className="card table-wrap"><table><thead><tr><th>Estabelecimento</th><th>Etapa</th><th>Prioridade</th><th>Responsável</th><th>Próxima ação</th><th>Prazo</th><th><span className="sr">Abrir</span></th></tr></thead><tbody>{leads.map(l=><tr key={l.id}><td><button className="text-button lead-name" onClick={()=>open(l.id)}>{l.name}</button><small>{l.segment} · {l.city}{l.demo?' · Fictício':''}</small></td><td><Tag>{l.stage}</Tag></td><td><Priority triage={find(l.id)}/></td><td>{l.owner}</td><td>{l.next||'—'}</td><td>{dateLabel(l.due)}</td><td><button className="button compact" aria-label={(triage?'Triar ':'Abrir ')+l.name} onClick={()=>triage?start(l.id):open(l.id)}>{triage?'Triar':<ArrowRight size={16}/>}</button></td></tr>)}</tbody></table><div className="table-foot">{leads.length} {leads.length===1?'estabelecimento':'estabelecimentos'}</div></div>}
  </Page>
 }

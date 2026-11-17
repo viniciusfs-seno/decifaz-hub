@@ -1,0 +1,107 @@
+/* Shared portal: operational density, official Decifaz palette, accessible controls. */
+.shared-app{--radius:12px;--shadow:0 3px 14px #1f243306}
+.shared-app .sidebar{padding-top:12px}
+.shared-app .brand{padding:10px 10px 15px}
+.shared-app .brand-logo{width:146px}
+.shared-app .nav-group{margin-top:16px}
+.shared-app .nav-group h2{color:#bdc8df;letter-spacing:.08em}
+.shared-app .nav-group button{min-height:37px;font-size:.8rem;border-radius:8px}
+.shared-app .topbar{height:68px;padding-inline:28px}
+.shared-app .space-switcher{display:grid;gap:2px;max-width:210px;font-size:.65rem;color:var(--muted)}
+.shared-app .space-switcher select{max-width:100%;min-height:30px;padding:3px 24px 3px 8px;font-size:.75rem}
+.shared-app .pilot{padding:18px 28px 40px;max-width:1510px}
+.shared-app .workspace-strip{margin-bottom:15px;padding-bottom:12px;border-bottom:1px solid var(--line);font-size:.75rem;color:var(--muted)}
+.workspace-strip>p{display:flex;align-items:center;gap:8px;min-width:0;overflow-wrap:anywhere}
+.shared-app h1{font-size:clamp(1.45rem,2.5vw,2rem);line-height:1.2;letter-spacing:-.035em}
+.shared-app h2{font-size:1rem;line-height:1.4}
+.shared-app .page-heading{align-items:center;margin-bottom:20px}
+.shared-app .page-heading p{font-size:.82rem;margin-top:6px;max-width:70ch}
+.shared-app .button,.shared-app select{min-height:40px}
+.shared-app .button.primary{box-shadow:0 2px 4px #1f243315}
+.shared-app :is(input,textarea,select):focus-visible{outline:2px solid var(--decifaz-orange);outline-offset:2px}
+.shared-app input,.shared-app select,.shared-app textarea{max-width:100%;min-width:0}
+.shared-app button{max-width:100%}
+.shared-app .card{border-radius:var(--radius)}
+.shared-app .panel{padding:18px}
+.shared-app .panel-head{align-items:center}
+.shared-app .op-hero{padding:14px 18px;margin:0 0 16px;border-radius:var(--radius);background:var(--paper);color:var(--ink);border:1px solid var(--line);border-left:4px solid var(--decifaz-orange)}
+.shared-app .op-hero h2{font-size:1.1rem;margin:3px 0}
+.shared-app .op-hero p{color:var(--muted);font-size:.8rem}
+.shared-app .op-hero .op-eyebrow{color:var(--muted)}
+.shared-app .op-main-grid{margin:0 0 16px;grid-template-columns:minmax(0,1.55fr) minmax(0,1fr);align-items:start}
+.shared-app .op-queue button{padding:12px 0;gap:11px;min-height:75px}
+.shared-app .op-queue button b{font-size:.85rem;line-height:1.45}
+.shared-app .op-queue button:hover{background:var(--soft)}
+.shared-app .op-eyebrow{font-size:.64rem;letter-spacing:.1em}
+.shared-app .op-kpis{grid-template-columns:repeat(3,minmax(0,1fr));gap:10px;margin-bottom:16px}
+.shared-app .op-kpis .metric{min-height:140px;padding:16px;gap:5px}
+.shared-app .metric h2{font-family:Inter,sans-serif;font-size:.8rem;color:var(--muted);letter-spacing:0}
+.shared-app .metric strong{font-size:1.85rem;letter-spacing:-.04em;line-height:1.2}
+.shared-app .metric-definition{font-size:.74rem;color:var(--muted);line-height:1.45;margin-top:5px}
+.shared-app .metric-method{margin-top:20px;font-size:.82rem}
+.shared-app .metric-method summary{cursor:pointer;font-weight:650}
+.shared-app .metric-method p{margin-top:12px}
+.shared-app .op-money-grid button{padding:18px;gap:7px}
+.view-summary{display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:10px;margin:12px 0 16px;padding:12px 14px;border:1px solid var(--line);border-radius:9px;background:var(--paper);font-size:.78rem;color:var(--muted)}
+.view-summary b{color:var(--ink)}
+.view-hint{font-size:.8rem;color:var(--muted);padding:0 0 14px;max-width:85ch}
+.shared-app .op-periods{gap:6px;margin:0 0 12px}
+.shared-app .op-periods button[aria-pressed=true]{background:var(--primary);color:#fff;border-color:var(--primary);box-shadow:inset 0 -3px var(--decifaz-orange)}
+.shared-app .op-filters{background:var(--paper);border:1px solid var(--line);border-radius:12px;padding:14px;gap:12px;align-items:flex-end}
+.shared-app .op-filters label{font-size:.74rem;color:var(--muted);gap:6px;min-width:130px}
+.shared-app .op-work-item{padding:16px;gap:14px;align-items:flex-start}
+.shared-app .op-work-item[data-overdue=true]{border-left:3px solid #bd5238}
+.shared-app .op-work-item .lead-name{display:block;font-size:.92rem;margin:6px 0}
+.shared-app .op-work-item p{margin:0 0 10px;font-size:.8rem}
+.shared-app .op-item-actions{min-width:150px;gap:10px}
+.shared-app .op-item-actions label{font-size:.7rem}
+.dossier-context{display:flex;align-items:center;gap:12px;flex-wrap:wrap;margin-bottom:18px;font-size:.8rem;color:var(--muted)}
+.shared-app .op-dossier-head{border-bottom:1px solid var(--line);padding-bottom:14px;margin-bottom:16px}
+.shared-app .op-dossier-head h2{font-size:1.25rem;margin:6px 0}
+.shared-app .op-journey{gap:7px;margin:16px 0}
+.shared-app .op-journey span{font-size:.73rem;padding:7px 10px}
+.shared-app .op-basics{margin-bottom:14px}
+.shared-app .op-basics summary{cursor:pointer}
+.shared-app .op-basics summary h2{display:inline;font-size:.85rem}
+.shared-app .op-dossier-links .card{padding:14px;border-left:3px solid var(--decifaz-orange);gap:7px}
+.shared-app .toolbar{gap:9px}
+.shared-app .table-wrap{overscroll-behavior-x:contain}
+.shared-app table th{font-weight:600;font-size:.72rem;white-space:nowrap}
+.shared-app table td{font-size:.8rem;line-height:1.5}
+.shared-app .table-wrap:focus-visible{outline:2px solid var(--decifaz-orange)}
+.shared-app .pilot-fields label{font-size:.78rem;gap:6px}
+.shared-app .team-members .card{padding:16px}
+.shared-app .catalog article{gap:12px}
+.shared-app .catalog article h2{font-size:1.04rem}
+.shared-app .catalog article ul{padding-left:18px;font-size:.8rem;line-height:1.6}
+.shared-app :is(.pilot-fields,.fields) textarea{min-height:100px;resize:vertical}
+.shared-app fieldset:disabled{opacity:.8}
+.shared-app [role=alert]{padding:12px 14px;background:var(--soft);border:1px solid #bd5238;border-radius:8px;margin:10px 0;font-size:.83rem}
+.shared-app main>[role=status]{padding:10px 14px;background:var(--soft);border-radius:8px;margin:10px 0;font-size:.8rem}
+.skip-link{position:fixed;top:8px;left:8px;transform:translateY(-150%);z-index:100;background:var(--paper);color:var(--ink);padding:12px;border:2px solid var(--decifaz-orange);border-radius:8px}
+.skip-link:focus{transform:none}
+.team-help{margin:14px 0;font-size:.82rem}.team-help summary{cursor:pointer;font-weight:650}.team-help dl{display:grid;grid-template-columns:130px 1fr;gap:8px;margin:14px 0}.team-help dt{font-weight:650}.team-help dd{margin:0;color:var(--muted)}
+.member-state{display:inline-flex;gap:5px;border:1px solid var(--line);border-radius:6px;padding:4px 8px;font-size:.76rem;background:var(--soft)}.member-state[data-active=false]{border-left:3px solid #bd5238}
+.solution-grid article{display:grid;align-content:start;gap:12px}.solution-grid h2{font-size:1.1rem!important}.solution-grid p,.solution-grid li{font-size:.82rem;line-height:1.6}.solution-grid ul{padding-left:18px;margin:0}.solution-grid .button{justify-self:start}
+:root[data-theme=dark] .shared-app .tag.rose{background:#56382f;color:#ffd0c2}
+:root[data-theme=dark] .shared-app .tag.amber{background:#51452d;color:#ffe1a3}
+:root[data-theme=dark] .shared-app .tag.blue,:root[data-theme=dark] .shared-app .tag.green{background:#364564;color:#e3ecff}
+@media(min-width:1500px){.shared-app .op-kpis{grid-template-columns:repeat(3,minmax(0,1fr))}}
+@media(max-width:1000px){.shared-app .op-main-grid{grid-template-columns:1fr}.shared-app .op-kpis{grid-template-columns:repeat(2,minmax(0,1fr))}}
+@media(max-width:890px){.shared-app .topbar{padding:0 12px;height:64px}.shared-app .pilot{padding:16px}.shared-app .mobile-menu{width:42px;height:42px}.shared-app .nav-group button{min-height:44px}.shared-app .sidebar{overflow-y:auto;visibility:hidden}.shared-app .sidebar.open{visibility:visible}.shared-app .crumb b{max-width:180px}.shared-app .home-link{display:none}}
+@media(max-width:600px){
+ .shared-app .pilot{padding:12px}.shared-app .topbar{gap:5px}.shared-app .crumb{gap:3px;min-width:0}.shared-app .crumb b{max-width:120px;font-size:.73rem}
+ .shared-app .header-actions{gap:5px}.shared-app .space-switcher{max-width:90px}.shared-app .space-switcher span{font-size:.58rem}.shared-app .space-switcher select{font-size:.65rem;padding-inline:4px}
+ .shared-app .workspace-strip{margin-bottom:14px;gap:8px}.shared-app .workspace-strip>p{font-size:.69rem;max-width:65%}
+ .shared-app .page-heading{gap:12px;align-items:stretch}.shared-app .page-heading .actions{width:100%}.shared-app .page-heading .actions>.button{flex:1}
+ .shared-app .op-hero{padding:12px;flex-direction:row;align-items:center;gap:10px}.shared-app .op-hero .button{font-size:.7rem;white-space:normal;max-width:125px;flex:none}
+ .shared-app .op-hero h2{font-size:.9rem}.shared-app .op-hero p{font-size:.7rem}.shared-app .op-queue button{gap:8px}.shared-app .op-queue button>.tag{font-size:.65rem;max-width:85px;white-space:normal}
+ .shared-app .op-kpis{gap:8px}.shared-app .op-kpis .metric{min-height:130px;padding:12px}.shared-app .metric strong{font-size:1.55rem}.shared-app .metric small{font-size:.69rem}.shared-app .metric-definition{font-size:.69rem}
+ .shared-app .op-periods{display:grid;grid-template-columns:repeat(3,1fr)}.shared-app .op-periods button{white-space:normal;font-size:.72rem;padding:6px}
+ .shared-app .op-filters{gap:10px;padding:12px}.shared-app .op-filters label{min-width:calc(50% - 10px);flex:1}.shared-app .op-filters input,.shared-app .op-filters select{width:100%;font-size:.76rem}
+ .shared-app .view-summary{align-items:flex-start;gap:7px;font-size:.72rem}.shared-app .op-work-item{display:grid;grid-template-columns:minmax(0,1fr);gap:10px;padding:13px}.shared-app .op-work-item>.tile{display:none}.shared-app .op-work-item>div{grid-column:1}.shared-app .op-item-actions{grid-column:1;display:flex;flex-wrap:wrap;align-items:flex-end;min-width:0;width:100%}.shared-app .op-item-actions label{flex:1;min-width:120px}
+ .shared-app .toolbar>.search{min-width:100%;}.shared-app .toolbar>select{flex:1;min-width:calc(50% - 9px);max-width:100%}
+ .shared-app .table-wrap td{min-width:100px}.shared-app .table-wrap td:first-child{min-width:160px}.shared-app .catalog{grid-template-columns:1fr}.shared-app .op-dossier-links{grid-template-columns:1fr}
+ .shared-app .pilot-fields{grid-template-columns:1fr}.shared-app .pilot-fields>label{width:100%;min-width:0}.shared-app .team-roles{display:flex;flex-wrap:wrap}.shared-app .op-money-grid strong{font-size:1.35rem}
+ .shared-app .panel-head{flex-wrap:wrap}.shared-app .list-item{flex-wrap:wrap}.shared-app .op-dossier-head h2{font-size:1.05rem}
+}

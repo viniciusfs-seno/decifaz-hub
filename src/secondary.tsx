@@ -1,3 +1,4 @@
+import {useViewState} from './view-state'
 import {useState} from 'react'
 import {ArrowRight,BookOpen,Download,Search} from 'lucide-react'
 import manual from './manual.json'
@@ -18,9 +19,9 @@ const suggested=[
 type Block={kind:string;text?:string;rows?:string[][]}
 const articles=[...manual.map((m,i)=>({id:'m'+i,title:m.title,category:'Manual',status:'Proposta interna · fonte',date:'13/11/2026',blocks:m.blocks as Block[]})),...suggested.map(([title,category,body],i)=>({id:'s'+i,title,category,status:'Sugestão · a validar',date:'—',blocks:[{kind:'paragraph',text:body}] as Block[]}))]
 export function Knowledge({category='',go,download=true}:{category?:string;go:(page:string)=>void;download?:boolean}){
- const [query,set]=useState('')
- const [filter,setFilter]=useState(category)
- const [current,open]=useState('')
+ const [query,set]=useViewState('knowledge-query','')
+ const [filter,setFilter]=useViewState('knowledge-category',category)
+ const [current,open]=useViewState('knowledge-current','')
  const list=articles.filter(a=>(!filter||a.category===filter)&&norm(a.title+' '+JSON.stringify(a.blocks)).includes(norm(query.trim())))
  const item=list.find(a=>a.id===current)
  return <Page title="Base de conhecimento" description="Consulte o manual interno, roteiros comerciais e materiais de apoio." actions={download?<a className="button" download href="./referencias/decifaz_manual.docx"><Download size={16}/> Manual original</a>:undefined}><div className="toolbar"><label className="search"><Search size={17}/><input aria-label="Buscar na base" placeholder="Pesquisar manuais e scripts..." value={query} onChange={e=>set(e.target.value)}/></label><select aria-label="Categoria" value={filter} onChange={e=>setFilter(e.target.value)}><option value="">Todas as categorias</option>{['Manual','Scripts','Procedimentos','Modelos'].map(x=><option key={x}>{x}</option>)}</select></div>

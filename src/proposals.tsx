@@ -1,4 +1,5 @@
 import {useState} from 'react'
+import {useViewState} from './view-state'
 import type {Solution} from './shared-catalog'
 import {FileText,Plus} from 'lucide-react'
 import {dateLabel,day,money,norm,solutions,uid,type Data,type Proposal} from './domain'
@@ -6,12 +7,13 @@ import {Choices,Dialog,Empty,Field,Form,Page,Tag} from './ui'
 import {proposalStatuses,proposalVersions,proposalText,type ProposalDecision} from './proposal-rules'
 
 export function Proposals({data,add,open}:{data:Data;add:()=>void;open:(id:string)=>void}){
- const [query,setQuery]=useState('')
- const [status,setStatus]=useState('')
+ const [query,setQuery]=useViewState('proposals-query','')
+ const [status,setStatus]=useViewState('proposals-status','')
  const rows=proposalVersions(data.proposals).filter(p=>(!status||p.status===status)&&norm(p.title+' '+data.leads.find(l=>l.id===p.leadId)?.name).includes(norm(query.trim())))
  return <Page title="Propostas comerciais" description="Prepare o escopo a partir do diagnóstico e registre o retorno do cliente." actions={<button className="button primary" onClick={add}><Plus size={16}/> Nova proposta</button>}>
  <div className="toolbar"><Field label="Buscar proposta ou estabelecimento" value={query} on={setQuery}/><Field label="Situação da versão atual" value={status} options={proposalStatuses} on={setStatus}/></div>
- <div className="card table-wrap">{rows.length?<table><thead><tr><th>Proposta</th><th>Estabelecimento</th><th>Versão atual</th><th>Implantação</th><th>Mensalidade</th><th>Validade</th><th>Situação</th></tr></thead><tbody>{rows.map(p=><tr key={p.id}><td><button className="text-button lead-name" onClick={()=>open(p.id)}>{p.title}</button></td><td>{data.leads.find(l=>l.id===p.leadId)?.name}</td><td>v{p.version}</td><td>{p.setup===undefined?'Restrito':money(p.setup)}</td><td>{p.monthly===undefined?'Restrito':money(p.monthly)}</td><td>{dateLabel(p.validity)}</td><td><Tag tone={p.status==='Aceita'?'green':p.status==='Recusada'?'rose':'neutral'}>{p.status}</Tag></td></tr>)}</tbody></table>:<Empty title="Nenhuma proposta encontrada" detail="Cadastre uma proposta ou ajuste os filtros."/>}</div>
+ <p className="view-summary" role="status"><span><b>{rows.length}</b> propostas · somente a versão atual de cada série</span><span>Abra uma proposta para consultar versões e ações permitidas.</span></p>
+ <div className="card table-wrap">{rows.length?<table><thead><tr><th>Proposta</th><th>Estabelecimento</th><th>Versão atual</th><th>Implantação</th><th>Mensalidade</th><th>Validade</th><th>Situação</th></tr></thead><tbody>{rows.map(p=><tr key={p.id}><td><button className="text-button lead-name" onClick={()=>open(p.id)}>{p.title}</button></td><td>{data.leads.find(l=>l.id===p.leadId)?.name}</td><td><Tag tone="blue">v{p.version} · Atual</Tag></td><td>{p.setup===undefined?'Restrito':money(p.setup)}</td><td>{p.monthly===undefined?'Restrito':money(p.monthly)}</td><td>{dateLabel(p.validity)}</td><td><Tag tone={p.status==='Aceita'?'green':p.status==='Recusada'?'rose':'neutral'}>{p.status}</Tag></td></tr>)}</tbody></table>:<Empty title="Nenhuma proposta encontrada" detail="Cadastre uma proposta ou ajuste os filtros."/>}</div>
  </Page>
 }
 

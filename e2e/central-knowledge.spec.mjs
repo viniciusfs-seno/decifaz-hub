@@ -38,6 +38,8 @@ test('Central filtra responsável, prazo e situação, limpa e abre as fichas',a
  await expect(page.getByRole('dialog')).toContainText('Projeto central')
  await page.getByRole('button',{name:'Cancelar',exact:true}).click()
  await page.getByRole('button',{name:'Central comercial',exact:true}).click()
+ await expect(page.getByRole('combobox',{name:/^Situação/})).toHaveValue('Pendente')
+ await page.getByRole('button',{name:'Limpar filtros'}).click()
  await page.getByRole('button',{name:'Ligar ao cliente',exact:true}).click()
  await expect(page.getByRole('heading',{name:'Jornada comercial de Cliente central',exact:true})).toBeVisible()
  await page.locator('summary').filter({hasText:'Editar dados do estabelecimento'}).click()
@@ -57,7 +59,7 @@ test('Conhecimento busca conteúdo, filtra categoria e mostra estado vazio',asyn
  await expect(page.getByText('Selecione um material',{exact:true})).toBeVisible()
  await page.getByLabel('Buscar na base').fill('')
  await page.getByRole('button',{name:'Abrir reuniões',exact:true}).click()
- await expect(page.getByRole('heading',{name:'Central comercial',exact:true})).toBeVisible()
+ await expect(page.getByRole('heading',{name:'Reuniões e diagnósticos',exact:true})).toBeVisible()
 })
 
 test('Falha financeira preserva CRM, Central e conhecimento',async({page})=>{
