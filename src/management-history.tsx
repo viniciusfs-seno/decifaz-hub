@@ -9,7 +9,7 @@ type Report={rows:Row[];financial:boolean;activity_capture_since:string;lead_fir
 export function ManagementHistory({client,workspace,filter}:{client:SupabaseClient;workspace:string;filter:ManagementFilter}){
  const [result,setResult]=useState<Report>(),[error,setError]=useState(''),[loading,setLoading]=useState(true),[retry,setRetry]=useState(0)
  useEffect(()=>{let current=true;setLoading(true);setError('');setResult(undefined);if(!filter.from||!filter.to||filter.from>filter.to){setLoading(false);return}
-  void client.rpc('hub_metric_history',{w:workspace,from_on:filter.from,to_on:filter.to,owner_filter:filter.owner,stage_filter:filter.stage}).then(({data,error})=>{if(!current)return;if(error||!data)setError('Não foi possível carregar o histórico. Use um período de até cinco anos e tente novamente.');else setResult(data);setLoading(false)})
+  void client.rpc('hub_metric_history',{w:workspace,from_on:filter.from,to_on:filter.to,owner_filter:filter.owner,stage_filter:filter.stage}).then(({data,error})=>{if(!current)return;if(error||!data||!Array.isArray(data.rows)||typeof data.financial!=='boolean')setError('Não foi possível carregar o histórico. Use um período de até cinco anos e tente novamente.');else setResult(data);setLoading(false)})
   return ()=>{current=false}
  },[client,workspace,filter.from,filter.to,filter.owner,filter.stage,retry])
  const columns=(Object.keys(labels) as (keyof typeof labels)[]).filter(k=>result?.financial||!k.startsWith('receita_'))
