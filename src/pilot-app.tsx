@@ -1,4 +1,5 @@
 import {can,hasRole,type Role} from './access'
+import {SharedCatalog,loadCatalog,type Solution} from './shared-catalog'
 import {Knowledge} from './secondary'
 import {Team} from './team'
 import {InviteInbox} from './invites'
@@ -70,7 +71,7 @@ const navigation=[
  ['Comercial',[['central','Central comercial',ListTodo],['crm','Captação e CRM',Users],['triagem','Triagem comercial',ClipboardList],['reunioes','Reuniões e diagnósticos',CalendarDays],['propostas','Propostas comerciais',FileCheck2]]],
  ['Operação',[['agenda','Agenda operacional',CalendarDays],['projetos','Projetos e entregas',FolderKanban]]],
  ['Gestão',[['financeiro','Financeiro',Wallet]]],
- ['Conhecimento',[['conhecimento','Base de conhecimento',BookOpen]]],
+ ['Conhecimento',[['conhecimento','Base de conhecimento',BookOpen],['catalogo','Catálogo de soluções',BookOpen]]],
  ['Administração',[['equipe','Equipe',Users]]],
 ] as const
 const sections=navigation.flatMap(([,items])=>[...items])
@@ -120,6 +121,7 @@ function SharedCrm(){
  const membership=spaces.find(space=>space.id===workspace)
  const role=membership?.roles??membership?.role
  const administrator=hasRole(role,'admin')
+ const [catalog,setCatalog]=useState<Solution[]>([])
  const [moduleErrors,setModuleErrors]=useState<string[]>([])
  const [leads,setLeads]=useState<Lead[]>([])
  const [selected,setSelected]=useState('')
@@ -146,7 +148,7 @@ function SharedCrm(){
  const [loadedLead,setLoadedLead]=useState('')
  const [revision,reload]=useState(0)
  function clearWorkspaceData(){
-  setLeads([]);setTriages([]);setFinance(undefined);setProjects([]);setProposals([]);setProposalMeetings([]);setMeetings([]);setAllActivities([]);loadedWorkspace.current=''
+  setLeads([]);setTriages([]);setFinance(undefined);setProjects([]);setProposals([]);setProposalMeetings([]);setMeetings([]);setAllActivities([]);setCatalog([]);loadedWorkspace.current=''
   setSelected('');setLoadedLead('');setInteractions([]);setTasks([]);setProjectId('');setProposalModal(undefined);setEditor(null);setMeeting(undefined);setShowForm(false)
  }
  useEffect(()=>{
@@ -176,7 +178,7 @@ function SharedCrm(){
   setLoadingData(true)
   if(!can(role,'finance'))setFinance(undefined)
   const activitiesQuery=client!.from('hub_activities').select('id,lead_id,project_proposal_id,title,owner,due_on,status,support,review_kind,review_id').eq('workspace_id',workspace).order('due_on').returns<SharedActivity[]>()
-  void Promise.allSettled([leadsQuery,triagesQuery,loadProposals(client!,workspace),loadMeetings(client!,workspace),loadProjects(client!,workspace),can(role,'finance')?loadFinance(client!,workspace):Promise.resolve(undefined),activitiesQuery]).then(results=>{
+  void Promise.allSettled([leadsQuery,triagesQuery,loadProposals(client!,workspace),loadMeetings(client!,workspace),loadProjects(client!,workspace),can(role,'finance')?loadFinance(client!,workspace):Promise.resolve(undefined),activitiesQuery,loadCatalog(client!,workspace)]).then(results=>{
    if(!current)return
    const failures:string[]=[]
    function result<T>(index:number,label:string):T|undefined{
@@ -194,6 +196,7 @@ function SharedCrm(){
    const financial=result<Awaited<ReturnType<typeof loadFinance>>>(5,'Financeiro')
    if(financial?.some(item=>item.error||!item.data))failures.push('Financeiro')
    setFinance(financial?.some(item=>item.error||!item.data)?undefined:financial)
+   setCatalog(result<{data:Solution[]}>(7,'Catálogo')?.data??[])
    setModuleErrors(failures)
    setReady(true)
    loadedWorkspace.current=workspace;setLoadingData(false)
@@ -292,6 +295,7 @@ function SharedCrm(){
     leads={commercialData.leads} meetings={proposalMeetings}
     openLead={id=>{const item=leads.find(lead=>lead.id===id);if(item){go('crm');select(item)}}}
     openProject={id=>{go('projetos');setProjectId(id)}}/>}
+   {page==='catalogo'&&<SharedCatalog items={catalog} admin={administrator} save={async draft=>{const r=await client!.rpc('hub_save_solution',{w:workspace,i:draft.id??null,n:draft.name,c:draft.category,d:draft.description,items:draft.scope_items?.filter(s=>s.trim()),enabled:draft.active,expected_revision:draft.revision??null});if(r.error)return;reload(v=>v+1);return r.data}}/>}
    {page==='conhecimento'&&<Knowledge download={false} go={()=>go('central')}/>}
    {page==='financeiro'&&!can(role,'finance')&&<p role="status">Seu papel não permite acesso ao Financeiro.</p>}
    {page==='financeiro'&&can(role,'finance')&&finance&&<SharedFinance key={workspace} client={client!} workspace={workspace} projects={projects} forecasts={finance[0].data??[]} receipts={finance[1].data??[]} expenses={finance[2].data??[]} month={reportMonth} setMonth={setReportMonth} audit={finance[3].data??[]} busy={busy} write={write}/>}
@@ -338,11 +342,11 @@ function SharedCrm(){
     </section>
    </div>}
    </>}
-   {can(role,'commercial',true)&&lead&&editor==='triage'&&<TriageEditor lead={lead} triage={selectedTriage&&fullTriage(selectedTriage)} team={[]} close={()=>setEditor(null)}
+   {can(role,'commercial',true)&&lead&&editor==='triage'&&<TriageEditor solutionOptions={catalog.filter(s=>s.active).map(s=>s.name)} lead={lead} triage={selectedTriage&&fullTriage(selectedTriage)} team={[]} close={()=>setEditor(null)}
     save={(triage,updatedLead)=>write(()=>saveTriage(client!,workspace,triage,updatedLead),()=>setDraft({...draft,name:updatedLead.name,segment:updatedLead.segment,city:updatedLead.city}))}/>}
    {can(role,'commercial',true)&&lead&&editor==='meeting'&&<MeetingEditor data={meetingContext} item={meeting} leadId={lead.id} lockLead close={()=>setEditor(null)}
     save={(item,follow,advance)=>write(()=>saveMeeting(client!,workspace,item,follow,advance))}/>}
-   {proposalModal&&<ProposalEditor readOnly={!can(role,'commercial',true)} financial={can(role,'finance')} canSetPrices={administrator} canAccept={administrator} key={proposalModal.id??proposalModal.meetingId??'new'} data={commercialData}
+   {proposalModal&&<ProposalEditor catalog={catalog} readOnly={!can(role,'commercial',true)} financial={can(role,'finance')} canSetPrices={administrator} canAccept={administrator} key={proposalModal.id??proposalModal.meetingId??'new'} data={commercialData}
     item={proposals.find(item=>item.id===proposalModal.id)} leadId={proposalModal.leadId} meetingId={proposalModal.meetingId}
     open={id=>setProposalModal({id})} close={()=>setProposalModal(undefined)}
     project={can(role,'projects',true)?item=>{

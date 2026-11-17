@@ -1,4 +1,5 @@
 import {useState} from 'react'
+import type {Solution} from './shared-catalog'
 import {FileText,Plus} from 'lucide-react'
 import {dateLabel,day,money,norm,solutions,uid,type Data,type Proposal} from './domain'
 import {Choices,Dialog,Empty,Field,Form,Page,Tag} from './ui'
@@ -14,7 +15,7 @@ export function Proposals({data,add,open}:{data:Data;add:()=>void;open:(id:strin
  </Page>
 }
 
-export function ProposalEditor({data,item,leadId='',meetingId='',save,close,open,project,projectExists,readOnly=false,financial=true,canSetPrices=financial,canAccept=true}:{data:Data;item?:Proposal;leadId?:string;meetingId?:string;save:(p:Proposal,decision?:ProposalDecision)=>boolean|Promise<boolean>;close:()=>void;open:(id:string)=>void;project?:(p:Proposal)=>void;projectExists?:(id:string)=>boolean;readOnly?:boolean;financial?:boolean;canSetPrices?:boolean;canAccept?:boolean}){
+export function ProposalEditor({data,item,leadId='',meetingId='',save,close,open,project,projectExists,readOnly=false,financial=true,canSetPrices=financial,canAccept=true,catalog}:{catalog?:Solution[];data:Data;item?:Proposal;leadId?:string;meetingId?:string;save:(p:Proposal,decision?:ProposalDecision)=>boolean|Promise<boolean>;close:()=>void;open:(id:string)=>void;project?:(p:Proposal)=>void;projectExists?:(id:string)=>boolean;readOnly?:boolean;financial?:boolean;canSetPrices?:boolean;canAccept?:boolean}){
  const [p,set]=useState<Proposal>(item??{id:'',leadId,meetingId,title:'',services:[],scope:'',setup:0,monthly:0,terms:'',validity:day(14),version:1,status:'Rascunho'})
  const [amount,setAmount]=useState(String(p.setup??0))
  const [monthly,setMonthly]=useState(String(p.monthly??0))
@@ -57,7 +58,7 @@ export function ProposalEditor({data,item,leadId='',meetingId='',save,close,open
  <Field label="Título" required value={p.title} on={v=>setField('title',v)}/><Field label="Validade" required type="date" value={p.validity} on={v=>setField('validity',v)}/>
  {canSetPrices&&<><Field label="Implantação (R$)" required type="number" min={0} step="0.01" value={amount} on={setAmount}/><Field label="Mensalidade (R$)" required type="number" min={0} step="0.01" value={monthly} on={setMonthly}/></>}
  </div>{meeting&&<div className="callout"><div><b>Diagnóstico interno · {dateLabel(meeting.date)}</b><p>{meeting.summary}</p></div></div>}
- <Choices items={solutions} value={p.services} on={services=>set({...p,services})}/>
+ <Choices items={[...new Set([...(catalog?catalog.filter(s=>s.active).map(s=>s.name):solutions),...p.services])]} value={p.services} on={services=>set({...p,services})}/>{catalog&&<button type="button" className="button compact" onClick={()=>set({...p,scope:[...new Set([...p.scope.split("\n"),...catalog.filter(s=>p.services.includes(s.name)).flatMap(s=>s.scope_items)])].filter(Boolean).join("\n")})}>Incluir itens do catálogo no escopo</button>}
  <Field label="Escopo e entregáveis" required type="area" value={p.scope} on={v=>setField('scope',v)}/>{canSetPrices&&<Field label="Condições, limites e dependências" type="area" value={p.terms} on={v=>setField('terms',v)}/>}</>
  return <Dialog title={revision?'Nova revisão':item?item.title:'Nova proposta'} subtitle={item?'Versão '+item.version+' · '+item.status:lead?.name} onClose={close} wide>
  {editable?<Form onClose={close} onSave={saveDraft} error={error} label={saving?"Salvando…":"Salvar rascunho"}>{controls}</Form>:<div className="dialog-body">
