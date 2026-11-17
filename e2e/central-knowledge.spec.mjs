@@ -57,7 +57,7 @@ test('Conhecimento busca conteúdo, filtra categoria e mostra estado vazio',asyn
  await expect(page.getByText('Selecione um material',{exact:true})).toBeVisible()
  await page.getByLabel('Buscar na base').fill('')
  await page.getByRole('button',{name:'Abrir reuniões',exact:true}).click()
- await expect(page.getByRole('heading',{name:'Central comercial',exact:true})).toBeVisible()
+ await expect(page.getByRole('heading',{name:'Reuniões e diagnósticos',exact:true})).toBeVisible()
 })
 
 test('Falha financeira preserva CRM, Central e conhecimento',async({page})=>{
