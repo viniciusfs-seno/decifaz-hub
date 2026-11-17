@@ -8,7 +8,7 @@ test.beforeEach(async({page})=>{
  if(!/^https:\/\/[a-z0-9-]+\.trycloudflare\.com$/.test(origin??'')||!password)throw Error('Prévia HTTPS protegida não configurada')
  await page.goto('/');await page.getByLabel('Senha de revisão').fill(password);await page.getByRole('button',{name:'Entrar na homologação'}).click();await expect(page.getByRole('heading',{name:'Escolha um perfil fictício'})).toBeVisible()
 })
-async function persona(page,name){await page.goto('/__review/persona/'+name);await expect(page.getByRole('navigation')).toBeVisible()}
+async function persona(page,name){await page.goto('/__review/persona/'+name);await expect(page.getByRole('heading',{name:'Dashboard',exact:true})).toBeVisible()}
 async function nav(page,name){const toggle=page.getByRole('button',{name:'Abrir navegação',exact:true});if(await toggle.isVisible())await toggle.click();await page.getByRole('navigation').getByRole('button',{name,exact:true}).click()}
 async function client(page,context,f){
  const token=await page.evaluate(()=>Object.entries(localStorage).filter(([k])=>k.endsWith('-auth-token')).map(([,v])=>JSON.parse(v)).find(v=>v.access_token)?.access_token)
@@ -27,7 +27,7 @@ test('HTTPS externo: Auth, duas sessões, navegação, apresentação e autoriza
  if(process.env.HUB_HML_EXPECTED_SHA)expect(health.candidate).toBe(process.env.HUB_HML_EXPECTED_SHA)
  // The link/token never enters the test logs: the protected gateway performs the Mailpit redirect.
  await page.goto('/__review/auth-start/'+(info.project.name==='webkit-celular'?'segunda':'admin'))
- await expect(page.getByRole('navigation')).toBeVisible()
+ await expect(page.getByRole('heading',{name:'Dashboard',exact:true})).toBeVisible()
  expect(await page.evaluate(()=>location.origin===new URL(document.baseURI).origin&&!location.hash.includes('access_token='))).toBe(true)
  const f=await(await context.request.get(origin+'/__review/fixtures')).json(),admin=await client(page,context,f)
  const noSession=await context.request.post(origin+'/__supabase/functions/v1/hub-workspaces',{data:{}});expect(noSession.status()).toBe(401)
@@ -38,7 +38,8 @@ test('HTTPS externo: Auth, duas sessões, navegação, apresentação e autoriza
  await page.getByRole('dialog').getByRole('button',{name:'Fechar',exact:true}).click()
  await nav(page,'Captação e CRM');await page.getByRole('button',{name:'Café Horizonte · fictício',exact:true}).click()
  await expect(page.getByRole('heading',{name:'Jornada comercial de Café Horizonte · fictício'})).toBeVisible();await capture(page,'ficha',info.project.name)
- // Dossier is inline; selecting another lead opens its journey.
+ // Return to the preserved list before selecting another establishment.
+ await page.getByRole('button',{name:'← Voltar à lista',exact:true}).click()
  await page.getByRole('button',{name:'Mercado Sol · fictício',exact:true}).click();await page.getByRole('button',{name:'Editar reunião',exact:true}).click()
  const dialog=page.getByRole('dialog');await dialog.getByRole('button',{name:'Modo reunião',exact:true}).click()
  await dialog.getByLabel('Pergunta realizada',{exact:true}).first().check();await dialog.getByLabel('Resposta',{exact:true}).first().fill('SEGREDO INTERNO FICTÍCIO')
