@@ -305,14 +305,13 @@ function SharedCrm(){
   {ready&&workspace&&<>
    {page==='equipe'&&(administrator?<Team key={workspace} client={client!} workspace={workspace} onSaved={refreshMemberships} sendInviteLink={sendInviteLink}/>:<p role="alert">Seu papel não permite gerir a equipe deste espaço.</p>)}
 
-   {page==='dashboard'&&<OperationalDashboard key={workspace} data={commercialData} entries={entries} projects={projects} errors={moduleErrors} finance={finance} financial={can(role,'finance')} month={reportMonth} setMonth={setReportMonth} openLead={openLead} openProject={openProject} openEntry={openEntry} openAgenda={openAgenda} openFinance={()=>go('financeiro')} addLead={()=>{go('crm');select()}}/>}
+   {page==='dashboard'&&<OperationalDashboard key={workspace} data={commercialData} entries={entries} projects={projects} errors={moduleErrors} finance={finance} financial={can(role,'finance')} month={reportMonth} setMonth={setReportMonth} openLead={openLead} openProject={openProject} openEntry={openEntry} openAgenda={openAgenda} openFinance={()=>go('financeiro')} addLead={()=>{setReturnPage('dashboard');go('crm');select()}}/>}
    {page==='revisao'&&<WeeklyClosure revision={revision} client={client!} workspace={workspace} admin={administrator} leads={commercialData.leads} tasks={allActivities} onSaved={()=>reload(v=>v+1)} openLead={openLead}/>}
    {page==='indicadores'&&<ManagementIndicators data={commercialData} projects={projects} tasks={allActivities} forecasts={finance?.[0].data??[]} receipts={finance?.[1].data??[]} financial={can(role,'finance')&&!!finance} openLead={openLead} openProject={openProject}/>}
    {page==='revisao'&&<OperationalReview data={commercialData} projects={projects} activities={allActivities} busy={busy} allowed={kind=>can(role,kind==='project'?'projects':'commercial',true)} openLead={openLead} openProject={openProject} openProposal={id=>setProposalModal({id})} save={(origin,title,owner,due)=>write(()=>client!.rpc('hub_review_action',{w:workspace,k:origin.kind,s:origin.id,t:title,o:owner,d:due}))}/>}
    {page==='central'&&<CommercialCenter key={workspace} client={client!} workspace={workspace} revision={revision}
     leads={commercialData.leads} meetings={proposalMeetings}
-    openLead={id=>{const item=leads.find(lead=>lead.id===id);if(item){go('crm');select(item)}}}
-    openProject={id=>{go('projetos');setProjectId(id)}}/>}
+    openLead={openLead} openProject={openProject}/>}
    {page==='catalogo'&&<SharedCatalog items={catalog} admin={administrator} save={async draft=>{const r=await client!.rpc('hub_save_solution',{w:workspace,i:draft.id??null,n:draft.name,c:draft.category,d:draft.description,items:draft.scope_items?.filter(s=>s.trim()),enabled:draft.active,expected_revision:draft.revision??null});if(r.error)return;reload(v=>v+1);return r.data}}/>}
    {page==='conhecimento'&&<Knowledge download={false} go={()=>go('reunioes')}/>}
    {page==='financeiro'&&!can(role,'finance')&&<p role="status">Seu papel não permite acesso ao Financeiro.</p>}
@@ -320,10 +319,10 @@ function SharedCrm(){
    {(page==='agenda'||page==='reunioes')&&<OperationalAgenda key={workspace+page} request={agendaRequest} entries={entries} leads={commercialData.leads} initial={page==='reunioes'?{kind:'meeting',state:'all'}:agendaFilter} title={page==='reunioes'?'Reuniões e diagnósticos':'Agenda operacional'} open={openEntry} busy={busy} canChange={entry=>can(role,entry.projectId?'projects':'commercial',true)} change={(entry,status)=>void write(()=>client!.from('hub_activities').update({status}).eq('workspace_id',workspace).eq('id',entry.id).select('id').single())}/>}
    {page==='projetos'&&<SharedProjects projects={projects} leads={commercialData.leads} open={id=>{setReturnPage('projetos');setProjectId(id)}}/>}
    {page==='propostas'&&<Proposals data={commercialData} add={()=>setProposalModal({})} open={id=>setProposalModal({id})}/>}
-   {(page==='crm'||page==='triagem')&&!showForm&&<CRM key={page} data={commercialData} triage={page==='triagem'} open={id=>{setReturnPage(page);select(leads.find(item=>item.id===id))}} add={()=>select()}
-    start={id=>{select(leads.find(item=>item.id===id));setEditor('triage')}}/>}
+   {(page==='crm'||page==='triagem')&&!showForm&&<CRM key={page} data={commercialData} triage={page==='triagem'} open={id=>{setReturnPage(page);select(leads.find(item=>item.id===id))}} add={()=>{setReturnPage(page);select()}}
+    start={id=>{setReturnPage(page);select(leads.find(item=>item.id===id));setEditor('triage')}}/>}
    {(page==='crm'||page==='triagem')&&showForm&&<>
-    <div className="dossier-context"><button className="button" onClick={()=>{setShowForm(false);setSelected('');setEditor(null);go(returnPage)}}>← Voltar {returnPage==='agenda'?'à agenda':returnPage==='indicadores'?'aos indicadores':'à lista'}</button><span>{lead?.name??'Novo estabelecimento'} · {lead?.stage??'Cadastro'}</span></div>
+    <div className="dossier-context"><button className="button" onClick={()=>{setShowForm(false);setSelected('');setEditor(null);go(returnPage)}}>← Voltar {returnPage==='agenda'?'à agenda':returnPage==='indicadores'?'aos indicadores':returnPage==='central'?'à Central comercial':returnPage==='reunioes'?'às reuniões':returnPage==='triagem'?'à triagem':returnPage==='dashboard'?'ao Dashboard':'à lista'}</button><span>{lead?.name??'Novo estabelecimento'} · {lead?.stage??'Cadastro'}</span></div>
     <details className="card panel op-basics" open={!selected}><summary><h2>{selected?'Editar dados do estabelecimento':'Cadastrar estabelecimento'}</h2></summary>
      <fieldset disabled={!can(role,'commercial',true)}><form className="pilot-fields" onSubmit={saveLead}>
       <label>Nome<input required value={draft.name} onChange={e=>setDraft({...draft,name:e.target.value})}/></label>
@@ -369,7 +368,7 @@ function SharedCrm(){
     item={proposals.find(item=>item.id===proposalModal.id)} leadId={proposalModal.leadId} meetingId={proposalModal.meetingId}
     open={id=>setProposalModal({id})} close={()=>setProposalModal(undefined)}
     project={can(role,'projects',true)?item=>{
-     const show=()=>{setProposalModal(undefined);go('projetos');setProjectId(item.id)}
+     const show=()=>{setReturnPage(page);setProposalModal(undefined);go('projetos');setProjectId(item.id)}
      if(projects.some(project=>project.proposal_id===item.id))show()
      else void write(()=>client!.rpc('hub_open_project',{w:workspace,p:item.id}),show)
     }:undefined} projectExists={id=>projects.some(project=>project.proposal_id===id)}

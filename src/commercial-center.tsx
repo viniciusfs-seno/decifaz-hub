@@ -1,4 +1,5 @@
 import {useEffect,useState} from 'react'
+import {useViewState} from './view-state'
 import type {SupabaseClient} from '@supabase/supabase-js'
 import {dateLabel,day,type Lead,type Meeting} from './domain'
 import {Empty,Field,Page,Tag} from './ui'
@@ -12,9 +13,9 @@ export function CommercialCenter({client,workspace,revision,leads,meetings,openL
 }){
  const [tasks,setTasks]=useState<Task[]>()
  const [error,setError]=useState(false)
- const [owner,setOwner]=useState('')
- const [until,setUntil]=useState('')
- const [status,setStatus]=useState('')
+ const [owner,setOwner]=useViewState('central-owner','')
+ const [until,setUntil]=useViewState('central-until','')
+ const [status,setStatus]=useViewState('central-status','')
  useEffect(()=>{
   let current=true
   void client.from('hub_activities').select('id,title,owner,due_on,status,lead_id,project_proposal_id')
