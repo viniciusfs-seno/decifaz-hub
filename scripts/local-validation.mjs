@@ -20,5 +20,5 @@ for(const name of ['financeiro_jornada.sql','papeis_associacoes.sql','equipe.sql
  console.log('SQL '+name+': passou; fixtures revertidas.')
 }
 const targets=process.argv.slice(2)
-const result=spawnSync('npx',['playwright','test',...(targets.length?targets:['shared-real.spec.mjs','roles-real.spec.mjs','concurrency-real.spec.mjs','team-real.spec.mjs','team-concurrency-real.spec.mjs','role-history-real.spec.mjs','invites-real.spec.mjs','invite-auth-real.spec.mjs','member-state-real.spec.mjs','operational-real.spec.mjs','catalog-real.spec.mjs'])],{env,stdio:'inherit',shell})
+const result=spawnSync('npx',['playwright','test',...(targets.length?targets:['shared-real.spec.mjs','roles-real.spec.mjs','concurrency-real.spec.mjs','team-real.spec.mjs','team-concurrency-real.spec.mjs','role-history-real.spec.mjs','invites-real.spec.mjs','invite-auth-real.spec.mjs','member-state-real.spec.mjs','operational-real.spec.mjs','catalog-real.spec.mjs','meeting-studio-real.spec.mjs'])],{env,stdio:'inherit',shell})
 process.exit(result.status??1)

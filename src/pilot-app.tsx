@@ -1,5 +1,6 @@
 import {can,hasRole,type Role} from './access'
 import {SharedCatalog,loadCatalog,type Solution} from './shared-catalog'
+import {ClientPresentation} from './client-presentation'
 import {Knowledge} from './secondary'
 import {Team} from './team'
 import {InviteInbox} from './invites'
@@ -344,7 +345,7 @@ function SharedCrm(){
    </>}
    {can(role,'commercial',true)&&lead&&editor==='triage'&&<TriageEditor solutionOptions={catalog.filter(s=>s.active).map(s=>s.name)} lead={lead} triage={selectedTriage&&fullTriage(selectedTriage)} team={[]} close={()=>setEditor(null)}
     save={(triage,updatedLead)=>write(()=>saveTriage(client!,workspace,triage,updatedLead),()=>setDraft({...draft,name:updatedLead.name,segment:updatedLead.segment,city:updatedLead.city}))}/>}
-   {can(role,'commercial',true)&&lead&&editor==='meeting'&&<MeetingEditor data={meetingContext} item={meeting} leadId={lead.id} lockLead close={()=>setEditor(null)}
+   {can(role,'commercial',true)&&lead&&editor==='meeting'&&<MeetingEditor solutionOptions={catalog.filter(s=>s.active).map(s=>s.name)} presentation={<ClientPresentation lead={lead} meeting={meeting} solutions={catalog} proposals={proposals} financial={can(role,'finance')}/>} data={meetingContext} item={meeting} leadId={lead.id} lockLead close={()=>setEditor(null)}
     save={(item,follow,advance)=>write(()=>saveMeeting(client!,workspace,item,follow,advance))}/>}
    {proposalModal&&<ProposalEditor catalog={catalog} readOnly={!can(role,'commercial',true)} financial={can(role,'finance')} canSetPrices={administrator} canAccept={administrator} key={proposalModal.id??proposalModal.meetingId??'new'} data={commercialData}
     item={proposals.find(item=>item.id===proposalModal.id)} leadId={proposalModal.leadId} meetingId={proposalModal.meetingId}
