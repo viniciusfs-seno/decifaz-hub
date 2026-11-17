@@ -1,3 +1,4 @@
+import {LeadDetails} from './lead-details'
 import {Priority} from './ui'
 import './shared-workspace.css'
 import {ViewStateProvider} from './view-state'
@@ -260,17 +261,6 @@ function SharedCrm(){
    setBusy(false)
   }
  }
- function saveLead(event:FormEvent<HTMLFormElement>){
-  event.preventDefault()
-  const values={...draft,name:draft.name.trim()}
-  if(!values.name)return
-  const table=client!.from('hub_leads')
-  const query=selected?table.update(values).eq('workspace_id',workspace).eq('id',selected):table.insert({...values,workspace_id:workspace})
-  void write(()=>query.select(leadColumns).returns<Lead[]>().single().then(result=>{
-   if(result.data)select(result.data)
-   return result
-  }))
- }
  const currentLead=leads.find(lead=>lead.id===selected)
  const selectedTriage=triages.find(row=>row.lead_id===selected)
  const lead=currentLead?fullLead(currentLead):undefined
@@ -324,17 +314,12 @@ function SharedCrm(){
    {(page==='crm'||page==='triagem')&&showForm&&<>
     <div className="dossier-context"><button className="button" onClick={()=>{setShowForm(false);setSelected('');setEditor(null);go(returnPage)}}>← Voltar {returnPage==='agenda'?'à agenda':returnPage==='indicadores'?'aos indicadores':returnPage==='central'?'à Central comercial':returnPage==='reunioes'?'às reuniões':returnPage==='triagem'?'à triagem':returnPage==='dashboard'?'ao Dashboard':'à lista'}</button><span>{lead?.name??'Novo estabelecimento'} · {lead?.stage??'Cadastro'}</span></div>
     <details className="card panel op-basics" open={!selected}><summary><h2>{selected?'Editar dados do estabelecimento':'Cadastrar estabelecimento'}</h2></summary>
-     <fieldset disabled={!can(role,'commercial',true)}><form className="pilot-fields" onSubmit={saveLead}>
-      <label>Nome<input required value={draft.name} onChange={e=>setDraft({...draft,name:e.target.value})}/></label>
-      <label>Segmento<input value={draft.segment} onChange={e=>setDraft({...draft,segment:e.target.value})}/></label>
-      <label>Cidade<input value={draft.city} onChange={e=>setDraft({...draft,city:e.target.value})}/></label>
-      <label>Observações<textarea value={draft.notes} onChange={e=>setDraft({...draft,notes:e.target.value})}/></label>
-      <button className="button primary" disabled={busy}>Salvar estabelecimento</button>
-     </form></fieldset>
+     <LeadDetails key={workspace+':'+selected} lead={currentLead} solutions={catalog} allowed={can(role,'commercial',true)} save={async(body,expected)=>{const r=await client!.rpc('hub_save_lead',{w:workspace,l:selected||null,expected_revision:expected,body});if(r.error)return;return r.data}} onSaved={item=>{setNotice('Ficha salva.');setLeads(rows=>[...rows.filter(l=>l.id!==item.id),item]);select(item);reload(v=>v+1)}}/>
     </details>
    {lead&&<section className="card panel">
     <div className="op-dossier-head"><div><span className="op-eyebrow">FICHA DO ESTABELECIMENTO</span><h2>Jornada comercial de {lead.name}</h2><p>{lead.segment||'Segmento não informado'} · {lead.city||'Cidade não informada'}</p></div><div className="actions"><span className="tag">{lead.stage}</span><Priority triage={selectedTriage&&fullTriage(selectedTriage)}/></div></div>
     <div className="op-journey" aria-label="Etapas da jornada">{[['Cadastro',true],['Triagem',!!selectedTriage?.completed],['Reunião',meetings.some(m=>m.state==='Realizada')],['Proposta',proposals.some(p=>p.leadId===lead.id)],['Projeto',projects.some(p=>p.lead_id===lead.id)],['Pós-venda',allActivities.some(a=>a.lead_id===lead.id&&a.support)]].map(([label,done])=><span key={String(label)} data-done={done}>{done?'✓':'○'} {label}</span>)}</div>
+    <dl className="lead-contact-summary"><div><dt>Contato no estabelecimento</dt><dd>{lead.contact||'Não informado'}{lead.contactInfo?' · '+lead.contactInfo:''}</dd></div><div><dt>Canais</dt><dd>{[lead.whatsapp,lead.instagram,lead.website,lead.other].filter(Boolean).join(' · ')||'Não informados'}</dd></div><div><dt>Localização</dt><dd>{[lead.address,lead.region,lead.city].filter(Boolean).join(' · ')||'Não informada'}</dd></div><div><dt>Origem e verificação</dt><dd>{[lead.origin,lead.verification].filter(Boolean).join(' · ')||'Não informadas'}</dd></div></dl>
     {lead.needs&&<p>{lead.needs}</p>}
     {lead.next&&<p>Próxima ação · {lead.next} · {dateLabel(lead.due)}</p>}
     <div className="actions">
