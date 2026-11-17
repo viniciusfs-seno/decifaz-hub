@@ -1,5 +1,6 @@
 import {test,expect} from '@playwright/test'
 import {operationalFixture} from './helpers/operational-fixture.mjs'
+test.use({actionTimeout:15000})
 
 test('Experiência: contexto de retorno, atalhos, vazios, teclado e temas em desktop e celular',async({browser})=>{
  test.skip(process.env.HUB_REAL_E2E!=='1','Requer Supabase local fictício.')
@@ -36,11 +37,11 @@ test('Experiência: contexto de retorno, atalhos, vazios, teclado e temas em des
    await expect(page.getByText('Nenhum registro encontrado',{exact:true})).toBeVisible()
    await page.getByRole('button',{name:'Limpar filtros do CRM'}).click()
    await nav('Central comercial')
-   await page.getByLabel('Responsável',{exact:true}).selectOption('Caio · fictício')
+   await page.getByRole('combobox',{name:'Responsável',exact:true}).selectOption('Caio · fictício')
    await page.getByRole('button',{name:'Enviar diagnóstico revisado',exact:true}).first().click()
    await page.getByRole('button',{name:'← Voltar à Central comercial',exact:true}).click()
    await expect(page.getByRole('heading',{name:'Central comercial',exact:true})).toBeVisible()
-   await expect(page.getByLabel('Responsável',{exact:true})).toHaveValue('Caio · fictício')
+   await expect(page.getByRole('combobox',{name:'Responsável',exact:true})).toHaveValue('Caio · fictício')
    await nav('Indicadores');await page.getByLabel('Responsável dos indicadores').selectOption('Marina · fictícia')
    await page.getByRole('button',{name:'Funil atual da coorte',exact:true}).click()
    const dialog=page.getByRole('dialog');await expect(dialog).toBeVisible();await dialog.getByRole('button',{name:'Café Horizonte · fictício',exact:true}).click()
