@@ -190,6 +190,8 @@ test('HTTPS externo: jornada comercial completa persistida até fechamento',asyn
  expect(versions.map(v=>v.version)).toEqual([1,2])
  expect(versions[0].record.scope).not.toContain('Ajustes versão 2')
  expect(versions[1].record.catalog_snapshot[0].name).toBe(solutionTitle)
+ await expect(page.getByRole('row').filter({has:proposalButton})).toContainText('v2 · Atual')
+ await expect(page.getByRole('row').filter({has:proposalButton})).toContainText('Rascunho')
  await proposalButton.click()
  await quote.getByLabel(/Nova situação/).selectOption('Enviada')
  await quote.getByLabel('Canal, evidência ou contexto').fill('Envio fictício')
