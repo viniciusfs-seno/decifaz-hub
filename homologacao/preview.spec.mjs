@@ -40,11 +40,11 @@ test('HTTPS externo: Auth, duas sessões, navegação, apresentação e autoriza
  }
  await page.getByRole('button',{name:'Acompanhar implantação do cardápio',exact:true}).click()
  await page.getByRole('dialog').getByRole('button',{name:'Fechar',exact:true}).click()
- await nav(page,'Captação e CRM');await page.getByRole('button',{name:'Café Horizonte · fictício',exact:true}).click()
+ await nav(page,'Captação e CRM');await page.getByLabel('Buscar leads').fill('Café Horizonte');await page.getByRole('button',{name:'Café Horizonte · fictício',exact:true}).click()
  await expect(page.getByRole('heading',{name:'Jornada comercial de Café Horizonte · fictício'})).toBeVisible();await capture(page,'ficha',info.project.name)
  // Return to the preserved list before selecting another establishment.
  await page.getByRole('button',{name:'← Voltar à lista',exact:true}).click()
- await page.getByRole('button',{name:'Mercado Sol · fictício',exact:true}).click();await page.getByRole('button',{name:'Editar reunião',exact:true}).click()
+ await page.getByLabel('Buscar leads').fill('Mercado Sol');await page.getByRole('button',{name:'Mercado Sol · fictício',exact:true}).click();await page.getByRole('button',{name:'Editar reunião',exact:true}).click()
  const dialog=page.getByRole('dialog');await dialog.getByRole('button',{name:'Modo reunião',exact:true}).click()
  await dialog.getByLabel('Pergunta realizada',{exact:true}).first().check();await dialog.getByLabel('Resposta',{exact:true}).first().fill('SEGREDO INTERNO FICTÍCIO')
  await dialog.getByRole('button',{name:'Voltar à ficha completa'}).click()
