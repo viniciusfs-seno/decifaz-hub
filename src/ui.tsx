@@ -9,13 +9,17 @@ export function Choices({items,value,on}:{items:string[];value:string[];on:(v:st
  return <div className="choices">{items.map(item=><label key={item} className={value.includes(item)?'checked':''}><input type="checkbox" checked={value.includes(item)} onChange={e=>on(e.target.checked?[...value,item]:value.filter(x=>x!==item))}/>{item}</label>)}</div>
 }
 export function Tag({children,tone='neutral'}:{children:ReactNode;tone?:string}){return <span className={'tag '+tone}>{children}</span>}
-export function Priority({triage}:{triage?:Triage}){const p=grade(triage);return p?<Tag tone={p.label==='A'?'green':p.label==='B'?'amber':'blue'}>{p.label} · {p.total}/15</Tag>:<Tag>{triage?'Triagem incompleta':'Sem triagem'}</Tag>}
+export function Priority({triage}:{triage?:Triage}){const p=grade(triage);return p?<Tag tone={p.label==='A'?'green':p.label==='B'?'amber':'blue'}>{p.label} · {p.total}/15</Tag>:<Tag>{triage?'Parcial · '+triage.scores.reduce<number>((sum,n)=>sum+(n??0),0)+'/15 · '+triage.scores.filter(n=>n!==null).length+'/7 critérios':'Sem triagem'}</Tag>}
 export function Empty({title='Nenhum registro encontrado',detail}:{title?:string;detail?:string}){return <div className="empty"><Inbox size={25}/><strong>{title}</strong>{detail&&<span>{detail}</span>}</div>}
 export function Page({title,description,actions,children}:{title:string;description:string;actions?:ReactNode;children:ReactNode}){return <><div className="page-heading"><div><h1>{title}</h1><p>{description}</p></div>{actions&&<div className="actions">{actions}</div>}</div>{children}</>}
 export function Dialog({title,subtitle,onClose,children,wide=false}:{title:string;subtitle?:string;onClose:()=>void;children:ReactNode;wide?:boolean}){
  const ref=useRef<HTMLDialogElement>(null)
  const titleId=useId()
- useEffect(()=>{ref.current?.showModal()},[])
+ useEffect(()=>{
+  const previous=document.activeElement as HTMLElement|null,dialog=ref.current
+  dialog?.showModal()
+  return ()=>{dialog?.close();if(previous?.isConnected)previous.focus()}
+ },[])
  return <dialog ref={ref} aria-labelledby={titleId} className={wide?'wide':''} onCancel={e=>{e.preventDefault();onClose()}}><div className="dialog-head"><div><h2 id={titleId}>{title}</h2>{subtitle&&<p>{subtitle}</p>}</div><button className="icon" aria-label="Fechar" onClick={onClose}><X size={20}/></button></div>{children}</dialog>
 }
 export function Form({onSave,onClose,children,error,label='Salvar'}:{onSave:()=>void;onClose:()=>void;children:ReactNode;error?:string;label?:string}){

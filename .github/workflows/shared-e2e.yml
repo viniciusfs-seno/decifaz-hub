@@ -32,7 +32,7 @@ jobs:
         run: VITE_HUB_MODE=local VITE_SUPABASE_URL= VITE_SUPABASE_PUBLISHABLE_KEY= npm run test:e2e -- backup.spec.mjs
 
   preview-externa:
-    if: github.event_name == 'pull_request' && github.head_ref == 'feat/indicadores-fechamento' && vars.HUB_HML_PREVIEW_URL != ''
+    if: github.event_name == 'pull_request' && (github.head_ref == 'feat/indicadores-fechamento' || github.head_ref == 'feat/experiencia-portal') && vars.HUB_HML_PREVIEW_URL != ''
     runs-on: ubuntu-latest
     timeout-minutes: 15
     concurrency:

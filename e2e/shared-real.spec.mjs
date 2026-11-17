@@ -54,7 +54,7 @@ test('membros compartilham chamados e lançamentos financeiros com isolamento',a
  await quote.getByLabel('Mover para Qualificado ao concluir').check()
  await quote.getByRole('button',{name:'Concluir triagem'}).click()
  await expect(quote).toHaveCount(0)
- const row=page.getByRole('row').filter({hasText:'Cliente fictício'})
+ const row=page.locator('.op-dossier-head')
  await expect(row).toContainText('A · 15/15')
  await expect(row).toContainText('Qualificado')
  await page.getByRole('button',{name:'Registrar reunião',exact:true}).click()

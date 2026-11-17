@@ -67,11 +67,12 @@ test('Equipe: admin edita conjuntos, servidor nega usuário comum e outro espaç
   await expect(common.getByRole('button',{name:'Equipe',exact:true})).toHaveCount(0)
   await page.getByRole('combobox',{name:'Espaço de trabalho',exact:true}).selectOption(other)
   await expect(page.getByRole('button',{name:'Equipe',exact:true})).toHaveCount(0)
-  await expect(page.getByText('Seu papel não permite gerir a equipe deste espaço.',{exact:true})).toBeVisible()
+  await expect(page.getByRole('heading',{name:'Dashboard',exact:true})).toBeVisible()
   await expect(page.getByText(member.email,{exact:true})).toHaveCount(0)
   // A second fictitious admin permits self-demotion; the UI must drop access.
   expect(await checked(owner.client.rpc('hub_set_roles',{w,u:member.id,r:['admin','commercial']}))).toBe(true)
   await page.getByRole('combobox',{name:'Espaço de trabalho',exact:true}).selectOption(w)
+  await page.getByRole('navigation').getByRole('button',{name:'Equipe',exact:true}).click()
   await own.getByRole('checkbox',{name:'Administração',exact:true}).uncheck()
   await own.getByRole('checkbox',{name:'Comercial',exact:true}).check()
   await own.getByRole('button',{name:'Salvar papéis',exact:true}).click()

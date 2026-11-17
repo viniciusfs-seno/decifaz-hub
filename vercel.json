@@ -10,7 +10,8 @@
       "feat/hub-operacional": false,
       "feat/catalogo-compartilhado": false,
       "feat/reuniao-apresentacao": false,
-      "feat/indicadores-fechamento": false
+      "feat/indicadores-fechamento": false,
+      "feat/experiencia-portal": false
     }
   }
 }

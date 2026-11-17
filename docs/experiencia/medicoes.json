@@ -1,0 +1,38 @@
+{
+  "base": "4558ba48b65a46fe40d96e74091c2fc3b377a046",
+  "method": "Cliques e entradas explícitos para retornar da ficha ao mesmo recorte vencidas + busca, sem contar scroll; posição da fila no Dashboard em pixels CSS.",
+  "measurements": [
+    {
+      "version": "antes",
+      "device": "desktop",
+      "width": 1440,
+      "height": 1000,
+      "queueTop": 986,
+      "returnFilteredAgendaSteps": 3
+    },
+    {
+      "version": "antes",
+      "device": "celular",
+      "width": 390,
+      "height": 844,
+      "queueTop": 1218,
+      "returnFilteredAgendaSteps": 4
+    },
+    {
+      "version": "depois",
+      "device": "desktop",
+      "width": 1440,
+      "height": 1000,
+      "queueTop": 504,
+      "returnFilteredAgendaSteps": 1
+    },
+    {
+      "version": "depois",
+      "device": "celular",
+      "width": 390,
+      "height": 844,
+      "queueTop": 560,
+      "returnFilteredAgendaSteps": 1
+    }
+  ]
+}

@@ -1,3 +1,4 @@
+import {useViewState} from './view-state'
 import {useState,type ReactNode} from 'react'
 import type {SupabaseClient} from '@supabase/supabase-js'
 import {dateLabel,day,money,type Lead,type Proposal} from './domain'
@@ -19,12 +20,16 @@ export function loadProjects(client:SupabaseClient,workspace:string){
 }
 
 export function SharedProjects({projects,leads,open}:{projects:SharedProject[];leads:Lead[];open:(id:string)=>void}){
+ const [query,setQuery]=useViewState('projects-query',''),[owner,setOwner]=useViewState('projects-owner',''),[late,setLate]=useViewState('projects-late',false)
+ const rows=projects.filter(p=>(!owner||p.owner===owner)&&(!late||!!p.due_on&&p.due_on<day()&&p.status!=='Entregue')&&(p.approved.title+' '+(leads.find(l=>l.id===p.lead_id)?.name??'')).toLocaleLowerCase().includes(query.trim().toLocaleLowerCase()))
  return <Page title="Projetos e entregas" description="Acompanhe os projetos abertos a partir de propostas aceitas.">
-  {projects.length?<div className="card table-wrap"><table><thead><tr><th>Projeto</th><th>Estabelecimento</th><th>Responsável</th><th>Prazo</th><th>Situação</th></tr></thead>
-  <tbody>{projects.map(item=><tr key={item.proposal_id}>
+  <div className="toolbar op-filters"><label>Buscar projeto ou estabelecimento<input value={query} onChange={e=>setQuery(e.target.value)}/></label><label>Responsável do projeto<select value={owner} onChange={e=>setOwner(e.target.value)}><option value="">Todos</option>{[...new Set(projects.map(p=>p.owner).filter(Boolean))].sort().map(o=><option key={o}>{o}</option>)}</select></label><label className="checkline"><input type="checkbox" checked={late} onChange={e=>setLate(e.target.checked)}/>Somente projetos vencidos</label></div>
+  <p className="view-summary" role="status"><span><b>{rows.length}</b> projetos neste recorte</span><span>Prazo e responsável do projeto · abra a ficha para entregas e suporte</span></p>
+  {rows.length?<div className="card table-wrap"><table><thead><tr><th>Projeto</th><th>Estabelecimento</th><th>Responsável</th><th>Prazo</th><th>Situação</th></tr></thead>
+  <tbody>{rows.map(item=><tr key={item.proposal_id}>
    <td><button className="text-button lead-name" onClick={()=>open(item.proposal_id)}>{item.approved.title}</button></td>
-   <td>{leads.find(lead=>lead.id===item.lead_id)?.name}</td><td>{item.owner||'—'}</td><td>{dateLabel(item.due_on??'')}</td><td><Tag>{item.status}</Tag></td>
-  </tr>)}</tbody></table></div>:<Empty title="Nenhum projeto aberto" detail="Abra um projeto pela versão aceita de uma proposta comercial."/>}
+   <td>{leads.find(lead=>lead.id===item.lead_id)?.name}</td><td>{item.owner||'—'}</td><td><Tag tone={item.due_on&&item.due_on<day()&&item.status!=='Entregue'?'rose':'neutral'}>{dateLabel(item.due_on??'')}{item.due_on&&item.due_on<day()&&item.status!=='Entregue'?' · Vencido':''}</Tag></td><td><Tag>{item.status}</Tag></td>
+  </tr>)}</tbody></table></div>:<Empty title={projects.length?"Nenhum projeto neste recorte":"Nenhum projeto aberto"} detail={projects.length?"Ajuste a busca, o responsável ou o filtro de vencidos.":"Abra um projeto pela versão aceita de uma proposta comercial."}/>}
  </Page>
 }
 

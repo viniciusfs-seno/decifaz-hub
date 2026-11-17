@@ -1,3 +1,4 @@
+import {useViewState} from './view-state'
 import {useState} from 'react'
 import type {SupabaseClient} from '@supabase/supabase-js'
 import {dateLabel,day,money,uid} from './domain'
@@ -34,7 +35,7 @@ export function SharedFinance({client,workspace,projects,forecasts,receipts,expe
  const [received,setReceived]=useState(day())
  const [amount,setAmount]=useState('')
  const [receiptId,setReceiptId]=useState(uid)
- const [overdueOnly,setOverdueOnly]=useState(false)
+ const [overdueOnly,setOverdueOnly]=useViewState('finance-overdue',false)
  const [reverseId,setReverseId]=useState('')
  const [reason,setReason]=useState('')
  const summary=financeMetrics(forecasts,receipts,expenses,day(),month)
