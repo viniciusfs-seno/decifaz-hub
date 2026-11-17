@@ -30,3 +30,30 @@ jobs:
       - run: npm run test:e2e -- shared-finance.spec.mjs central-knowledge.spec.mjs
       - name: Regressão do modo local
         run: VITE_HUB_MODE=local VITE_SUPABASE_URL= VITE_SUPABASE_PUBLISHABLE_KEY= npm run test:e2e -- backup.spec.mjs
+
+  preview-externa:
+    if: github.event_name == 'pull_request' && github.head_ref == 'feat/indicadores-fechamento' && vars.HUB_HML_PREVIEW_URL != ''
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    concurrency:
+      group: decifaz-homologacao-externa
+      cancel-in-progress: false
+    env:
+      HUB_HML_PREVIEW_URL: ${{ vars.HUB_HML_PREVIEW_URL }}
+      HUB_HML_REVIEW_PASSWORD: ${{ secrets.HUB_HML_REVIEW_PASSWORD }}
+      HUB_HML_EXPECTED_SHA: ${{ github.event.pull_request.head.sha }}
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '24'
+          cache: npm
+      - run: npm ci
+      - run: npx playwright install --with-deps chromium webkit
+      - run: xvfb-run npx playwright test --config homologacao.config.mjs
+      - uses: actions/upload-artifact@v4
+        if: success()
+        with:
+          name: homologacao-externa-capturas
+          path: .validation/external-captures
+          retention-days: 7

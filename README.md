@@ -1,5 +1,9 @@
 # Decifaz Hub
 
+Homologação das quatro entregas empilhadas (#19–#22): [acesso isolado, testes externos, integração e recuperação](docs/homologacao-integrada.md). A publicação autorizada está registrada em [publicação integrada](docs/publicacao-integrada.md).
+
+Em revisão: [Comercial e Gerencial](docs/comercial-gerencial.md), com catálogo compartilhado, proposta versionada, reunião/apresentação, indicadores filtráveis e fechamento semanal persistido. A documentação reúne os PRs encadeados, capturas desktop/celular, limites da prévia local e a ordem de publicação/recuperação. Produção permanece para aprovação posterior.
+
 Portal interno da Decifaz para gerenciar o funil comercial. O frontend usa React, TypeScript e Vite, com deploy na Vercel. O Supabase fornece login por link de e-mail, PostgreSQL, RLS e a função Edge que lista os espaços autorizados.
 
 O [Hub Operacional](docs/operacional.md) reúne dashboard com recortes navegáveis, agenda persistida, revisão semanal e ficha integrada no modo compartilhado. A documentação inclui a comparação com a demo, capturas de desktop/celular, prévia local com dados fictícios e o roteiro de publicação e recuperação. Esta entrega permanece em rascunho, sem publicação em produção.
