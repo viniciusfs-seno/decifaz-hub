@@ -28,8 +28,9 @@ export type ReviewClosure = {week:string;closedOn:string;notes:string;actions:Pi
 export type Data = {reviewClosures?:ReviewClosure[];version:1; leads:Lead[];triages:Triage[];activities:Activity[];meetings:Meeting[];proposals:Proposal[];projects:Project[];finance:Finance[];team:string[]}
 export const uid = () => crypto.randomUUID()
 export function day(offset=0) {
- const date = new Date(); date.setDate(date.getDate()+offset)
- return new Intl.DateTimeFormat('sv-SE').format(date)
+ const today=new Intl.DateTimeFormat('sv-SE',{timeZone:'America/Fortaleza'}).format(new Date())
+ const date=new Date(today+'T12:00:00Z');date.setUTCDate(date.getUTCDate()+offset)
+ return date.toISOString().slice(0,10)
 }
 export const dateLabel = (value:string) => value ? value.slice(0,10).split('-').reverse().join('/') : '—'
 export const money = (value:number) => new Intl.NumberFormat('pt-BR',{style:'currency',currency:'BRL'}).format(value)
