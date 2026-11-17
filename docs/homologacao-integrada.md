@@ -1,6 +1,6 @@
 # Homologação integrada — Operacional, Comercial e Gerencial
 
-Esta rodada não autoriza merge, migração remota, Edge ou frontend de produção. A base conferida é `4e59c14d08b5080936d38668c6643e0fc1c0cedf` (#18), com histórico de migrações até `20261116010000`, consultado somente por metadados. Não foram consultados registros de negócio reais.
+Este documento registra a homologação inicial, cuja base era `4e59c14d08b5080936d38668c6643e0fc1c0cedf` (#18), com migrações até `20261116010000`. Após essa etapa, o solicitante aprovou o candidato integrado `53e70b5` e autorizou explicitamente a publicação em fases dos PRs #19 → #20 → #21 → #22. Veja o [registro da publicação e da revisão visual](publicacao-integrada.md). As restrições de publicação e referências de base abaixo pertencem à rodada inicial; a autorização posterior está registrada no roteiro executado.
 
 ## Candidato e referências
 

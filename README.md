@@ -1,6 +1,6 @@
 # Decifaz Hub
 
-Homologação das quatro entregas empilhadas (#19–#22): [acesso isolado, testes externos, integração e recuperação](docs/homologacao-integrada.md). Produção permanece fora desta rodada.
+Homologação das quatro entregas empilhadas (#19–#22): [acesso isolado, testes externos, integração e recuperação](docs/homologacao-integrada.md). A publicação autorizada está registrada em [publicação integrada](docs/publicacao-integrada.md).
 
 Em revisão: [Comercial e Gerencial](docs/comercial-gerencial.md), com catálogo compartilhado, proposta versionada, reunião/apresentação, indicadores filtráveis e fechamento semanal persistido. A documentação reúne os PRs encadeados, capturas desktop/celular, limites da prévia local e a ordem de publicação/recuperação. Produção permanece para aprovação posterior.
 

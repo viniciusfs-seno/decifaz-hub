@@ -45,7 +45,7 @@ test('HTTPS externo: Auth, duas sessões, navegação, apresentação e autoriza
  await dialog.getByRole('button',{name:'Voltar à ficha completa'}).click()
  const presentation=dialog.locator('.client-presentation');await presentation.getByLabel('Cardápio digital',{exact:true}).check()
  const popupPromise=context.waitForEvent('page');await presentation.getByRole('button',{name:'Abrir visão do cliente'}).click();const popup=await popupPromise
- await expect(popup.getByRole('heading',{name:'Cardápio digital',exact:true})).toBeVisible();await expect(popup.locator('body')).not.toContainText('SEGREDO INTERNO');await expect(popup.locator('body')).not.toContainText('R$')
+ await expect(popup.getByRole('heading',{name:'Cardápio digital',exact:true})).toBeVisible();await expect(popup.locator('body')).not.toContainText('SEGREDO INTERNO');await expect(popup.locator('body')).not.toContainText('Nota interna fictícia');await expect(popup.locator('body')).not.toContainText('Condição fictícia reservada');await expect(popup.locator('body')).not.toContainText('R$')
  await capture(popup,'apresentacao',info.project.name);await popup.close();await capture(page,'reuniao',info.project.name)
  const supportsCapture=await page.evaluate(()=>typeof navigator.mediaDevices?.getDisplayMedia==='function')
  let captureResult='API indisponível neste navegador'
@@ -64,6 +64,12 @@ test('HTTPS externo: Auth, duas sessões, navegação, apresentação e autoriza
   expect((await restricted.from('hub_projects').select('approved')).error?.code).toBe('42501')
   const visible=await checked(restricted.from('hub_proposals_visible').select('record').eq('workspace_id',f.workspace));expect(visible.length).toBeGreaterThan(0)
   for(const p of visible)for(const field of ['setup','monthly','terms'])expect(field in p.record).toBe(false)
+  await nav(second,'Indicadores')
+  await expect(second.getByRole('button',{name:/Receita prevista/})).toHaveCount(0);await expect(second.getByRole('button',{name:/Receita realizada/})).toHaveCount(0)
+  const commercialDownload=second.waitForEvent('download');await second.getByRole('button',{name:'Exportar indicadores CSV'}).click();let commercialCsv='';for await(const part of await(await commercialDownload).createReadStream())commercialCsv+=part.toString()
+  for(const financialText of ['"2400,00"','"800,00"','"180,00"','Condição fictícia reservada','Receita prevista','Receita realizada'])expect(commercialCsv).not.toContain(financialText)
+  for(const line of commercialCsv.replace(/^\uFEFF/,'').trim().split(/\r?\n/).slice(1).filter(l=>!l.startsWith('"Conversão:')))expect(line.split(';')[6]).toBe('""')
+  await capture(second,'indicadores-comercial',info.project.name)
   expect((await restricted.rpc('hub_close_week',{w:f.workspace,start_on:'2026-11-09',expected_revision:0,summary_text:'Não autorizado',decision_text:'',planned:[]})).error?.code).toBe('42501')
   const otherRows=await checked(restricted.from('hub_leads').select('id').eq('workspace_id',f.other));expect(otherRows.length).toBeGreaterThan(0)
   await nav(second,'Dashboard');await expect(second.getByText('Valores financeiros são restritos',{exact:false})).toBeVisible()
