@@ -17,7 +17,15 @@ async function client(page,context,f){
  return createClient(f.api,f.publicKey,{auth:{persistSession:false,autoRefreshToken:false},global:{headers:{Authorization:'Bearer '+token},fetch:(url,options)=>{const headers=new Headers(options.headers);headers.set('Cookie',cookie);return fetch(url,{...options,headers})}}})
 }
 const checked=async op=>{const {data,error}=await op;if(error)throw Error('Operação fictícia recusada: '+error.code);return data}
-async function capture(page,name,project){await expect(page.getByText(/^Carregando/)).toHaveCount(0);await mkdir('.validation/external-captures',{recursive:true});await page.screenshot({path:'.validation/external-captures/'+name+'-'+project+'.png',fullPage:true})}
+async function capture(page,name,project){
+ await expect(page.getByText(/^Carregando/)).toHaveCount(0)
+ await page.evaluate(async()=>{await document.fonts.ready;window.scrollTo(0,0);await new Promise(r=>requestAnimationFrame(()=>requestAnimationFrame(r)))})
+ await mkdir('.validation/external-captures',{recursive:true})
+ const size=await page.evaluate(()=>({height:document.documentElement.scrollHeight,width:innerWidth,scale:devicePixelRatio})),fullPage=Math.max(size.height,size.width)*size.scale<30000
+ const base='.validation/external-captures/'+name+'-'+project
+ await page.screenshot({path:base+'.png',fullPage})
+ if(!fullPage){await writeFile(base+'.json',JSON.stringify({fullPage:false,reason:'Limite físico de captura do motor; validações e navegação permanecem integrais.',...size}));await page.evaluate(()=>window.scrollTo(0,document.documentElement.scrollHeight));await page.screenshot({path:base+'-final.png'});await page.evaluate(()=>window.scrollTo(0,0))}
+}
 
 test('HTTPS externo: Auth, duas sessões, navegação, apresentação e autorização',async({page,context,browser},info)=>{
  const anonymous=await browser.newContext();try{
