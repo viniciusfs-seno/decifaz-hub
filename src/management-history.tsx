@@ -6,13 +6,13 @@ import {businessDay} from './shared-operational'
 const labels={cadastros:'Cadastros',reunioes:'Reuniões registradas',propostas_enviadas:'Versões enviadas',entregas_aceitas:'Entregas aceitas',atividades_concluidas:'Conclusões de atividades',suporte_concluido:'Conclusões de suporte',entradas_ganho:'Entradas em Ganho observadas',entradas_perdido:'Entradas em Perdido observadas',receita_prevista:'Receita prevista',receita_realizada:'Receita realizada'}
 type Row={month:string}&Partial<Record<keyof typeof labels,number>>
 type Report={rows:Row[];financial:boolean;activity_capture_since:string;lead_first_observed:string|null}
-export function ManagementHistory({client,workspace,filter}:{client:SupabaseClient;workspace:string;filter:ManagementFilter}){
+export function ManagementHistory({client,workspace,filter,financial,revision}:{client:SupabaseClient;workspace:string;filter:ManagementFilter;financial:boolean;revision:number}){
  const [result,setResult]=useState<Report>(),[error,setError]=useState(''),[loading,setLoading]=useState(true),[retry,setRetry]=useState(0)
  useEffect(()=>{let current=true;setLoading(true);setError('');setResult(undefined);if(!filter.from||!filter.to||filter.from>filter.to){setLoading(false);return}
   void client.rpc('hub_metric_history',{w:workspace,from_on:filter.from,to_on:filter.to,owner_filter:filter.owner,stage_filter:filter.stage}).then(({data,error})=>{if(!current)return;if(error||!data||!Array.isArray(data.rows)||typeof data.financial!=='boolean')setError('Não foi possível carregar o histórico. Use um período de até cinco anos e tente novamente.');else setResult(data);setLoading(false)})
   return ()=>{current=false}
- },[client,workspace,filter.from,filter.to,filter.owner,filter.stage,retry])
- const columns=(Object.keys(labels) as (keyof typeof labels)[]).filter(k=>result?.financial||!k.startsWith('receita_'))
+ },[client,workspace,filter.from,filter.to,filter.owner,filter.stage,retry,financial,revision])
+ const columns=(Object.keys(labels) as (keyof typeof labels)[]).filter(k=>financial&&result?.financial||!k.startsWith('receita_'))
  const numeric=(row:Row,key:keyof typeof labels)=>key.startsWith('receita_')?money(row[key]??0):row[key]??0
  function download(){if(!result)return;const cell=(v:unknown)=>'"'+String(v??'').replace(/^[\s]*[=+@-]/,"'$&").replaceAll('"','""')+'"';const lines=[['Mês','De','Até','Responsável','Etapa atual',...columns.map(k=>labels[k])],...result.rows.map(r=>[r.month,filter.from,filter.to,filter.owner,filter.stage,...columns.map(k=>r[k]??0)])];const url=URL.createObjectURL(new Blob(['\uFEFF'+lines.map(r=>r.map(cell).join(';')).join('\r\n')],{type:'text/csv;charset=utf-8'})),a=document.createElement('a');a.href=url;a.download='decifaz-historico.csv';a.click();setTimeout(()=>URL.revokeObjectURL(url),1000)}
  return <section className="card panel history-report" aria-labelledby="history-title"><div className="panel-head"><div><span className="op-eyebrow">DADOS DATADOS · FORTALEZA</span><h2 id="history-title">Histórico verificável por mês</h2></div><button className="button" disabled={loading||!result} onClick={download}>Exportar histórico CSV</button></div>
