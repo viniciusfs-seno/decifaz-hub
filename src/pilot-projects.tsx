@@ -1,3 +1,4 @@
+import {allRows} from './load-all'
 import {useViewState} from './view-state'
 import {useState,type ReactNode} from 'react'
 import type {SupabaseClient} from '@supabase/supabase-js'
@@ -15,8 +16,8 @@ export type SharedProject={
 export type ProjectUpdate=Pick<SharedProject,'owner'|'due_on'|'status'|'deliverables'>
 
 export function loadProjects(client:SupabaseClient,workspace:string){
- return client.from('hub_projects_visible').select('proposal_id,lead_id,owner,due_on,status,deliverables,approved,delivery')
-  .eq('workspace_id',workspace).order('due_on').order('proposal_id').returns<SharedProject[]>()
+ return allRows(client.from('hub_projects_visible').select('proposal_id,lead_id,owner,due_on,status,deliverables,approved,delivery')
+  .eq('workspace_id',workspace).order('due_on').order('proposal_id').returns<SharedProject[]>())
 }
 
 export function SharedProjects({projects,leads,open}:{projects:SharedProject[];leads:Lead[];open:(id:string)=>void}){

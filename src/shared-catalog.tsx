@@ -1,9 +1,10 @@
+import {allRows} from './load-all'
 import {useState} from 'react'
 import {useViewState} from './view-state'
 import type {SupabaseClient} from '@supabase/supabase-js'
 import {Dialog,Empty,Page,Tag} from './ui'
 export type Solution={id:string;name:string;category:string;description:string;scope_items:string[];active:boolean;revision:number}
-export const loadCatalog=(client:SupabaseClient,w:string)=>client.from('hub_solutions').select('id,name,category,description,scope_items,active,revision').eq('workspace_id',w).order('name').returns<Solution[]>()
+export const loadCatalog=(client:SupabaseClient,w:string)=>allRows(client.from('hub_solutions').select('id,name,category,description,scope_items,active,revision').eq('workspace_id',w).order('name').order('id').returns<Solution[]>())
 export function SharedCatalog({items,admin,save}:{items:Solution[];admin:boolean;save:(draft:Partial<Solution>)=>Promise<{status:string;current?:Solution}|undefined>}){
  const [query,setQuery]=useViewState('catalog-query',''),[archived,setArchived]=useViewState('catalog-archived',false),[category,setCategory]=useViewState('catalog-category',''),[draft,setDraft]=useState<Partial<Solution>>(),[busy,setBusy]=useState(false),[error,setError]=useState('')
  const rows=items.filter(i=>(!category||i.category===category)&&(archived||i.active)&&(i.name+' '+i.category+' '+i.description).toLocaleLowerCase().includes(query.toLocaleLowerCase()))

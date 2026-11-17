@@ -19,6 +19,7 @@ async function fixtures(page,{financeError=false}={}){
    '/rest/v1/hub_receipts':[{id:'r',proposal_id:'p',kind:'Implantação',period:'0001-01-01',amount:30,received_on:'2026-11-02',reversed_at:null}],
    '/rest/v1/hub_expenses':[{id:'e',title:'Licença mensal',amount:20,due_on:'2026-10-05',paid_on:'2026-11-03',paid_amount:25}],
   }
+  if(path==='/rest/v1/rpc/hub_crm_page')return route.fulfill({json:{rows:rows['/rest/v1/hub_leads'],total:1,owners:['Ana','Bia']}})
   return route.fulfill({json:rows[path]??[]})
  })
  await page.goto('/')
