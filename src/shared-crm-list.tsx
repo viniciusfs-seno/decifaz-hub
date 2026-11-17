@@ -1,4 +1,4 @@
-import {useEffect,useState} from 'react'
+import {useEffect,useLayoutEffect,useRef,useState} from 'react'
 import type {SupabaseClient} from '@supabase/supabase-js'
 import {CRM} from './commercial'
 import {fullLead,type PilotLead} from './pilot-journey'
@@ -9,6 +9,12 @@ export function SharedCrmList({client,workspace,revision,data,triage,open,add,st
  const [filter,setFilter]=useViewState<CrmFilter>('server-crm-'+triage,{query:'',stage:'',owner:'',priority:'',sort:'Recentes',offset:0})
  const [result,setResult]=useState<{rows:PilotLead[];total:number;owners:string[]}>(),[busy,setBusy]=useState(true),[error,setError]=useState(''),[retry,setRetry]=useState(0)
  const [position,setPosition]=useViewState('crm-position-'+triage,{y:0,id:''})
+ const restore=useRef(true)
+ useLayoutEffect(()=>{
+  if(busy||!result||!position.id||!restore.current)return
+  const target=document.querySelector<HTMLElement>(`[data-crm-lead="${position.id}"]`)
+  if(target){target.focus({preventScroll:true});window.scrollTo(0,position.y);restore.current=false}
+ },[busy,result,position.id,position.y])
  const params={w:workspace,q:filter.query,s:filter.stage,o:filter.owner,p:filter.priority,sort_by:filter.sort}
  useEffect(()=>{
   let current=true;setBusy(true);setError('')
@@ -17,7 +23,6 @@ export function SharedCrmList({client,workspace,revision,data,triage,open,add,st
    if(error||!data){setError('Não foi possível consultar o CRM. Tente novamente.');setBusy(false);return}
    if(data.total>0&&filter.offset>=data.total){setFilter({...filter,offset:Math.floor((data.total-1)/25)*25});return}
    setResult(data);setBusy(false)
-   if(position.id)requestAnimationFrame(()=>{document.querySelector<HTMLElement>(`[data-crm-lead="${position.id}"]`)?.focus({preventScroll:true});window.scrollTo(0,position.y)})
   })},150)
   return ()=>{current=false;clearTimeout(timer)}
  },[client,workspace,revision,filter,retry])
