@@ -23,6 +23,11 @@ test('Experiência: contexto de retorno, atalhos, vazios, teclado e temas em des
    await nav('Dashboard');await page.getByRole('button',{name:/Atividades de hoje/}).click()
    await expect(page.getByRole('button',{name:'Hoje',exact:true})).toHaveAttribute('aria-pressed','true')
    await expect(page.getByLabel('Buscar na agenda')).toHaveValue('')
+   if(width===390){
+    const entry=page.locator('.op-work-item').first(),body=await entry.locator(':scope > div').first().boundingBox(),actions=await entry.locator('.op-item-actions').boundingBox()
+    expect(body.width).toBeGreaterThan(250)
+    expect(actions.y).toBeGreaterThanOrEqual(body.y+body.height)
+   }
    await nav('Captação e CRM');await page.getByLabel('Buscar leads').fill('Studio')
    await page.getByRole('button',{name:'Studio Aurora · fictício',exact:true}).click()
    await page.getByRole('button',{name:'← Voltar à lista',exact:true}).click()

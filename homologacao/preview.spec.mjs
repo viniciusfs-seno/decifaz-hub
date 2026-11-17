@@ -34,6 +34,10 @@ test('HTTPS externo: Auth, duas sessões, navegação, apresentação e autoriza
  await expect(page.getByRole('button',{name:'Organizar meu dia',exact:true})).toBeVisible();await capture(page,'dashboard',info.project.name)
  await page.getByRole('button',{name:'Organizar meu dia',exact:true}).click();await expect(page.getByRole('heading',{name:'Agenda operacional',exact:true})).toBeVisible();await expect(page.getByRole('button',{name:'Hoje',exact:true})).toHaveAttribute('aria-pressed','true')
  await page.getByRole('button',{name:'Limpar filtros da agenda',exact:true}).click();await capture(page,'agenda',info.project.name)
+ if(info.project.name==='webkit-celular'){
+  const entry=page.locator('.op-work-item').first(),body=await entry.locator(':scope > div').first().boundingBox(),actions=await entry.locator('.op-item-actions').boundingBox()
+  expect(body.width).toBeGreaterThan(250);expect(actions.y).toBeGreaterThanOrEqual(body.y+body.height)
+ }
  await page.getByRole('button',{name:'Acompanhar implantação do cardápio',exact:true}).click()
  await page.getByRole('dialog').getByRole('button',{name:'Fechar',exact:true}).click()
  await nav(page,'Captação e CRM');await page.getByRole('button',{name:'Café Horizonte · fictício',exact:true}).click()
