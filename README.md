@@ -68,3 +68,5 @@ Para continuar no editor, consulte o [guia de VS Code e prompt de continuidade](
 Próxima entrega em revisão: [ficha compartilhada e auditoria](docs/ficha-compartilhada.md).
 
 [Paginação do CRM, busca e exportação completa](docs/crm-paginado.md).
+
+[Fontes e limites do histórico de indicadores e roteiro integrado](docs/historico-indicadores.md).

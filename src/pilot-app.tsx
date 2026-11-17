@@ -1,3 +1,4 @@
+import {ManagementHistory} from './management-history'
 import {SharedCrmList} from './shared-crm-list'
 import {allRows} from './load-all'
 import {LeadDetails} from './lead-details'
@@ -299,7 +300,7 @@ function SharedCrm(){
 
    {page==='dashboard'&&<OperationalDashboard key={workspace} data={commercialData} entries={entries} projects={projects} errors={moduleErrors} finance={finance} financial={can(role,'finance')} month={reportMonth} setMonth={setReportMonth} openLead={openLead} openProject={openProject} openEntry={openEntry} openAgenda={openAgenda} openFinance={()=>go('financeiro')} addLead={()=>{setReturnPage('dashboard');go('crm');select()}}/>}
    {page==='revisao'&&<WeeklyClosure revision={revision} client={client!} workspace={workspace} admin={administrator} leads={commercialData.leads} tasks={allActivities} onSaved={()=>reload(v=>v+1)} openLead={openLead}/>}
-   {page==='indicadores'&&<ManagementIndicators data={commercialData} projects={projects} tasks={allActivities} forecasts={finance?.[0].data??[]} receipts={finance?.[1].data??[]} financial={can(role,'finance')&&!!finance} openLead={openLead} openProject={openProject}/>}
+   {page==='indicadores'&&<ManagementIndicators history={filter=><ManagementHistory client={client!} workspace={workspace} filter={filter}/>} data={commercialData} projects={projects} tasks={allActivities} forecasts={finance?.[0].data??[]} receipts={finance?.[1].data??[]} financial={can(role,'finance')&&!!finance} openLead={openLead} openProject={openProject}/>}
    {page==='revisao'&&<OperationalReview data={commercialData} projects={projects} activities={allActivities} busy={busy} allowed={kind=>can(role,kind==='project'?'projects':'commercial',true)} openLead={openLead} openProject={openProject} openProposal={id=>setProposalModal({id})} save={(origin,title,owner,due)=>write(()=>client!.rpc('hub_review_action',{w:workspace,k:origin.kind,s:origin.id,t:title,o:owner,d:due}))}/>}
    {page==='central'&&<CommercialCenter key={workspace} client={client!} workspace={workspace} revision={revision}
     leads={commercialData.leads} meetings={proposalMeetings}
