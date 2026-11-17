@@ -10,7 +10,7 @@ permissions:
 
 jobs:
   browser-with-supabase:
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-24.04
     timeout-minutes: 20
     env:
       HUB_REAL_E2E: '1'
@@ -29,6 +29,10 @@ jobs:
           version: 3.0.0
       - run: npm ci
       - run: npx playwright install --with-deps chromium
+      - name: Diagnosticar portas locais do runner
+        run: |
+          ss -lntp '( sport = :54321 or sport = :54322 or sport = :54324 )'
+          docker ps --format '{{.Names}} {{.Ports}}'
       - run: supabase start
       - name: Testar com a pilha local
         run: |
