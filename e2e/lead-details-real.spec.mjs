@@ -7,6 +7,7 @@ test('Ficha: campos antigos, duas sessões, conflito, celular, autorização e a
  const f=await operationalFixture(),contexts=[]
  const open=async(user,width)=>{const c=await browser.newContext({viewport:{width,height:900}});contexts.push(c);const p=await c.newPage();await p.addInitScript(s=>localStorage.setItem('sb-127-auth-token',JSON.stringify(s)),user.session);await p.goto('/');await p.getByRole('heading',{name:'Fila de ações'}).waitFor();const menu=p.getByRole('button',{name:'Abrir navegação',exact:true});if(await menu.isVisible())await menu.click();await p.getByRole('navigation').getByRole('button',{name:'Captação e CRM',exact:true}).click();await p.getByRole('button',{name:'Studio Aurora · fictício',exact:true}).click();await p.locator('summary').filter({hasText:'Editar dados do estabelecimento'}).click();return p}
  try{
+  await checked(f.admin.from('hub_leads').update({profile:{owner:'Caio · fictício',legacy_extra:{preserved:true}}}).eq('workspace_id',f.workspace).eq('id',f.prospect))
   const page=await open(f.owner,1440),second=await open(f.second,390)
   for(const p of [page,second]){await p.getByText('Canais e contato',{exact:true}).click();await p.getByText('Contexto comercial',{exact:true}).click()}
   await page.getByLabel('Responsável pelo estabelecimento',{exact:true}).fill('Pessoa fictícia')
@@ -25,9 +26,10 @@ test('Ficha: campos antigos, duas sessões, conflito, celular, autorização e a
   await expect(second.getByRole('status').filter({hasText:'Ficha salva.'}).first()).toBeVisible()
   const current=await checked(f.owner.client.from('hub_leads').select('*').eq('workspace_id',f.workspace).eq('id',f.prospect).single())
   expect(current.profile.contactInfo).toBe('nova-referencia@example.invalid')
+  expect(current.profile.legacy_extra).toEqual({preserved:true})
   expect(current.profile.contact).toBe('Pessoa fictícia');expect(current.profile.origin).toBe('Indicação fictícia');expect(current.profile.owner).toBe('Caio · fictício')
   const audit=await checked(f.owner.client.from('hub_lead_audit').select('*').eq('workspace_id',f.workspace).eq('lead_id',f.prospect).order('id'))
-  expect(audit).toHaveLength(3);expect(audit.at(-1).actor_id).toBe(f.second.id);expect(audit.at(-1).before_record.revision+1).toBe(audit.at(-1).after_record.revision)
+  expect(audit).toHaveLength(4);expect(audit.at(-1).actor_id).toBe(f.second.id);expect(audit.at(-1).before_record.revision+1).toBe(audit.at(-1).after_record.revision)
   expect((await f.restricted.client.from('hub_lead_audit').select('*').eq('workspace_id',f.workspace)).data).toEqual([])
   expect((await f.owner.client.from('hub_lead_audit').insert({workspace_id:f.workspace,lead_id:f.prospect,after_record:{}})).error?.code).toBe('42501')
   expect((await f.owner.client.rpc('hub_save_lead',{w:f.other,l:f.prospect,expected_revision:current.revision,body:{name:'Outro'}})).error?.code).toBe('42501')
