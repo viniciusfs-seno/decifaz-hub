@@ -1,3 +1,4 @@
+import {startLocalStack} from './start-local-stack.mjs'
 import {spawnSync} from 'node:child_process'
 import {mkdirSync,writeFileSync,readFileSync,symlinkSync,existsSync,rmSync} from 'node:fs'
 import {resolve,dirname} from 'node:path'
@@ -37,21 +38,26 @@ writeFileSync(resolve(fixture,'index.ts'),run('git',['show','8357a4ac49b1d29fa05
 const configPath=resolve('supabase/config.toml')
 const originalConfig=readFileSync(configPath,'utf8')
 const testConfig=originalConfig+'\n[functions.hub-workspaces-legacy-test]\nverify_jwt = false\n'
-let result=1
+let result=1,primaryFailure
+
 try{
  writeFileSync(configPath,testConfig)
  // Reload the local Edge routing configuration for the generated legacy fixture.
  run('npx',['--yes','supabase@3.0.0','stop'])
- run('npx',['--yes','supabase@3.0.0','start'])
+ await startLocalStack()
  console.log('Recriando somente a pilha fictícia local na versão anterior aos papéis.')
  run('npx',['--yes','supabase@3.0.0','db','reset','--local','--version','20261114181046'])
  result=spawnSync('npx',['playwright','test','--config','playwright.transition.config.mjs'],{env,shell,stdio:'inherit'}).status??1
-}finally{
+}catch(error){primaryFailure=error;throw error}finally{
  if(readFileSync(configPath,'utf8')!==testConfig)throw Error('Configuração alterada durante o teste; preserve a alteração e revise a limpeza local.')
  writeFileSync(configPath,originalConfig)
  // Exact generated fixture path inside this checkout, never a user directory.
  rmSync(fixture,{recursive:true,force:true})
  console.log('Restaurando a pilha fictícia local com todas as migrações atuais.')
- run('npx',['--yes','supabase@3.0.0','db','reset','--local'])
+ try{
+  const status=spawnSync('npx',['--yes','supabase@3.0.0','status','-o','json'],{encoding:'utf8',shell})
+  if(status.status!==0)await startLocalStack()
+  run('npx',['--yes','supabase@3.0.0','db','reset','--local'])
+ }catch(cleanupError){if(primaryFailure)console.error('A restauração local também falhou; preservada a falha original.');else throw cleanupError}
 }
 process.exit(result)
