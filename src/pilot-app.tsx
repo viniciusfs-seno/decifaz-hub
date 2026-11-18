@@ -1,3 +1,4 @@
+import {Contracts,RegistryTimeline,RegistryAlerts} from './registry'
 import {ManagementHistory} from './management-history'
 import {SharedCrmList} from './shared-crm-list'
 import {allRows} from './load-all'
@@ -80,14 +81,15 @@ const navigation=[
  ['Visão Geral',[['dashboard','Dashboard',LayoutDashboard],['revisao','Revisão semanal',ClipboardList]]],
  ['Comercial',[['central','Central comercial',ListTodo],['crm','Captação e CRM',Users],['triagem','Triagem comercial',ClipboardList],['reunioes','Reuniões e diagnósticos',CalendarDays],['propostas','Propostas comerciais',FileCheck2]]],
  ['Operação',[['agenda','Agenda operacional',CalendarDays],['projetos','Projetos e entregas',FolderKanban]]],
- ['Gestão',[['indicadores','Indicadores',LayoutDashboard],['financeiro','Financeiro',Wallet]]],
+ ['Gestão',[['indicadores','Indicadores',LayoutDashboard],['financeiro','Financeiro',Wallet],['rastreabilidade','Rastreabilidade',ClipboardList]]],
  ['Conhecimento',[['conhecimento','Base de conhecimento',BookOpen],['catalogo','Catálogo de soluções',BookOpen]]],
- ['Administração',[['equipe','Equipe',Users]]],
+ ['Administração',[['contratos','Contratos',FileCheck2],['equipe','Equipe',Users]]],
 ] as const
 const sections=navigation.flatMap(([,items])=>[...items])
 type Section=typeof sections[number][0]|'equipe'|'convites'
 
 function SharedCrm(){
+ const [contractId,setContractId]=useState('')
  const [reportMonth,setReportMonth]=useState(businessDay().slice(0,7))
  const [agendaFilter,setAgendaFilter]=useState<WorkFilter>({})
  const [allActivities,setAllActivities]=useState<SharedActivity[]>([])
@@ -299,6 +301,9 @@ function SharedCrm(){
    {page==='equipe'&&(administrator?<Team key={workspace} client={client!} workspace={workspace} onSaved={refreshMemberships} sendInviteLink={sendInviteLink}/>:<p role="alert">Seu papel não permite gerir a equipe deste espaço.</p>)}
 
    {page==='dashboard'&&<OperationalDashboard key={workspace} data={commercialData} entries={entries} projects={projects} errors={moduleErrors} finance={finance} financial={can(role,'finance')} month={reportMonth} setMonth={setReportMonth} openLead={openLead} openProject={openProject} openEntry={openEntry} openAgenda={openAgenda} openFinance={()=>go('financeiro')} addLead={()=>{setReturnPage('dashboard');go('crm');select()}}/>}
+   {page==='dashboard'&&<RegistryAlerts client={client!} workspace={workspace} revision={revision} openContract={id=>{setContractId(id);go('contratos')}}/>}
+   {page==='contratos'&&<Contracts key={workspace} client={client!} workspace={workspace} admin={administrator} financial={can(role,'finance')} leads={commercialData.leads} proposals={proposals} projects={projects} openId={contractId} onSaved={()=>reload(v=>v+1)}/>}
+   {page==='rastreabilidade'&&<RegistryTimeline key={workspace+String(can(role,'finance'))} client={client!} workspace={workspace} revision={revision}/>}
    {page==='revisao'&&<WeeklyClosure revision={revision} client={client!} workspace={workspace} admin={administrator} leads={commercialData.leads} tasks={allActivities} onSaved={()=>reload(v=>v+1)} openLead={openLead}/>}
    {page==='indicadores'&&<ManagementIndicators history={filter=><ManagementHistory client={client!} workspace={workspace} filter={filter} financial={can(role,'finance')} revision={revision}/>} data={commercialData} projects={projects} tasks={allActivities} forecasts={finance?.[0].data??[]} receipts={finance?.[1].data??[]} financial={can(role,'finance')&&!!finance} openLead={openLead} openProject={openProject}/>}
    {page==='revisao'&&<OperationalReview data={commercialData} projects={projects} activities={allActivities} busy={busy} allowed={kind=>can(role,kind==='project'?'projects':'commercial',true)} openLead={openLead} openProject={openProject} openProposal={id=>setProposalModal({id})} save={(origin,title,owner,due)=>write(()=>client!.rpc('hub_review_action',{w:workspace,k:origin.kind,s:origin.id,t:title,o:owner,d:due}))}/>}
@@ -366,6 +371,7 @@ function SharedCrm(){
     }))} save={values=>write(()=>client!.from('hub_projects').update(values)
      .eq('workspace_id',workspace).eq('proposal_id',activeProject.proposal_id).select('proposal_id').single())}>
     <ProjectSupport readOnly={!can(role,'projects',true)} client={client!} workspace={workspace} project={activeProject.proposal_id} revision={revision} busy={busy} write={write} projectName={()=>activeProject.approved.title}/>
+    <RegistryTimeline key={workspace+String(can(role,'finance'))} client={client!} workspace={workspace} kind="project" record={activeProject.proposal_id} revision={revision}/>
    </SharedProjectEditor>}
   </>}
  </main></ViewStateProvider></div></div>

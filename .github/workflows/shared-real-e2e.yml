@@ -11,7 +11,7 @@ permissions:
 jobs:
   browser-with-supabase:
     runs-on: ubuntu-24.04
-    timeout-minutes: 20
+    timeout-minutes: 30
     env:
       HUB_REAL_E2E: '1'
       VITE_HUB_MODE: shared
@@ -49,13 +49,15 @@ jobs:
           docker exec -i supabase_db_decifaz-hub-e2e psql -U postgres -v ON_ERROR_STOP=1 < supabase/tests/integrantes_ativos.sql
           docker exec -i supabase_db_decifaz-hub-e2e psql -U postgres -v ON_ERROR_STOP=1 < supabase/tests/revisao_operacional.sql
           docker exec -i supabase_db_decifaz-hub-e2e psql -U postgres -v ON_ERROR_STOP=1 < supabase/tests/fechamentos.sql
-          npm run test:e2e -- shared-real.spec.mjs roles-real.spec.mjs concurrency-real.spec.mjs team-real.spec.mjs team-concurrency-real.spec.mjs role-history-real.spec.mjs invites-real.spec.mjs invite-auth-real.spec.mjs member-state-real.spec.mjs operational-real.spec.mjs catalog-real.spec.mjs meeting-studio-real.spec.mjs management-real.spec.mjs commercial-management-real.spec.mjs experience-real.spec.mjs lead-details-real.spec.mjs crm-pagination-real.spec.mjs metric-history-real.spec.mjs
+          npm run test:e2e -- shared-real.spec.mjs roles-real.spec.mjs concurrency-real.spec.mjs team-real.spec.mjs team-concurrency-real.spec.mjs role-history-real.spec.mjs invites-real.spec.mjs invite-auth-real.spec.mjs member-state-real.spec.mjs operational-real.spec.mjs catalog-real.spec.mjs meeting-studio-real.spec.mjs management-real.spec.mjs commercial-management-real.spec.mjs experience-real.spec.mjs lead-details-real.spec.mjs crm-pagination-real.spec.mjs metric-history-real.spec.mjs contracts-real.spec.mjs
       - name: Validar migração de vínculos existentes do PR 17
         run: node scripts/member-state-migration-validation.mjs --reset-local-fixtures
       - name: Ensaiar expansão integrada a partir do esquema do PR 18
         run: node scripts/integrated-upgrade-validation.mjs --reset-local-fixtures
       - name: Ensaiar ficha, paginação e histórico a partir do PR 23
         run: node scripts/crm-upgrade-validation.mjs --reset-local-fixtures
+      - name: Ensaiar prioridades a partir do esquema atual de produção
+        run: node scripts/registry-upgrade-validation.mjs --reset-local-fixtures
       - name: Validar transição e recuperação com versões anteriores
         run: node scripts/transition-validation.mjs --reset-local-fixtures
       - if: always()
