@@ -1,3 +1,4 @@
+import {allRows} from './load-all'
 import type { SupabaseClient } from '@supabase/supabase-js'
 import { day, emptyLead, type Lead, type Meeting, type Proposal, type Stage, type Triage } from './domain'
 
@@ -21,7 +22,7 @@ export function fullTriage(row:TriageRow):Triage {
 export async function loadMeetings(client:SupabaseClient, workspace:string, lead?:string) {
  const query=client.from('hub_meetings').select('id,lead_id,meeting_on,state,record')
   .eq('workspace_id',workspace)
- const {data,error}=await (lead?query.eq('lead_id',lead):query).order('meeting_on',{ascending:false}).returns<MeetingRow[]>()
+ const {data,error}=await allRows((lead?query.eq('lead_id',lead):query).order('meeting_on',{ascending:false}).order('id').returns<MeetingRow[]>())
  return {data:data?.map((row):Meeting=>({...row.record,id:row.id,leadId:row.lead_id,date:row.meeting_on,state:row.state})),error}
 }
 
@@ -52,8 +53,8 @@ type ProposalRow = {id:string; lead_id:string; series_id:string; version:number;
  record:Omit<Proposal,'id'|'leadId'|'seriesId'|'version'|'meetingId'|'status'>}
 
 export async function loadProposals(client:SupabaseClient, workspace:string) {
- const {data,error}=await client.from('hub_proposals_visible').select('id,lead_id,series_id,version,meeting_id,status,record')
-  .eq('workspace_id',workspace).order('version',{ascending:false}).order('id').returns<ProposalRow[]>()
+ const {data,error}=await allRows(client.from('hub_proposals_visible').select('id,lead_id,series_id,version,meeting_id,status,record')
+  .eq('workspace_id',workspace).order('version',{ascending:false}).order('id').returns<ProposalRow[]>())
  return {error,data:data?.map((row):Proposal=>({...row.record,id:row.id,leadId:row.lead_id,seriesId:row.series_id,
   version:row.version,meetingId:row.meeting_id??undefined,status:row.status}))}
 }

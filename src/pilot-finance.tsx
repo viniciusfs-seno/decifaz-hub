@@ -1,3 +1,4 @@
+import {allRows} from './load-all'
 import {useViewState} from './view-state'
 import {useState} from 'react'
 import type {SupabaseClient} from '@supabase/supabase-js'
@@ -15,11 +16,11 @@ export function financeCsv(rows:string[][]){
 
 export function loadFinance(client:SupabaseClient,workspace:string){
  return Promise.all([
-  client.from('hub_receivables').select('proposal_id,kind,period,amount,due_on').eq('workspace_id',workspace)
-   .order('due_on').order('proposal_id').order('kind').returns<Forecast[]>(),
-  client.from('hub_receipts').select('proposal_id,kind,period,amount,id,received_on,reversed_at,reversal_reason').eq('workspace_id',workspace)
-   .order('received_on',{ascending:false}).order('id').returns<Receipt[]>(),
-  client.from('hub_expenses').select('id,title,due_on,amount,paid_on,paid_amount').eq('workspace_id',workspace).order('due_on').order('id').returns<Expense[]>(),
+  allRows(client.from('hub_receivables').select('proposal_id,kind,period,amount,due_on').eq('workspace_id',workspace)
+   .order('due_on').order('proposal_id').order('kind').order('period').returns<Forecast[]>()),
+  allRows(client.from('hub_receipts').select('proposal_id,kind,period,amount,id,received_on,reversed_at,reversal_reason').eq('workspace_id',workspace)
+   .order('received_on',{ascending:false}).order('id').returns<Receipt[]>()),
+  allRows(client.from('hub_expenses').select('id,title,due_on,amount,paid_on,paid_amount').eq('workspace_id',workspace).order('due_on').order('id').returns<Expense[]>()),
   client.from('hub_finance_audit').select('id,occurred_at,actor_id,entity,operation,before_record,after_record')
    .eq('workspace_id',workspace).order('occurred_at',{ascending:false}).order('id').limit(30).returns<Audit[]>(),
  ])

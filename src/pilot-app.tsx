@@ -1,3 +1,5 @@
+import {SharedCrmList} from './shared-crm-list'
+import {allRows} from './load-all'
 import {LeadDetails} from './lead-details'
 import {Priority} from './ui'
 import './shared-workspace.css'
@@ -19,7 +21,7 @@ import {useEffect,useRef,useState,type FormEvent} from 'react'
 import {createClient,type Session} from '@supabase/supabase-js'
 import {BookOpen, CalendarDays, ClipboardList, FileCheck2, FolderKanban, LayoutDashboard, ListTodo, Menu, Moon, Sun, Users, Wallet} from 'lucide-react'
 import {dateLabel,day,money,stages,type Data,type Meeting,type Proposal} from './domain'
-import {CRM,MeetingEditor,TriageEditor} from './commercial'
+import {MeetingEditor,TriageEditor} from './commercial'
 import {ProposalEditor,Proposals} from './proposals'
 import {loadFinance,SharedFinance} from './pilot-finance'
 import {ProjectSupport,activityStatuses as statuses} from './project-support'
@@ -194,7 +196,7 @@ function SharedCrm(){
   setLoadingData(true)
   if(!can(role,'finance'))setFinance(undefined)
   const activitiesQuery=client!.from('hub_activities').select('id,lead_id,project_proposal_id,title,owner,due_on,status,support,review_kind,review_id').eq('workspace_id',workspace).order('due_on').returns<SharedActivity[]>()
-  void Promise.allSettled([leadsQuery,triagesQuery,loadProposals(client!,workspace),loadMeetings(client!,workspace),loadProjects(client!,workspace),can(role,'finance')?loadFinance(client!,workspace):Promise.resolve(undefined),activitiesQuery,loadCatalog(client!,workspace)]).then(results=>{
+  void Promise.allSettled([allRows(leadsQuery.order('id')),allRows(triagesQuery.order('lead_id')),loadProposals(client!,workspace),loadMeetings(client!,workspace),loadProjects(client!,workspace),can(role,'finance')?loadFinance(client!,workspace):Promise.resolve(undefined),allRows(activitiesQuery.order('id')),loadCatalog(client!,workspace)]).then(results=>{
    if(!current)return
    const failures:string[]=[]
    function result<T>(index:number,label:string):T|undefined{
@@ -309,8 +311,7 @@ function SharedCrm(){
    {(page==='agenda'||page==='reunioes')&&<OperationalAgenda key={workspace+page} request={agendaRequest} entries={entries} leads={commercialData.leads} initial={page==='reunioes'?{kind:'meeting',state:'all'}:agendaFilter} title={page==='reunioes'?'Reuniões e diagnósticos':'Agenda operacional'} open={openEntry} busy={busy} canChange={entry=>can(role,entry.projectId?'projects':'commercial',true)} change={(entry,status)=>void write(()=>client!.from('hub_activities').update({status}).eq('workspace_id',workspace).eq('id',entry.id).select('id').single())}/>}
    {page==='projetos'&&<SharedProjects projects={projects} leads={commercialData.leads} open={id=>{setReturnPage('projetos');setProjectId(id)}}/>}
    {page==='propostas'&&<Proposals data={commercialData} add={()=>setProposalModal({})} open={id=>setProposalModal({id})}/>}
-   {(page==='crm'||page==='triagem')&&!showForm&&<CRM key={page} data={commercialData} triage={page==='triagem'} open={id=>{setReturnPage(page);select(leads.find(item=>item.id===id))}} add={()=>{setReturnPage(page);select()}}
-    start={id=>{setReturnPage(page);select(leads.find(item=>item.id===id));setEditor('triage')}}/>}
+   {(page==='crm'||page==='triagem')&&!showForm&&<SharedCrmList key={workspace+page} client={client!} workspace={workspace} revision={revision} data={commercialData} triage={page==='triagem'} open={item=>{setReturnPage(page);setLeads(rows=>[...rows.filter(l=>l.id!==item.id),item]);select(item)}} add={()=>{setReturnPage(page);select()}} start={item=>{setReturnPage(page);setLeads(rows=>[...rows.filter(l=>l.id!==item.id),item]);select(item);setEditor('triage')}}/>}
    {(page==='crm'||page==='triagem')&&showForm&&<>
     <div className="dossier-context"><button className="button" onClick={()=>{setShowForm(false);setSelected('');setEditor(null);go(returnPage)}}>← Voltar {returnPage==='agenda'?'à agenda':returnPage==='indicadores'?'aos indicadores':returnPage==='central'?'à Central comercial':returnPage==='reunioes'?'às reuniões':returnPage==='triagem'?'à triagem':returnPage==='dashboard'?'ao Dashboard':'à lista'}</button><span>{lead?.name??'Novo estabelecimento'} · {lead?.stage??'Cadastro'}</span></div>
     <details className="card panel op-basics" open={!selected}><summary><h2>{selected?'Editar dados do estabelecimento':'Cadastrar estabelecimento'}</h2></summary>
