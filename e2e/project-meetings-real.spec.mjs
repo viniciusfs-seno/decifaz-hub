@@ -1,0 +1,24 @@
+import {test,expect} from '@playwright/test'
+import {randomUUID} from 'node:crypto'
+import {operationalFixture,checked} from './helpers/operational-fixture.mjs'
+import {sql} from './helpers/local-db.mjs'
+test.use({actionTimeout:15000})
+test('Reunião vinculada: ata, revisão e atividade atômica sem transmitir conteúdo interno',async({page})=>{
+ test.skip(process.env.HUB_REAL_E2E!=='1','Somente pilha local.');test.setTimeout(120000)
+ const f=await operationalFixture(),m=randomUUID()
+ try{
+  const body={date:f.today,state:'Realizada',contract_id:null,participants:'Dois participantes fictícios',agenda:'Pauta interna fictícia',summary:'ATA INTERNA NÃO APRESENTAR',decisions:'Decisão interna de teste',owner:'Sócio fictício',next:'Executar decisão da ata',due:f.today,callUrl:'https://example.invalid/chamada-ficticia'}
+  const args={w:f.workspace,p:f.proposal,m,expected_revision:null,operation_id:randomUUID(),body,follow:true}
+  const saved=await checked(f.owner.client.rpc('hub_save_project_meeting',args));expect(saved.current.project_id).toBe(f.proposal);expect(await checked(f.owner.client.rpc('hub_save_project_meeting',args))).toEqual(saved)
+  expect(await checked(f.owner.client.from('hub_activities').select('id,project_proposal_id').eq('meeting_id',m))).toHaveLength(1)
+  expect((await f.restricted.client.rpc('hub_save_project_meeting',{...args,m:randomUUID(),operation_id:randomUUID()})).error?.code).toBe('42501')
+  expect((await f.owner.client.rpc('hub_save_project_meeting',{...args,w:f.other,operation_id:randomUUID()})).error?.code).toBe('42501')
+  const edits=await Promise.all([f.owner,f.second].map(u=>checked(u.client.rpc('hub_save_project_meeting',{...args,expected_revision:0,operation_id:randomUUID(),body:{...body,decisions:'Decisão revisada'}}))));expect(edits.map(x=>x.status).sort()).toEqual(['conflict','saved'])
+  expect((await f.owner.client.from('hub_meetings').update({record:{...body,summary:'Gravação legada desatualizada'}}).eq('workspace_id',f.workspace).eq('id',m)).error?.code).toBe('42501')
+  const rejected=randomUUID();sql(`create function public.test_meeting_event_failure() returns trigger language plpgsql as $$begin if new.record_id='${rejected}'::uuid then raise exception 'Falha fictícia de auditoria';end if;return new;end$$;create trigger test_meeting_event_failure before insert on public.hub_registry_events for each row execute function public.test_meeting_event_failure();`)
+  try{expect((await f.owner.client.rpc('hub_save_project_meeting',{...args,m:rejected,operation_id:randomUUID()})).error).toBeTruthy();expect(await checked(f.owner.client.from('hub_meetings').select('id').eq('id',rejected))).toHaveLength(0);expect(await checked(f.owner.client.from('hub_activities').select('id').eq('meeting_id',rejected))).toHaveLength(0)}finally{sql('drop trigger test_meeting_event_failure on public.hub_registry_events;drop function public.test_meeting_event_failure();')}
+  expect((await checked(f.owner.client.rpc('hub_registry_timeline',{w:f.workspace,r:f.proposal}))).some(e=>e.kind==='meeting'&&e.record_id===m)).toBe(true)
+  await page.addInitScript(s=>localStorage.setItem('sb-127-auth-token',JSON.stringify(s)),f.owner.session);await page.goto('/');await page.getByRole('navigation').getByRole('button',{name:'Projetos e entregas',exact:true}).click();await page.getByRole('button',{name:'Pedidos digitais · Horizonte',exact:true}).click();await expect(page.getByRole('heading',{name:'Reuniões do projeto',exact:true})).toBeVisible();await expect(page.getByRole('dialog')).toContainText('ATA INTERNA NÃO APRESENTAR');await page.getByRole('button',{name:'Preparar / registrar ata',exact:true}).click();await expect(page.getByLabel('Ata interna',{exact:true})).toHaveValue('ATA INTERNA NÃO APRESENTAR');await expect(page.getByText('transmissão entre participantes ainda não foi homologada.',{exact:false})).toBeVisible()
+  await checked(f.owner.client.rpc('hub_update_member_active',{w:f.workspace,u:f.second.id,enabled:false,expected_revision:0}));expect((await f.second.client.rpc('hub_save_project_meeting',{...args,expected_revision:1,operation_id:randomUUID()})).error?.code).toBe('42501')
+ }finally{sql(`delete from public.hub_registry_events where workspace_id='${f.workspace}';delete from public.hub_lead_audit where workspace_id='${f.workspace}';delete from public.hub_activity_events where workspace_id='${f.workspace}';`);await f.cleanup();sql(`delete from public.hub_registry_events where workspace_id='${f.workspace}';`)}
+})

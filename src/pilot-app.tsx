@@ -1,3 +1,4 @@
+import {ProjectMeetings} from './project-meetings'
 import {InternalFinance,InternalAlerts,useInternalFinance} from './internal-finance'
 import {Contracts,RegistryTimeline,RegistryAlerts,type Contract} from './registry'
 import {ManagementHistory} from './management-history'
@@ -378,7 +379,8 @@ function SharedCrm(){
     }))} save={values=>write(()=>client!.from('hub_projects').update(values)
      .eq('workspace_id',workspace).eq('proposal_id',activeProject.proposal_id).select('proposal_id').single())}>
     <ProjectSupport readOnly={!can(role,'projects',true)} client={client!} workspace={workspace} project={activeProject.proposal_id} revision={revision} busy={busy} write={write} projectName={()=>activeProject.approved.title}/>
-    <RegistryTimeline key={workspace+String(can(role,'finance'))} client={client!} workspace={workspace} kind="project" record={activeProject.proposal_id} revision={revision}/>
+    {commercialData.leads.find(l=>l.id===activeProject.lead_id)&&<ProjectMeetings key={workspace+activeProject.proposal_id+String(can(role,'projects',true))+String(can(role,'finance'))} client={client!} workspace={workspace} project={activeProject} contracts={contractRows} lead={commercialData.leads.find(l=>l.id===activeProject.lead_id)!} solutions={catalog} proposals={proposals} financial={can(role,'finance')} editable={can(role,'projects',true)} revision={revision} saved={()=>reload(v=>v+1)}/>}
+    <RegistryTimeline key={workspace+String(can(role,'finance'))} client={client!} workspace={workspace} record={activeProject.proposal_id} revision={revision}/>
    </SharedProjectEditor>}
   </>}
  </main></ViewStateProvider></div></div>
