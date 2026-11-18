@@ -17,11 +17,11 @@ export function SharedCrmList({client,workspace,revision,data,triage,open,add,st
  },[busy,result,position.id,position.y])
  const params={w:workspace,q:filter.query,s:filter.stage,o:filter.owner,p:filter.priority,sort_by:filter.sort}
  useEffect(()=>{
-  let current=true;setBusy(true);setError('')
+  let current=true;setBusy(true);setError('');setResult(undefined)
   const timer=setTimeout(()=>{void client.rpc('hub_crm_page',{...params,page_offset:filter.offset,page_size:25}).then(({data,error})=>{
    if(!current)return
    if(error||!data){setError('Não foi possível consultar o CRM. Tente novamente.');setBusy(false);return}
-   if(data.total>0&&filter.offset>=data.total){setFilter({...filter,offset:Math.floor((data.total-1)/25)*25});return}
+   if(filter.offset>0&&filter.offset>=data.total){setFilter({...filter,offset:data.total?Math.floor((data.total-1)/25)*25:0});return}
    setResult(data);setBusy(false)
   })},150)
   return ()=>{current=false;clearTimeout(timer)}
