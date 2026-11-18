@@ -76,6 +76,7 @@
 .shared-app :is(.pilot-fields,.fields) textarea{min-height:100px;resize:vertical}
 .shared-app fieldset:disabled{opacity:.8}
 .registry-fields{border:0;min-width:0;padding:0;margin:0}.registry-json{white-space:pre-wrap;overflow-wrap:anywhere;max-height:320px;overflow:auto;font-size:.75rem}
+.shared-app fieldset{min-inline-size:0;min-width:0}
 .shared-app [role=alert]{padding:12px 14px;background:var(--soft);border:1px solid #bd5238;border-radius:8px;margin:10px 0;font-size:.83rem}
 .shared-app main>[role=status]{padding:10px 14px;background:var(--soft);border-radius:8px;margin:10px 0;font-size:.8rem}
 .skip-link{position:fixed;top:8px;left:8px;transform:translateY(-150%);z-index:100;background:var(--paper);color:var(--ink);padding:12px;border:2px solid var(--decifaz-orange);border-radius:8px}

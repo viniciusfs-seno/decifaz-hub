@@ -1,4 +1,4 @@
-import {useRef,useState} from 'react'
+import {useEffect,useRef,useState} from 'react'
 import type {SupabaseClient} from '@supabase/supabase-js'
 import {active,dateLabel,norm,type Data,type Lead} from './domain'
 import type {PilotLead} from './pilot-journey'
@@ -36,6 +36,7 @@ export function ContactPlanner({client,workspace,lead,allowed,saved}:{client:Sup
  const [result,setResult]=useState(''),[next,setNext]=useState(lead.profile.next??''),[owner,setOwner]=useState(lead.profile.owner??''),[due,setDue]=useState(lead.profile.due??'')
  const [create,setCreate]=useState(true),[plan,setPlan]=useState(false),[busy,setBusy]=useState(false),[message,setMessage]=useState(''),[revision,setRevision]=useState(lead.revision??0)
  const operation=useRef({id:crypto.randomUUID(),payload:''})
+ useEffect(()=>{if(plan||result)return;setRevision(previous=>Math.max(previous,lead.revision??0));setNext(lead.profile.next??'');setOwner(lead.profile.owner??'');setDue(lead.profile.due??'')},[lead.revision,plan,result])
  async function save(){
   if(busy)return;setBusy(true);setMessage('')
   const body={result,...(plan?{next,owner,due,create_activity:create}:{})},payload=JSON.stringify(body)

@@ -13,7 +13,9 @@ begin
  if not public.hub_can(w,'commercial',true) then raise exception 'Acesso negado' using errcode='42501';end if;
  if operation_id is null or jsonb_typeof(body) is distinct from 'object' or length(body::text)>12000
  or exists(select 1 from jsonb_object_keys(body) k where k not in ('result','next','owner','due','create_activity'))
- or coalesce(body->>'result','')='' and coalesce(body->>'next','')='' then raise exception 'Informe resultado ou próxima ação' using errcode='22023';end if;
+ or btrim(coalesce(body->>'result',''))='' and btrim(coalesce(body->>'next',''))=''
+ or exists(select 1 from jsonb_each(body) e where e.key in ('result','next','owner','due') and jsonb_typeof(e.value)<>'string')
+ or body ? 'create_activity' and jsonb_typeof(body->'create_activity')<>'boolean' then raise exception 'Informe resultado ou próxima ação' using errcode='22023';end if;
  perform pg_advisory_xact_lock(hashtextextended(w::text||operation_id::text,0));
  select * into receipt from hub_private.command_receipts r where r.workspace_id=w and r.operation_id=hub_plan_contact.operation_id;
  if found then
