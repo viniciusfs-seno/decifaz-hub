@@ -13,5 +13,11 @@ export async function commercialFixture(env){
  const start=weekStart(f.today),previous=new Date(start+'T12:00:00Z');previous.setUTCDate(previous.getUTCDate()-7)
  await checked(f.owner.client.rpc('hub_close_week',{w:f.workspace,start_on:previous.toISOString().slice(0,10),expected_revision:0,summary_text:'Semana fictícia: oportunidade qualificada e implantação em andamento.',decision_text:'Confirmar prioridades e acompanhar os primeiros resultados.',planned:[]}))
  await checked(f.owner.client.rpc('hub_close_week',{w:f.workspace,start_on:start,expected_revision:0,summary_text:'Foco da semana: da conversa ao próximo passo.',decision_text:'Validar diagnóstico de automação e preparar a entrega do cardápio.',planned:[{kind:'lead',source:f.prospect,title:'Validar prioridades da automação',owner:'Caio · fictício',due:f.today}]}))
+ for(const [id,contact] of [[f.lead,'Nora · fictícia'],[f.prospect,'Rui · fictício']]){
+  const existing=await checked(f.admin.from('hub_leads').select('profile').eq('workspace_id',f.workspace).eq('id',id).single())
+  await checked(f.admin.from('hub_leads').update({profile:{...existing.profile,contact,contactInfo:'equipe@example.invalid',origin:'Homologação sintética',verification:'Parcialmente verificado',address:'Rua de exemplo, 123',region:'Centro',whatsapp:'00000000000',website:'https://example.invalid',services:['Automações']},notes:'Dados e evidências inteiramente fictícios para revisão.'}).eq('workspace_id',f.workspace).eq('id',id))
+ }
+ const completed=await checked(f.admin.from('hub_activities').insert({workspace_id:f.workspace,lead_id:f.prospect,title:'Ação fictícia para o histórico',owner:'Caio · fictício',status:'Pendente',due_on:f.today}).select('id').single())
+ await checked(f.admin.from('hub_activities').update({status:'Concluída'}).eq('workspace_id',f.workspace).eq('id',completed.id))
  return f
 }

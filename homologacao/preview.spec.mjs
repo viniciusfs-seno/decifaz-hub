@@ -17,7 +17,15 @@ async function client(page,context,f){
  return createClient(f.api,f.publicKey,{auth:{persistSession:false,autoRefreshToken:false},global:{headers:{Authorization:'Bearer '+token},fetch:(url,options)=>{const headers=new Headers(options.headers);headers.set('Cookie',cookie);return fetch(url,{...options,headers})}}})
 }
 const checked=async op=>{const {data,error}=await op;if(error)throw Error('Operação fictícia recusada: '+error.code);return data}
-async function capture(page,name,project){await expect(page.getByText(/^Carregando/)).toHaveCount(0);await mkdir('.validation/external-captures',{recursive:true});await page.screenshot({path:'.validation/external-captures/'+name+'-'+project+'.png',fullPage:true})}
+async function capture(page,name,project){
+ await expect(page.getByText(/^Carregando/)).toHaveCount(0)
+ await page.evaluate(async()=>{await document.fonts.ready;window.scrollTo(0,0);await new Promise(r=>requestAnimationFrame(()=>requestAnimationFrame(r)))})
+ await mkdir('.validation/external-captures',{recursive:true})
+ const size=await page.evaluate(()=>({height:document.documentElement.scrollHeight,width:innerWidth,scale:devicePixelRatio})),fullPage=Math.max(size.height,size.width)*size.scale<30000
+ const base='.validation/external-captures/'+name+'-'+project
+ await page.screenshot({path:base+'.png',fullPage})
+ if(!fullPage){await writeFile(base+'.json',JSON.stringify({fullPage:false,reason:'Limite físico de captura do motor; validações e navegação permanecem integrais.',...size}));await page.evaluate(()=>window.scrollTo(0,document.documentElement.scrollHeight));await page.screenshot({path:base+'-final.png'});await page.evaluate(()=>window.scrollTo(0,0))}
+}
 
 test('HTTPS externo: Auth, duas sessões, navegação, apresentação e autorização',async({page,context,browser},info)=>{
  const anonymous=await browser.newContext();try{
@@ -40,11 +48,11 @@ test('HTTPS externo: Auth, duas sessões, navegação, apresentação e autoriza
  }
  await page.getByRole('button',{name:'Acompanhar implantação do cardápio',exact:true}).click()
  await page.getByRole('dialog').getByRole('button',{name:'Fechar',exact:true}).click()
- await nav(page,'Captação e CRM');await page.getByRole('button',{name:'Café Horizonte · fictício',exact:true}).click()
+ await nav(page,'Captação e CRM');await page.getByLabel('Buscar leads').fill('Café Horizonte');await page.getByRole('button',{name:'Café Horizonte · fictício',exact:true}).click()
  await expect(page.getByRole('heading',{name:'Jornada comercial de Café Horizonte · fictício'})).toBeVisible();await capture(page,'ficha',info.project.name)
  // Return to the preserved list before selecting another establishment.
  await page.getByRole('button',{name:'← Voltar à lista',exact:true}).click()
- await page.getByRole('button',{name:'Mercado Sol · fictício',exact:true}).click();await page.getByRole('button',{name:'Editar reunião',exact:true}).click()
+ await page.getByLabel('Buscar leads').fill('Mercado Sol');await page.getByRole('button',{name:'Mercado Sol · fictício',exact:true}).click();await page.getByRole('button',{name:'Editar reunião',exact:true}).click()
  const dialog=page.getByRole('dialog');await dialog.getByRole('button',{name:'Modo reunião',exact:true}).click()
  await dialog.getByLabel('Pergunta realizada',{exact:true}).first().check();await dialog.getByLabel('Resposta',{exact:true}).first().fill('SEGREDO INTERNO FICTÍCIO')
  await dialog.getByRole('button',{name:'Voltar à ficha completa'}).click()
@@ -182,6 +190,8 @@ test('HTTPS externo: jornada comercial completa persistida até fechamento',asyn
  expect(versions.map(v=>v.version)).toEqual([1,2])
  expect(versions[0].record.scope).not.toContain('Ajustes versão 2')
  expect(versions[1].record.catalog_snapshot[0].name).toBe(solutionTitle)
+ await expect(page.getByRole('row').filter({has:proposalButton})).toContainText('v2 · Atual')
+ await expect(page.getByRole('row').filter({has:proposalButton})).toContainText('Rascunho')
  await proposalButton.click()
  await quote.getByLabel(/Nova situação/).selectOption('Enviada')
  await quote.getByLabel('Canal, evidência ou contexto').fill('Envio fictício')
@@ -224,4 +234,31 @@ test('HTTPS externo: jornada comercial completa persistida até fechamento',asyn
  const closure=await checked(second.client.from('hub_weekly_closures').select('actions').eq('workspace_id',workspace).eq('week_start',weekStart(today)).single())
  expect(closure.actions.some(a=>a.lead_id===saved.lead_id&&a.title==='Retorno do projeto da jornada')).toBe(true)
  }finally{await secondContext.close()}
+})
+
+test('HTTPS próxima entrega: ficha concorrente, paginação/CSV completo e histórico',async({page,context,browser},info)=>{
+ test.skip(info.project.name==='webkit-celular','A jornada de escrita completa roda no Chromium; regressão móvel em lead-details-real.')
+ await persona(page,'admin')
+ const f=await(await context.request.get(origin+'/__review/fixtures')).json(),admin=await client(page,context,f)
+ await nav(page,'Captação e CRM');await page.getByLabel('Buscar leads').fill('Studio Aurora')
+ await page.getByRole('button',{name:'Studio Aurora · fictício',exact:true}).click()
+ await page.locator('summary').filter({hasText:'Editar dados do estabelecimento'}).click();await page.getByText('Canais e contato',{exact:true}).click()
+ await page.getByLabel('Responsável pelo estabelecimento',{exact:true}).fill('Seleção externa desatualizada')
+ const otherContext=await browser.newContext(),other=await otherContext.newPage()
+ try{
+  await other.goto(origin);await other.getByLabel('Senha de revisão').fill(password);await other.getByRole('button',{name:'Entrar na homologação'}).click();await other.getByRole('heading',{name:'Escolha um perfil fictício'}).waitFor();await persona(other,'segunda')
+  const second=await client(other,otherContext,f),lead=await checked(second.from('hub_leads').select('id,name,revision').eq('workspace_id',f.workspace).eq('id',f.prospect).single())
+  const saved=await checked(second.rpc('hub_save_lead',{w:f.workspace,l:f.prospect,expected_revision:lead.revision,body:{name:lead.name,profile:{contact:'Atualização externa fictícia'}}}));expect(saved.status).toBe('saved')
+  await page.getByRole('button',{name:'Salvar estabelecimento',exact:true}).click();await expect(page.getByRole('alert')).toContainText('Outra sessão alterou')
+  await expect(page.getByLabel('Responsável pelo estabelecimento',{exact:true})).toHaveValue('Atualização externa fictícia')
+  await page.getByLabel('Contato do responsável',{exact:true}).fill('equipe-atualizada@example.invalid');await page.getByRole('button',{name:'Salvar estabelecimento',exact:true}).click();await expect(page.getByText('Atualização externa fictícia · equipe-atualizada@example.invalid',{exact:true})).toBeVisible()
+  await capture(page,'ficha-completa',info.project.name)
+ }finally{await otherContext.close()}
+ const stamp=Date.now().toString(36),prefix='Página fictícia '+stamp
+ for(let i=0;i<27;i++)expect((await checked(admin.rpc('hub_save_lead',{w:f.workspace,l:null,expected_revision:null,body:{name:prefix+' '+String(i).padStart(3,'0'),profile:{owner:'Equipe fictícia'}}}))).status).toBe('saved')
+ await page.getByRole('button',{name:'← Voltar à lista',exact:true}).click();await page.getByLabel('Buscar leads').fill(prefix);await page.getByRole('combobox',{name:'Ordenar',exact:true}).selectOption('Nome')
+ await expect(page.getByRole('navigation',{name:'Páginas do CRM'})).toContainText('1–25 de 27');await page.getByRole('button',{name:'Próxima página',exact:true}).click();await expect(page.getByRole('navigation',{name:'Páginas do CRM'})).toContainText('26–27 de 27')
+ const download=page.waitForEvent('download');await page.getByRole('button',{name:'Exportar CRM CSV'}).click();let csv='';for await(const c of await(await download).createReadStream())csv+=c.toString();expect(csv.replace(/^\uFEFF/,'').split('\r\n')).toHaveLength(28)
+ await capture(page,'crm-paginado',info.project.name)
+ await nav(page,'Indicadores');await expect(page.getByRole('heading',{name:'Histórico verificável por mês'})).toBeVisible();await expect(page.getByRole('button',{name:'Exportar histórico CSV'})).toBeEnabled();await capture(page,'historico-mensal',info.project.name)
 })

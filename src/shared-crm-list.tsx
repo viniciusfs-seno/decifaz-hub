@@ -20,7 +20,7 @@ export function SharedCrmList({client,workspace,revision,data,triage,open,add,st
   let current=true;setBusy(true);setError('');setResult(undefined)
   const timer=setTimeout(()=>{void client.rpc('hub_crm_page',{...params,page_offset:filter.offset,page_size:25}).then(({data,error})=>{
    if(!current)return
-   if(error||!data){setError('Não foi possível consultar o CRM. Tente novamente.');setBusy(false);return}
+   if(error||!data||!Array.isArray(data.rows)||!Array.isArray(data.owners)||typeof data.total!=='number'){setError('Não foi possível consultar o CRM. Tente novamente.');setBusy(false);return}
    if(filter.offset>0&&filter.offset>=data.total){setFilter({...filter,offset:data.total?Math.floor((data.total-1)/25)*25:0});return}
    setResult(data);setBusy(false)
   })},150)
