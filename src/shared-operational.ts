@@ -2,11 +2,11 @@ import {norm,type Lead,type Meeting} from './domain.ts'
 import type {SharedProject} from './pilot-projects.tsx'
 
 export type SharedActivity={id:string;lead_id:string;project_proposal_id:string|null;title:string;owner:string;due_on:string|null;status:string;support?:boolean;review_kind?:string;review_id?:string}
-export type WorkKind='activity'|'meeting'|'project'|'contact'|'support'
+export type WorkKind='activity'|'meeting'|'project'|'contact'|'support'|'bill'|'contract'
 export type WorkEntry={key:string;id:string;kind:WorkKind;title:string;leadId:string;projectId?:string;owner:string;date:string;status:string;detail:string}
-export const workKinds:Record<WorkKind,string>={activity:'Atividade',meeting:'Reunião',project:'Entrega de projeto',contact:'Próximo contato',support:'Chamado de pós-venda'}
+export const workKinds:Record<WorkKind,string>={activity:'Atividade',meeting:'Reunião',project:'Entrega de projeto',contact:'Próximo contato',support:'Chamado de pós-venda',bill:'Obrigação da Decifaz',contract:'Aviso de contrato'}
 export const businessDay=(now=new Date())=>new Intl.DateTimeFormat('sv-SE',{timeZone:'America/Fortaleza'}).format(now)
-export const isPending=(status:string)=>!['Concluída','Cancelada','Realizada','Entregue','Perdido','Arquivado'].includes(status)
+export const isPending=(status:string)=>!['Paga','Suspensa','Concluída','Cancelada','Realizada','Entregue','Perdido','Arquivado'].includes(status)
 export function workEntries(leads:Lead[],tasks:SharedActivity[],meetings:Meeting[],projects:SharedProject[]):WorkEntry[]{
  const rows:WorkEntry[]=[
   ...tasks.map(t=>({key:'activity-'+t.id,id:t.id,kind:t.support?'support' as const:'activity' as const,title:t.title,leadId:t.lead_id,projectId:t.project_proposal_id??undefined,owner:t.owner,date:t.due_on??'',status:t.status,detail:t.support?'Suporte':t.project_proposal_id?'Pós-venda':'Comercial'})),
