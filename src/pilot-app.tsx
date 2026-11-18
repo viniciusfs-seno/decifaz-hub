@@ -1,3 +1,4 @@
+import {ActivityEditor} from './activity-editor'
 import {LeadImport} from './lead-import'
 import {ContactPlanner,ProspectingQueue} from './prospecting'
 import {ProjectMeetings} from './project-meetings'
@@ -30,7 +31,7 @@ import {dateLabel,day,money,norm,stages,type Data,type Meeting,type Proposal} fr
 import {MeetingEditor,TriageEditor} from './commercial'
 import {ProposalEditor,Proposals} from './proposals'
 import {loadFinance,SharedFinance} from './pilot-finance'
-import {ProjectSupport,activityStatuses as statuses} from './project-support'
+import {ProjectSupport} from './project-support'
 import {loadProjects,SharedProjects,SharedProjectEditor,type SharedProject} from './pilot-projects'
 import {fullLead,fullTriage,leadColumns,loadMeetings,loadProposals,saveProposal,saveMeeting,saveTriage,type PilotLead,type TriageRow} from './pilot-journey'
 
@@ -94,6 +95,9 @@ type Section=typeof sections[number][0]|'equipe'|'convites'
 
 function SharedCrm(){
  const [contractId,setContractId]=useState('')
+ const [activityEditor,setActivityEditor]=useState<{item?:SharedActivity;leadId?:string;projectId?:string;initialStatus?:string}>()
+ const [currentUser,setCurrentUser]=useState('')
+ useEffect(()=>{void client!.auth.getUser().then(r=>setCurrentUser(r.data.user?.id??''))},[])
  const [reportMonth,setReportMonth]=useState(businessDay().slice(0,7))
  const [agendaFilter,setAgendaFilter]=useState<WorkFilter>({})
  const [allActivities,setAllActivities]=useState<SharedActivity[]>([])
@@ -180,15 +184,21 @@ function SharedCrm(){
  useEffect(()=>{let live=true;setContractRows([]);if(workspace)void allRows(client!.from('hub_contracts').select('*').eq('workspace_id',workspace).order('id')).then(r=>{if(live&&!r.error)setContractRows(r.data as Contract[]??[])});return()=>{live=false}},[workspace,revision])
  function clearWorkspaceData(){
   setNavQuery('')
+  setActivityEditor(undefined)
   setLeads([]);setTriages([]);setFinance(undefined);setProjects([]);setProposals([]);setProposalMeetings([]);setMeetings([]);setAllActivities([]);setCatalog([]);loadedWorkspace.current=''
   setSelected('');setLoadedLead('');setInteractions([]);setTasks([]);setProjectId('');setProposalModal(undefined);setEditor(null);setMeeting(undefined);setShowForm(false)
  }
  useEffect(()=>{
+  let tick=0,timer:number|undefined
   const refresh=()=>{void refreshMemberships().then(()=>reload(v=>v+1)).catch(()=>{/* erro visível; não encerrar Auth nem outros espaços */})}
+  const schedule=()=>{clearTimeout(timer);timer=window.setTimeout(refresh,400)}
+  const broadcast=new BroadcastChannel('decifaz-work-'+workspace);broadcast.onmessage=schedule
+  const realtime=workspace?client!.channel('workspace-'+workspace).on('postgres_changes',{event:'*',schema:'public',table:'hub_leads',filter:'workspace_id=eq.'+workspace},schedule).on('postgres_changes',{event:'*',schema:'public',table:'hub_activities',filter:'workspace_id=eq.'+workspace},schedule).on('postgres_changes',{event:'*',schema:'public',table:'hub_interactions',filter:'workspace_id=eq.'+workspace},schedule).on('postgres_changes',{event:'*',schema:'public',table:'hub_triages',filter:'workspace_id=eq.'+workspace},schedule).subscribe():undefined
   window.addEventListener('focus',refresh)
-  const timer=window.setInterval(refresh,15000)
-  return ()=>{window.removeEventListener('focus',refresh);window.clearInterval(timer);membershipRequest.current++}
+  const interval=window.setInterval(()=>{if(document.hidden)return;tick++;void refreshMemberships().then(()=>{if(tick%4===0)reload(v=>v+1)}).catch(()=>{})},15000)
+  return ()=>{window.removeEventListener('focus',refresh);window.clearInterval(interval);clearTimeout(timer);broadcast.close();if(realtime)void client!.removeChannel(realtime);membershipRequest.current++}
  },[workspace])
+ function changed(){const channel=new BroadcastChannel('decifaz-work-'+workspace);channel.postMessage('changed');channel.close();reload(v=>v+1)}
 
  useEffect(()=>{
   let current=true
@@ -209,7 +219,7 @@ function SharedCrm(){
   if(loadedWorkspace.current!==workspace)setReady(false)
   setLoadingData(true)
   if(!can(role,'finance'))setFinance(undefined)
-  const activitiesQuery=client!.from('hub_activities').select('id,lead_id,project_proposal_id,title,owner,due_on,status,support,review_kind,review_id').eq('workspace_id',workspace).order('due_on').returns<SharedActivity[]>()
+ const activitiesQuery=client!.from('hub_activities').select('id,lead_id,project_proposal_id,title,owner,due_on,status,support,review_kind,review_id,revision,result,assigned_user_id,completed_at').eq('workspace_id',workspace).order('due_on').returns<SharedActivity[]>()
   void Promise.allSettled([allRows(leadsQuery.order('id')),allRows(triagesQuery.order('lead_id')),loadProposals(client!,workspace),loadMeetings(client!,workspace),loadProjects(client!,workspace),can(role,'finance')?loadFinance(client!,workspace):Promise.resolve(undefined),allRows(activitiesQuery.order('id')),loadCatalog(client!,workspace)]).then(results=>{
    if(!current)return
    const failures:string[]=[]
@@ -267,7 +277,7 @@ function SharedCrm(){
    const result=await operation()
    if(result.error||!result.data)throw new Error()
    success?.()
-   reload(value=>value+1)
+   changed()
    setNotice('Registro salvo.')
    return true
   }catch{
@@ -287,6 +297,13 @@ function SharedCrm(){
  function openLead(id:string){const item=leads.find(l=>l.id===id);if(item){setReturnPage(page);go('crm');select(item)}}
  function openProject(id:string,section='resumo'){setProjectSection(section);setReturnPage(page);go('projetos');setProjectId(id)}
  function openEntry(entry:WorkEntry){if(entry.kind==='bill'){setBillId(entry.id);go('obrigacoes')}else if(entry.kind==='contract'){setContractId(entry.id);go('contratos')}else if(entry.projectId)openProject(entry.projectId,entry.kind==='meeting'?'reunioes':entry.kind==='support'||entry.kind==='activity'?'suporte':'resumo');else openLead(entry.leadId)}
+ function openProject(id:string){setReturnPage(page);go('projetos');setProjectId(id)}
+ function changeActivity(entry:WorkEntry,status:string){
+  const item=allActivities.find(a=>a.id===entry.id)
+  if(status==='Concluída'&&item){setActivityEditor({item,initialStatus:status});return}
+  void write(()=>client!.from('hub_activities').update({status}).eq('workspace_id',workspace).eq('id',entry.id).select('id').single())
+ }
+ function openEntry(entry:WorkEntry){if(entry.projectId)openProject(entry.projectId);else openLead(entry.leadId)}
  function openAgenda(filter:WorkFilter){go('agenda');setAgendaFilter(filter);setAgendaRequest(n=>n+1)}
  const pageLabel=page==='convites'?'Meus convites':page==='equipe'?'Administração / Equipe':sections.find(([id])=>id===page)?.[1]
  const signOut=()=>void client!.auth.signOut().then(({error})=>{if(error)setError('Não foi possível sair. Tente novamente.')})
@@ -323,12 +340,12 @@ function SharedCrm(){
     leads={commercialData.leads} meetings={proposalMeetings}
     openLead={openLead} openProject={openProject}/>}
    {page==='prospeccao'&&<ProspectingQueue data={commercialData} tasks={allActivities} open={openLead}/>}
-   {page==='importacao'&&<LeadImport key={workspace} client={client!} workspace={workspace} allowed={can(role,'commercial',true)} saved={()=>reload(v=>v+1)}/>}
+   {page==='importacao'&&<LeadImport key={workspace} client={client!} workspace={workspace} allowed={can(role,'commercial',true)} saved={changed}/>}
    {page==='catalogo'&&<SharedCatalog items={catalog} admin={administrator} save={async draft=>{const r=await client!.rpc('hub_save_solution',{w:workspace,i:draft.id??null,n:draft.name,c:draft.category,d:draft.description,items:draft.scope_items?.filter(s=>s.trim()),enabled:draft.active,expected_revision:draft.revision??null});if(r.error)return;reload(v=>v+1);return r.data}}/>}
    {page==='conhecimento'&&<Knowledge download={false} go={()=>go('reunioes')}/>}
    {page==='financeiro'&&!can(role,'finance')&&<p role="status">Seu papel não permite acesso ao Financeiro.</p>}
    {page==='financeiro'&&can(role,'finance')&&finance&&<SharedFinance key={workspace} client={client!} workspace={workspace} projects={projects} forecasts={finance[0].data??[]} receipts={finance[1].data??[]} expenses={finance[2].data??[]} month={reportMonth} setMonth={setReportMonth} audit={finance[3].data??[]} busy={busy} write={write}/>}
-   {(page==='agenda'||page==='reunioes')&&<OperationalAgenda key={workspace+page} request={agendaRequest} entries={entries} leads={commercialData.leads} initial={page==='reunioes'?{kind:'meeting',state:'all'}:agendaFilter} title={page==='reunioes'?'Reuniões e diagnósticos':'Agenda operacional'} open={openEntry} busy={busy} canChange={entry=>can(role,entry.projectId?'projects':'commercial',true)} change={(entry,status)=>void write(()=>client!.from('hub_activities').update({status}).eq('workspace_id',workspace).eq('id',entry.id).select('id').single())}/>}
+   {(page==='agenda'||page==='reunioes')&&<OperationalAgenda key={workspace+page} request={agendaRequest} entries={entries} leads={commercialData.leads} initial={page==='reunioes'?{kind:'meeting',state:'all'}:agendaFilter} title={page==='reunioes'?'Reuniões e diagnósticos':'Agenda operacional'} activities={page==='agenda'?{user:currentUser,edit:id=>setActivityEditor({item:allActivities.find(a=>a.id===id)}),add:can(role,'commercial',true)?()=>setActivityEditor({}):undefined}:undefined} open={openEntry} busy={busy} canChange={entry=>can(role,entry.projectId?'projects':'commercial',true)} change={changeActivity}/>}
    {page==='projetos'&&<SharedProjects projects={projects} leads={commercialData.leads} open={id=>{setProjectSection('resumo');setReturnPage('projetos');setProjectId(id)}}/>}
    {page==='propostas'&&<Proposals data={commercialData} add={()=>setProposalModal({})} open={id=>setProposalModal({id})}/>}
    {(page==='crm'||page==='triagem')&&!showForm&&<SharedCrmList key={workspace+page} client={client!} workspace={workspace} revision={revision} data={commercialData} triage={page==='triagem'} open={item=>{setReturnPage(page);setLeads(rows=>[...rows.filter(l=>l.id!==item.id),item]);select(item)}} add={()=>{setReturnPage(page);select()}} start={item=>{setReturnPage(page);setLeads(rows=>[...rows.filter(l=>l.id!==item.id),item]);select(item);setEditor('triage')}}/>}
@@ -351,19 +368,18 @@ function SharedCrm(){
     <div className="op-dossier-links">{proposals.filter(p=>p.leadId===lead.id).map(p=><button className="card" key={p.id} onClick={()=>setProposalModal({id:p.id})}><small>Proposta · versão {p.version}</small><b>{p.title}</b><span>{p.status}</span></button>)}{projects.filter(p=>p.lead_id===lead.id).map(p=><button className="card" key={p.proposal_id} onClick={()=>openProject(p.proposal_id)}><small>Projeto · {p.status}</small><b>{p.approved.title}</b><span>{p.owner||'Sem responsável'} · {dateLabel(p.due_on??'')}</span><span>{allActivities.filter(a=>a.project_proposal_id===p.proposal_id&&a.support).length} chamados de pós-venda</span></button>)}</div>
     {loadedLead===selected&&meetings.map(item=><div key={item.id} className="list-item"><div><b>{dateLabel(item.date)} · {item.state}</b><p>{item.summary||item.participants}</p></div><button className="button" disabled={busy} onClick={()=>{if(item.projectId)openProject(item.projectId,'reunioes');else{setMeeting(item);setEditor('meeting')}}}>{item.projectId?'Abrir reunião no projeto':'Editar reunião'}</button>{!item.projectId&&item.state==='Realizada'&&<button className="button" disabled={busy||!can(role,'commercial',true)} onClick={()=>setProposalModal({leadId:lead.id,meetingId:item.id})}>Criar proposta</button>}</div>)}
    </section>}
-   {selected&&currentLead&&loadedLead===selected&&<ContactPlanner key={workspace+selected} client={client!} workspace={workspace} lead={currentLead} allowed={can(role,'commercial',true)} saved={()=>reload(v=>v+1)}/>}
+   {selected&&currentLead&&loadedLead===selected&&<ContactPlanner key={workspace+selected} client={client!} workspace={workspace} lead={currentLead} allowed={can(role,'commercial',true)} saved={changed}/>}
    {selected&&loadedLead===selected&&<div className="dashboard-grid">
     <section className="card panel"><h2>Histórico</h2>
      {interactions.length?<ul>{interactions.map(entry=><li key={entry.id}>{entry.body} · {dateLabel(entry.created_at)}</li>)}</ul>:<p>Sem interações registradas.</p>}
     </section>
     <section className="card panel"><h2>Atividades</h2><fieldset disabled={!can(role,'commercial',true)}>
-     <form className="pilot-fields" onSubmit={e=>{e.preventDefault();if(task.trim())void write(()=>client!.from('hub_activities').insert({workspace_id:workspace,lead_id:selected,title:task.trim(),due_on:due||null}).select('id').single(),()=>{setTask('');setDue('')})}}>
-      <label>Título<input required value={task} onChange={e=>setTask(e.target.value)}/></label><label>Prazo<input type="date" value={due} onChange={e=>setDue(e.target.value)}/></label><button className="button" disabled={busy}>Criar atividade</button>
-     </form>
-     {tasks.length?<ul>{tasks.map(item=><li key={item.id}><label>{item.title}{item.owner?' · '+item.owner:''}{item.due_on?' · '+dateLabel(item.due_on):''}<select disabled={busy} value={item.status} onChange={e=>void write(()=>client!.from('hub_activities').update({status:e.target.value}).eq('workspace_id',workspace).eq('id',item.id).select('id').single())}>{statuses.map(status=><option key={status}>{status}</option>)}</select></label></li>)}</ul>:<p>Sem atividades registradas.</p>}</fieldset>
+     <button className="button" disabled={busy} onClick={()=>setActivityEditor({leadId:selected})}>Criar atividade</button>
+     {tasks.length?<ul>{tasks.map(item=><li key={item.id}><p>{item.title}{item.owner?' · '+item.owner:''}{item.due_on?' · '+dateLabel(item.due_on):''} · {item.status}</p>{allActivities.find(a=>a.id===item.id)?.result&&<p>Resultado: {allActivities.find(a=>a.id===item.id)?.result}</p>}<button className="button compact" disabled={busy} onClick={()=>setActivityEditor({item:allActivities.find(a=>a.id===item.id)})}>Editar acompanhamento de {item.title}</button></li>)}</ul>:<p>Sem atividades registradas.</p>}</fieldset>
     </section>
    </div>}
    </>}
+   {activityEditor&&<ActivityEditor key={workspace+':'+(activityEditor.item?.id??activityEditor.leadId??'new')} client={client!} workspace={workspace} {...activityEditor} leads={commercialData.leads} close={()=>setActivityEditor(undefined)} saved={()=>{setNotice('Atividade salva.');changed()}}/>}
    {can(role,'commercial',true)&&lead&&editor==='triage'&&<TriageEditor solutionOptions={catalog.filter(s=>s.active).map(s=>s.name)} lead={lead} triage={selectedTriage&&fullTriage(selectedTriage)} team={[]} close={()=>setEditor(null)}
     save={(triage,updatedLead)=>write(()=>saveTriage(client!,workspace,triage,updatedLead),()=>setDraft({...draft,name:updatedLead.name,segment:updatedLead.segment,city:updatedLead.city}))}/>}
    {can(role,'commercial',true)&&lead&&editor==='meeting'&&<MeetingEditor solutionOptions={catalog.filter(s=>s.active).map(s=>s.name)} presentation={<ClientPresentation lead={lead} meeting={meeting} solutions={catalog} proposals={proposals} financial={can(role,'finance')}/>} data={meetingContext} item={meeting} leadId={lead.id} lockLead close={()=>setEditor(null)}

@@ -4,6 +4,7 @@ import {mkdtemp,writeFile,rm} from 'node:fs/promises'
 import {tmpdir} from 'node:os'
 import {join} from 'node:path'
 import {randomBytes} from 'node:crypto'
+import {request} from 'node:http'
 import {createGateway} from '../scripts/hml-gateway.mjs'
 test('gateway protege frontend, APIs e Auth; cookie seguro e rotas administrativas não expostas',async()=>{
  const root=await mkdtemp(join(tmpdir(),'hub-hml-')),password=randomBytes(24).toString('hex')
@@ -18,6 +19,9 @@ test('gateway protege frontend, APIs e Auth; cookie seguro e rotas administrativ
   const login=await fetch(url+'/__review/login',{method:'POST',body:new URLSearchParams({password}),redirect:'manual'})
   assert.equal(login.status,303);const cookie=login.headers.get('set-cookie');for(const attr of ['Secure','HttpOnly','SameSite=Lax','Path=/'])assert.ok(cookie.includes(attr))
   const headers={Cookie:cookie.split(';')[0]}
+  const upgrade=extra=>new Promise((resolve,reject)=>{const r=request(url+'/__supabase/realtime/v1/websocket',{headers:{Connection:'Upgrade',Upgrade:'websocket',Origin:'https://fixture.trycloudflare.com',...extra}},res=>{res.resume();resolve(res.statusCode)});r.on('error',reject);r.setTimeout(2000,()=>r.destroy(Error('Handshake sem resposta')));r.end()})
+  assert.equal(await upgrade({}),401)
+  assert.equal(await upgrade({...headers,Origin:'https://foreign.example.invalid'}),401)
   assert.match(await(await fetch(url+'/',{headers})).text(),/Fixture protegida/)
   for(const path of ['/__supabase/auth/v1/admin/users','/__supabase/storage/v1/','/__supabase/pg/','/.env'])assert.equal((await fetch(url+path,{headers})).status,404,path)
   assert.equal((await fetch(url+'/__supabase/auth/v1/otp',{method:'POST',headers,body:JSON.stringify({email:'not-a-fixture@real-domain.invalid'})})).status,400)

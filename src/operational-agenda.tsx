@@ -5,13 +5,15 @@ import {dateLabel,type Lead} from './domain'
 import {businessDay,filterWork,workKinds,type WorkEntry,type WorkFilter,type WorkKind} from './shared-operational'
 import {Empty,Page,Tag} from './ui'
 
-export function OperationalAgenda({entries,leads,initial={},request=0,open,change,busy,canChange,title='Agenda operacional'}:{entries:WorkEntry[];leads:Lead[];initial?:WorkFilter;request?:number;open:(entry:WorkEntry)=>void;change:(entry:WorkEntry,status:string)=>void;busy:boolean;canChange:(entry:WorkEntry)=>boolean;title?:string}){
+export function OperationalAgenda({entries,leads,initial={},request=0,open,change,busy,canChange,title='Agenda operacional',activities}:{entries:WorkEntry[];leads:Lead[];initial?:WorkFilter;request?:number;open:(entry:WorkEntry)=>void;change:(entry:WorkEntry,status:string)=>void;busy:boolean;canChange:(entry:WorkEntry)=>boolean;title?:string;activities?:{user:string;edit:(id:string)=>void;add?:()=>void}}){
  const [filter,setFilter]=useViewState<WorkFilter>('agenda-'+title,{period:'all',state:'pending',...initial})
  const [lastRequest,setLastRequest]=useViewState('agenda-request-'+title,0)
  useEffect(()=>{if(request&&request!==lastRequest){setFilter({period:'all',state:'pending',...initial});setLastRequest(request)}},[request,lastRequest,initial,setFilter,setLastRequest])
- const today=businessDay(),rows=filterWork(entries,filter,today)
+ const [scope,setScope]=useViewState('agenda-scope-'+title,'workspace')
+ const today=businessDay(),rows=filterWork(entries,filter,today).filter(row=>scope!=='mine'||!activities||row.assignedUser===activities.user)
  const owners=[...new Set(entries.map(e=>e.owner).filter(Boolean))].sort()
  return <Page title={title} description="Atividades, reuniões, próximos contatos e prazos de entrega do espaço.">
+  {activities&&<div className="actions"><button className="button" aria-pressed={scope==='mine'} onClick={()=>setScope('mine')}>Minhas atividades</button><button className="button" aria-pressed={scope==='workspace'} onClick={()=>setScope('workspace')}>Agenda do espaço</button>{activities.add&&<button className="button primary" onClick={activities.add}>Nova atividade</button>}{scope==='mine'&&<p>Somente atividades atribuídas à sua conta. Responsáveis antigos em texto devem ser vinculados explicitamente.</p>}</div>}
   <div className="op-periods" aria-label="Recorte da agenda">{([['all','Todas'],['overdue','Vencidas'],['today','Hoje'],['week','Próximos 7 dias'],['undated','Sem prazo']] as const).map(([value,label])=><button key={value} className="button compact" aria-pressed={filter.period===value} onClick={()=>setFilter({...filter,period:value})}>{label}</button>)}</div>
   <div className="toolbar op-filters">
    <label>Tipo de compromisso<select value={filter.kind??''} onChange={e=>setFilter({...filter,kind:e.target.value as WorkKind|''})}><option value="">Todos os tipos</option>{Object.entries(workKinds).map(([value,label])=><option key={value} value={value}>{label}</option>)}</select></label>
@@ -24,7 +26,7 @@ export function OperationalAgenda({entries,leads,initial={},request=0,open,chang
   {rows.length?<div className="op-agenda-list">{rows.map(row=><article data-overdue={!!row.date&&row.date<today} className="card op-work-item" key={row.key}>
    <span className={'tile '+(row.date&&row.date<today?'rose':'blue')}><CalendarDays size={19}/></span>
    <div><small>{workKinds[row.kind]} · {row.detail}</small><button className="text-button lead-name" onClick={()=>open(row)}>{row.title}</button><p>{leads.find(l=>l.id===row.leadId)?.name??'Sem estabelecimento'} · {row.owner||'Sem responsável'}</p><Tag tone={row.date&&row.date<today?'rose':'neutral'}>{row.date?dateLabel(row.date):'Sem prazo'}{row.date===today?' · Hoje':''}</Tag> <Tag>{row.status}</Tag></div>
-   <div className="op-item-actions">{(row.kind==='activity'||row.kind==='support')&&<label>Situação de {row.title}<select value={row.status} title={!canChange(row)?'Seu papel permite consultar; a edição exige acesso operacional ou comercial.':undefined} disabled={busy||!canChange(row)} onChange={e=>change(row,e.target.value)}>{['Pendente','Em andamento','Concluída','Cancelada'].map(s=><option key={s}>{s}</option>)}</select></label>}<button className="button compact" onClick={()=>open(row)}>Abrir ficha <ArrowUpRight size={15}/></button></div>
+   <div className="op-item-actions">{(row.kind==='activity'||row.kind==='support')&&<><label>Situação de {row.title}<select value={row.status} title={!canChange(row)?'Seu papel permite consultar; a edição exige acesso operacional ou comercial.':undefined} disabled={busy||!canChange(row)} onChange={e=>change(row,e.target.value)}>{['Pendente','Em andamento','Concluída','Cancelada'].map(s=><option key={s}>{s}</option>)}</select></label>{activities&&<button className="button compact" disabled={busy||!canChange(row)} onClick={()=>activities.edit(row.id)}>Editar acompanhamento</button>}</>}<button className="button compact" onClick={()=>open(row)}>Abrir ficha <ArrowUpRight size={15}/></button></div>
   </article>)}</div>:<div className="card"><Empty title="Nenhum compromisso neste recorte" detail="Ajuste os filtros ou registre atividades e reuniões nas fichas."/></div>}
  </Page>
 }
