@@ -37,6 +37,8 @@ test('Atividades: conclusão/follow-up atômicos, duas sessões, revisão, isola
   expect((await f.restricted.client.from('hub_activity_audit').insert({workspace_id:f.workspace,activity_id:follow.id,after_record:{}})).error?.code).toBe('42501')
   await checked(f.owner.client.rpc('hub_update_member_active',{w:f.workspace,u:f.restricted.id,expected_revision:0,enabled:false}))
   expect((await f.restricted.client.rpc('hub_save_activity',initial)).error?.code).toBe('42501')
+  expect((await f.restricted.client.rpc('hub_workspace_version',{w:f.workspace})).error?.code).toBe('42501')
+  expect((await f.owner.client.rpc('hub_workspace_version',{w:f.other})).error?.code).toBe('42501')
  }finally{await second.close();sql(`delete from public.hub_activity_audit where workspace_id='${f.workspace}';delete from public.hub_lead_audit where workspace_id='${f.workspace}';delete from public.hub_activity_events where workspace_id='${f.workspace}';`);await f.cleanup()}
 })
 test('Atividades: falha no acompanhamento reverte conclusão, auditoria e recibo; papéis por módulo',async()=>{
@@ -47,7 +49,9 @@ test('Atividades: falha no acompanhamento reverte conclusão, auditoria e recibo
   const created=await checked(f.owner.client.rpc('hub_save_activity',initial))
   sql(`create function hub_private.${fn}() returns trigger language plpgsql as $$ begin if new.workspace_id='${f.workspace}' and new.after_record->>'title'='Falha fictícia controlada' then raise exception 'Falha de auditoria fictícia';end if;return new;end $$;create trigger ${fn} before insert on public.hub_activity_audit for each row execute function hub_private.${fn}();`)
   const args={...initial,a:created.current.id,expected_revision:created.current.revision,operation_id:randomUUID(),body:{...initial.body,status:'Concluída',result:'Resultado fictício',followup:{title:'Falha fictícia controlada',owner:'Equipe fictícia',due:f.today}}}
+  const version=await checked(f.owner.client.rpc('hub_workspace_version',{w:f.workspace}))
   expect((await f.owner.client.rpc('hub_save_activity',args)).error).toBeTruthy()
+  expect(await checked(f.owner.client.rpc('hub_workspace_version',{w:f.workspace}))).toBe(version)
   const actual=await checked(f.admin.from('hub_activities').select('status,revision').eq('workspace_id',f.workspace).eq('id',created.current.id).single());expect(actual).toEqual({status:'Pendente',revision:0})
   expect((await checked(f.admin.from('hub_activity_audit').select('id').eq('workspace_id',f.workspace).eq('activity_id',created.current.id)))).toHaveLength(1)
   sql(`drop trigger ${fn} on public.hub_activity_audit;drop function hub_private.${fn}();`)
