@@ -11,7 +11,10 @@
       "feat/catalogo-compartilhado": false,
       "feat/reuniao-apresentacao": false,
       "feat/indicadores-fechamento": false,
-      "feat/experiencia-portal": false
+      "feat/experiencia-portal": false,
+      "feat/ficha-compartilhada": false,
+      "feat/crm-paginado": false,
+      "feat/historico-indicadores": false
     }
   }
 }

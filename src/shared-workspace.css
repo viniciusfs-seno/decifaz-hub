@@ -82,6 +82,7 @@
 .skip-link:focus{transform:none}
 .team-help{margin:14px 0;font-size:.82rem}.team-help summary{cursor:pointer;font-weight:650}.team-help dl{display:grid;grid-template-columns:130px 1fr;gap:8px;margin:14px 0}.team-help dt{font-weight:650}.team-help dd{margin:0;color:var(--muted)}
 .member-state{display:inline-flex;gap:5px;border:1px solid var(--line);border-radius:6px;padding:4px 8px;font-size:.76rem;background:var(--soft)}.member-state[data-active=false]{border-left:3px solid #bd5238}
+.lead-section{border:1px solid var(--line);border-radius:9px;padding:12px;margin:12px 0}.lead-section summary{font-weight:650;cursor:pointer;font-size:.85rem}.lead-section[open]>summary{margin-bottom:12px}.lead-details fieldset{border:0;padding:0;margin:0;min-width:0}.lead-contact-summary{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:12px;font-size:.8rem;margin:18px 0}.lead-contact-summary dt{color:var(--muted);font-size:.72rem}.lead-contact-summary dd{margin:5px 0;overflow-wrap:anywhere}@media(max-width:600px){.lead-contact-summary{grid-template-columns:1fr}}
 .solution-grid article{display:grid;align-content:start;gap:12px}.solution-grid h2{font-size:1.1rem!important}.solution-grid p,.solution-grid li{font-size:.82rem;line-height:1.6}.solution-grid ul{padding-left:18px;margin:0}.solution-grid .button{justify-self:start}
 :root[data-theme=dark] .shared-app .tag.rose{background:#56382f;color:#ffd0c2}
 :root[data-theme=dark] .shared-app .tag.amber{background:#51452d;color:#ffe1a3}

@@ -60,7 +60,7 @@ try{
   await verify(previous,'anterior-apos-'+version)
   if(i===0)await verify(operational,'operacional')
   if(i===1){await verify(catalog,'catalogo');await verify(meeting,'reuniao-catalogo')}
-  if(i===2)await verify(candidate,'integrado')
+  if(i===2)await verify('d0ae5dd47a48813d2d9c15166bcc5c3cd30a37b0','integrado')
   if(digest()!==before)throw Error('Migração alterou registros anteriores')
   evidence.phases.push({version,onlyPendingMigration:true,previousFrontend:previous,preserved:true,sha256:createHash('sha256').update(readFileSync(join('supabase/migrations',files.find(f=>f.startsWith(version))))).digest('hex')})
  }

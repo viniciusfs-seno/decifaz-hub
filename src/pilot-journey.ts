@@ -1,16 +1,16 @@
 import type { SupabaseClient } from '@supabase/supabase-js'
 import { day, emptyLead, type Lead, type Meeting, type Proposal, type Stage, type Triage } from './domain'
 
-type Profile = Partial<Pick<Lead, 'region' | 'address' | 'instagram' | 'website' | 'whatsapp' | 'other' | 'services' | 'owner' | 'next' | 'due' | 'needs'>>
-export type PilotLead = {id:string; name:string; segment:string; city:string; notes:string; stage:Stage; profile:Profile; created_at:string}
-export const leadColumns = 'id,name,segment,city,notes,stage,profile,created_at'
+type Profile = Partial<Pick<Lead, 'contact' | 'contactInfo' | 'origin' | 'verification' | 'noDueReason' | 'region' | 'address' | 'instagram' | 'website' | 'whatsapp' | 'other' | 'services' | 'owner' | 'next' | 'due' | 'needs'>>
+export type PilotLead = {id:string; name:string; segment:string; city:string; notes:string; stage:Stage; profile:Profile; created_at:string;revision?:number}
+export const leadColumns = 'id,name,segment,city,notes,stage,profile,created_at,revision'
 export type TriageRow = {lead_id:string; record:Omit<Triage,'leadId'|'scores'|'completed'>; scores:Triage['scores']; completed:boolean}
 type MeetingRow = {id:string; lead_id:string; meeting_on:string; state:Meeting['state']; record:Omit<Meeting,'id'|'leadId'|'date'|'state'>}
 export type PilotMetrics = {funnel:Partial<Record<Stage,number>>; priorities:Partial<Record<'A'|'B'|'C',number>>; scheduled:number; diagnosed:number; pending:number; overdue:number}
 
 export function fullLead({profile,created_at,...lead}:PilotLead):Lead {
- const {region,address,instagram,website,whatsapp,other,services,owner,next,due,needs}=profile
- return {...emptyLead(owner),...lead,created:created_at,region:region??'',address:address??'',instagram:instagram??'',website:website??'',
+ const {contact,contactInfo,origin,verification,noDueReason,region,address,instagram,website,whatsapp,other,services,owner,next,due,needs}=profile
+ return {...emptyLead(owner),...lead,contact:contact??'',contactInfo:contactInfo??'',origin:origin??'',verification:verification??'',noDueReason:noDueReason??'',created:created_at,region:region??'',address:address??'',instagram:instagram??'',website:website??'',
   whatsapp:whatsapp??'',other:other??'',services:services??[],next:next??'',due:due??'',needs:needs??''}
 }
 
