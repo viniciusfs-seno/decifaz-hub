@@ -189,14 +189,21 @@ function SharedCrm(){
   setSelected('');setLoadedLead('');setInteractions([]);setTasks([]);setProjectId('');setProposalModal(undefined);setEditor(null);setMeeting(undefined);setShowForm(false)
  }
  useEffect(()=>{
-  let tick=0,timer:number|undefined
-  const refresh=()=>{void refreshMemberships().then(()=>reload(v=>v+1)).catch(()=>{/* erro visível; não encerrar Auth nem outros espaços */})}
-  const schedule=()=>{clearTimeout(timer);timer=window.setTimeout(refresh,400)}
+  let current=true,seenVersion:string|undefined,timer:number|undefined,inFlight=false
+  const refresh=async(force=false)=>{
+   if(inFlight)return;inFlight=true
+   try{await refreshMemberships();if(!current||!workspace)return;const r=await client!.rpc('hub_workspace_version',{w:workspace});if(!current)return
+    if(force||!r.error&&seenVersion!==String(r.data))reload(v=>v+1)
+    if(!r.error)seenVersion=String(r.data)
+   }catch{/* erro visível; não encerrar Auth nem outros espaços */}finally{inFlight=false}
+  }
+  const focus=()=>void refresh(true)
+  const schedule=()=>{clearTimeout(timer);timer=window.setTimeout(()=>void refresh(),400)}
   const broadcast=new BroadcastChannel('decifaz-work-'+workspace);broadcast.onmessage=schedule
   const realtime=workspace?client!.channel('workspace-'+workspace).on('postgres_changes',{event:'*',schema:'public',table:'hub_leads',filter:'workspace_id=eq.'+workspace},schedule).on('postgres_changes',{event:'*',schema:'public',table:'hub_activities',filter:'workspace_id=eq.'+workspace},schedule).on('postgres_changes',{event:'*',schema:'public',table:'hub_interactions',filter:'workspace_id=eq.'+workspace},schedule).on('postgres_changes',{event:'*',schema:'public',table:'hub_triages',filter:'workspace_id=eq.'+workspace},schedule).subscribe():undefined
-  window.addEventListener('focus',refresh)
-  const interval=window.setInterval(()=>{if(document.hidden)return;tick++;void refreshMemberships().then(()=>{if(tick%4===0)reload(v=>v+1)}).catch(()=>{})},15000)
-  return ()=>{window.removeEventListener('focus',refresh);window.clearInterval(interval);clearTimeout(timer);broadcast.close();if(realtime)void client!.removeChannel(realtime);membershipRequest.current++}
+  window.addEventListener('focus',focus)
+  const interval=window.setInterval(()=>void refresh(),15000)
+  return ()=>{current=false;window.removeEventListener('focus',focus);window.clearInterval(interval);clearTimeout(timer);broadcast.close();if(realtime)void client!.removeChannel(realtime);membershipRequest.current++}
  },[workspace])
  function changed(){const channel=new BroadcastChannel('decifaz-work-'+workspace);channel.postMessage('changed');channel.close();reload(v=>v+1)}
 

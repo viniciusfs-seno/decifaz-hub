@@ -100,4 +100,27 @@ do $$ declare t text;begin
   end loop;
  end if;
 end $$;
+-- Change clock: a small authorized poll recovers missed Realtime events.
+create table hub_private.workspace_versions(workspace_id uuid primary key references public.hub_workspaces(id) on delete cascade,version bigint not null default 0);
+revoke all on hub_private.workspace_versions from public,anon,authenticated;
+create function hub_private.bump_workspace_version() returns trigger language plpgsql security definer set search_path='' as $$
+declare w uuid;begin
+ w:=case when TG_OP='DELETE' then old.workspace_id else new.workspace_id end;
+ if exists(select 1 from public.hub_workspaces where id=w) then
+  insert into hub_private.workspace_versions values(w,1) on conflict(workspace_id) do update set version=hub_private.workspace_versions.version+1;
+ end if;
+ return case when TG_OP='DELETE' then old else new end;
+end $$;
+revoke all on function hub_private.bump_workspace_version() from public,anon,authenticated;
+create trigger hub_leads_changed after insert or update or delete on public.hub_leads for each row execute function hub_private.bump_workspace_version();
+create trigger hub_triages_changed after insert or update or delete on public.hub_triages for each row execute function hub_private.bump_workspace_version();
+create trigger hub_interactions_changed after insert or update or delete on public.hub_interactions for each row execute function hub_private.bump_workspace_version();
+create trigger hub_activities_changed after insert or update or delete on public.hub_activities for each row execute function hub_private.bump_workspace_version();
+create function public.hub_workspace_version(w uuid) returns bigint language plpgsql stable security definer set search_path='' as $$
+begin
+ if not public.hub_can(w,'commercial') then raise exception 'Acesso negado' using errcode='42501';end if;
+ return coalesce((select version from hub_private.workspace_versions where workspace_id=w),0);
+end $$;
+revoke all on function public.hub_workspace_version(uuid) from public,anon;
+grant execute on function public.hub_workspace_version(uuid) to authenticated;
 commit;
