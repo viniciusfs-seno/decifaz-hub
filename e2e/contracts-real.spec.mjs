@@ -37,3 +37,17 @@ test('Contratos: existente/proposta, revisão, documento privado, timeline e pap
   await f.admin.storage.from('hub-private-documents').remove([path])
  }finally{await f.admin.storage.from('hub-private-documents').remove([f.workspace+'/contract/'+c+'/'+d+'.pdf']);sql(`delete from public.hub_private_documents where workspace_id='${f.workspace}';delete from hub_private.contract_values where workspace_id='${f.workspace}';delete from public.hub_contracts where workspace_id='${f.workspace}';delete from public.hub_registry_events where workspace_id='${f.workspace}';delete from public.hub_lead_audit where workspace_id='${f.workspace}';delete from public.hub_activity_events where workspace_id='${f.workspace}';`);await f.cleanup()}
 })
+
+test('Rastreabilidade descarta página antiga depois de trocar o integrante',async({page})=>{
+ test.skip(process.env.HUB_REAL_E2E!=='1','Somente Supabase local.');test.setTimeout(90000)
+ const f=await operationalFixture();let release
+ try{
+  sql(`insert into public.hub_registry_events(workspace_id,kind,record_id,actor_id,action) select '${f.workspace}','contract','${f.lead}','${f.owner.id}','Evento inicial fictício' from generate_series(1,55);insert into public.hub_registry_events(workspace_id,kind,record_id,actor_id,action) values('${f.workspace}','contract','${f.lead}','${f.second.id}','Evento atual fictício');`)
+  let requested;const received=new Promise(r=>{requested=r}),gate=new Promise(r=>{release=r})
+  await page.route('**/rest/v1/rpc/hub_registry_timeline',async route=>{const body=route.request().postDataJSON();if(!body.before_id){await route.continue();return}requested();await gate;await route.fulfill({status:200,contentType:'application/json',body:JSON.stringify([{id:1,kind:'contract',record_id:f.lead,actor_id:f.owner.id,occurred_at:new Date().toISOString(),action:'PAGINAÇÃO ANTIGA FICTÍCIA',financial:false,revision:0,before_record:null,after_record:null}])})})
+  await page.addInitScript(s=>localStorage.setItem('sb-127-auth-token',JSON.stringify(s)),f.owner.session);await page.goto('/');await page.getByRole('navigation').getByRole('button',{name:'Rastreabilidade',exact:true}).click();await page.getByRole('button',{name:'Carregar mais eventos',exact:true}).click();await received
+  await page.getByRole('combobox',{name:'Integrante dos eventos',exact:true}).selectOption(f.second.id);await expect(page.locator('.timeline')).toContainText('Evento atual fictício');await expect(page.locator('.timeline')).not.toContainText('Evento inicial fictício')
+  const response=page.waitForResponse(r=>r.url().includes('/rpc/hub_registry_timeline')&&!!r.request().postDataJSON()?.before_id);release();await(await response).finished();await page.evaluate(()=>new Promise(r=>requestAnimationFrame(()=>requestAnimationFrame(r))))
+  await expect(page.locator('.timeline')).not.toContainText('PAGINAÇÃO ANTIGA FICTÍCIA');await expect(page.locator('.timeline li')).toHaveCount(1)
+ }finally{release?.();sql(`delete from public.hub_registry_events where workspace_id='${f.workspace}';delete from public.hub_lead_audit where workspace_id='${f.workspace}';delete from public.hub_activity_events where workspace_id='${f.workspace}';`);await f.cleanup()}
+})
