@@ -14,7 +14,10 @@
       "feat/experiencia-portal": false,
       "feat/ficha-compartilhada": false,
       "feat/crm-paginado": false,
-      "feat/historico-indicadores": false
+      "feat/historico-indicadores": false,
+      "feat/contratos-rastreabilidade": false,
+      "feat/obrigacoes-decifaz": false,
+      "feat/reunioes-projetos": false
     }
   }
 }
