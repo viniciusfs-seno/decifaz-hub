@@ -38,6 +38,6 @@ export function Contracts({client,workspace,admin,financial,leads,proposals,proj
 }
 export function RegistryAlerts({client,workspace,revision,openContract}:{client:SupabaseClient;workspace:string;revision:number;openContract:(id:string)=>void}){
  const [data,setData]=useState<{contracts:Contract[]}>(),[error,setError]=useState(false),[retry,setRetry]=useState(0)
- useEffect(()=>{let live=true;void client.rpc('hub_due_overview',{w:workspace}).then(r=>{if(!live)return;setError(!!r.error);setData(r.error?undefined:r.data)});return()=>{live=false}},[client,workspace,revision,retry])
+ useEffect(()=>{let live=true;void client.rpc('hub_due_overview',{w:workspace}).then(r=>{if(!live)return;const failed=!!r.error||!Array.isArray(r.data?.contracts);setError(failed);setData(failed?undefined:r.data)});return()=>{live=false}},[client,workspace,revision,retry])
  return <section className="card panel"><h2>Contratos a acompanhar</h2><p>Términos e avisos de renovação vencidos ou nos próximos 30 dias · Fortaleza.</p>{error?<p>Não foi possível consultar avisos. <button className="button" onClick={()=>setRetry(n=>n+1)}>Tentar avisos novamente</button></p>:!data?<p role="status">Consultando contratos…</p>:data.contracts.length?data.contracts.map(c=><p key={c.id}><button className="text-button" onClick={()=>openContract(c.id)}>{c.title}</button> · {c.owner} · término {dateLabel(c.ends_on??'')} · renovação {dateLabel(c.renews_on??'')} · aviso {c.notice_days} dias</p>):<Empty title="Sem contratos próximos do aviso ou vencimento"/>}</section>
 }
