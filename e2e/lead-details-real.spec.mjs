@@ -39,6 +39,7 @@ test('Ficha: campos antigos, duas sessões, conflito, celular, autorização e a
   sql(`create function hub_private.fail_lead_audit_test() returns trigger language plpgsql as $$begin raise exception 'falha fictícia';end$$;create trigger fail_lead_audit_test before insert on public.hub_lead_audit for each row when (new.workspace_id='${f.workspace}'::uuid) execute function hub_private.fail_lead_audit_test();`)
   try{expect((await f.owner.client.rpc('hub_save_lead',{w:f.workspace,l:f.prospect,expected_revision:current.revision,body:{name:'Não deve persistir'}})).error).toBeTruthy()}finally{sql('drop trigger fail_lead_audit_test on public.hub_lead_audit;drop function hub_private.fail_lead_audit_test();')}
   expect((await checked(f.owner.client.from('hub_leads').select('revision').eq('workspace_id',f.workspace).eq('id',f.prospect).single())).revision).toBe(current.revision)
-  expect(await second.evaluate(()=>document.documentElement.scrollWidth<=innerWidth+1)).toBe(true)
+  const geometry=await second.evaluate(()=>({fits:document.documentElement.scrollWidth<=innerWidth+1,width:document.documentElement.scrollWidth,inner:innerWidth,x:scrollX,overflow:[...document.querySelectorAll('body *')].filter(e=>e.getBoundingClientRect().right>innerWidth+1||e.scrollWidth>e.clientWidth+2).slice(0,12).map(e=>({tag:e.tagName,class:e.className,width:Math.round(e.getBoundingClientRect().width),scroll:e.scrollWidth,client:e.clientWidth}))}))
+  expect(geometry.fits,JSON.stringify(geometry)).toBe(true)
  }finally{for(const c of contexts)await c.close();await f.cleanup()}
 })

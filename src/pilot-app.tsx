@@ -375,7 +375,7 @@ function SharedCrm(){
     </section>
     <section className="card panel"><h2>Atividades</h2><fieldset disabled={!can(role,'commercial',true)}>
      <button className="button" disabled={busy} onClick={()=>setActivityEditor({leadId:selected})}>Criar atividade</button>
-     {tasks.length?<ul>{tasks.map(item=><li key={item.id}><p>{item.title}{item.owner?' · '+item.owner:''}{item.due_on?' · '+dateLabel(item.due_on):''} · {item.status}</p>{allActivities.find(a=>a.id===item.id)?.result&&<p>Resultado: {allActivities.find(a=>a.id===item.id)?.result}</p>}<button className="button compact" disabled={busy} onClick={()=>setActivityEditor({item:allActivities.find(a=>a.id===item.id)})}>Editar acompanhamento de {item.title}</button></li>)}</ul>:<p>Sem atividades registradas.</p>}</fieldset>
+     {tasks.length?<ul>{tasks.map(item=><li key={item.id}><p>{item.title}{item.owner?' · '+item.owner:''}{item.due_on?' · '+dateLabel(item.due_on):''} · {item.status}</p>{allActivities.find(a=>a.id===item.id)?.result&&<p>Resultado: {allActivities.find(a=>a.id===item.id)?.result}</p>}<button className="button compact activity-edit" disabled={busy} onClick={()=>setActivityEditor({item:allActivities.find(a=>a.id===item.id)})}>Editar acompanhamento de {item.title}</button></li>)}</ul>:<p>Sem atividades registradas.</p>}</fieldset>
     </section>
    </div>}
    </>}

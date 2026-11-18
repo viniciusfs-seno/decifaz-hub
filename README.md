@@ -2,6 +2,8 @@
 
 Reorganização atual: [hierarquia, componentes, capturas comparativas e roteiro de publicação](docs/hierarquia-e-usabilidade.md). Projetos têm seções por tarefa; contratos e obrigações usam detalhes progressivos; navegação permite localizar uma área. A entrega é de frontend, sem migração ou alteração de Edge.
 
+Também em revisão: [importação CSV](docs/importacao-csv.md) e [atividades com acompanhamento](docs/atividades-acompanhamentos.md). Dados fictícios, publicação futura em fases; critérios e limites estão documentados por entrega.
+
 Também em revisão: [importação assistida por CSV](docs/importacao-csv.md) e [atividades e acompanhamentos](docs/atividades-acompanhamentos.md), com Agenda única, responsáveis vinculados à conta, revisão e conclusão/follow-up atômicos.
 
 Revisão de UI/UX do portal compartilhado: [paridade, fluxos, capturas antes/depois, validação e publicação](docs/experiencia-portal.md). A prévia usa somente dados fictícios; a entrega permanece em rascunho para revisão. Não requer migração ou alteração de Edge.

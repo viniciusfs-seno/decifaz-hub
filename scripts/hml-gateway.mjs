@@ -19,7 +19,7 @@ export function createGateway({origin,password,root,fixture,publicKey,sha='test'
  const server=createServer(async(req,res)=>{
   res.setHeader('Cache-Control','no-store');res.setHeader('X-Content-Type-Options','nosniff');res.setHeader('X-Frame-Options','DENY');res.setHeader('Referrer-Policy','strict-origin')
   res.setHeader('Permissions-Policy','display-capture=(self),camera=(),microphone=()')
-  res.setHeader('Content-Security-Policy',"default-src 'self'; script-src 'self' 'unsafe-inline'; style-src 'self' 'unsafe-inline'; img-src 'self' data:; connect-src 'self'; object-src 'none'; base-uri 'self'; frame-ancestors 'none'")
+  res.setHeader('Content-Security-Policy',"default-src 'self'; script-src 'self' 'unsafe-inline'; style-src 'self' 'unsafe-inline'; img-src 'self' data:; connect-src 'self' "+origin.replace('https:','wss:')+"; object-src 'none'; base-uri 'self'; frame-ancestors 'none'")
   const send=(status,body,type='text/html; charset=utf-8')=>{res.statusCode=status;res.setHeader('Content-Type',type);res.end(body)}
   try{
    const url=new URL(req.url,origin),path=url.pathname
