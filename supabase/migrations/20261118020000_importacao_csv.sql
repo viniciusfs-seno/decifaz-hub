@@ -1,10 +1,14 @@
 begin;
+create function hub_private.import_phone(v text) returns text language sql immutable set search_path='' as $$
+ select case when length(digits) in (10,11) then '55'||digits else digits end from (select regexp_replace(coalesce(v,''),'\D','','g') digits) x
+$$;
+revoke all on function hub_private.import_phone(text) from public,anon,authenticated;
 create function hub_private.import_matches(w uuid,body jsonb)
 returns table(id uuid,name text,city text,revision bigint) language sql stable set search_path='' as $$
  select l.id,l.name,l.city,l.revision from public.hub_leads l where l.workspace_id=w and (
   (hub_private.crm_normalize(btrim(l.name))=hub_private.crm_normalize(btrim(body->>'name')) and hub_private.crm_normalize(btrim(l.city))=hub_private.crm_normalize(btrim(body->>'city')))
   or (length(regexp_replace(coalesce(body->'profile'->>'whatsapp',''),'\D','','g'))>=10 and
-      regexp_replace(coalesce(l.profile->>'whatsapp',''),'\D','','g')=regexp_replace(body->'profile'->>'whatsapp','\D','','g'))
+      hub_private.import_phone(l.profile->>'whatsapp')=hub_private.import_phone(body->'profile'->>'whatsapp'))
   or (length(coalesce(body->'profile'->>'website',''))>5 and lower(regexp_replace(regexp_replace(l.profile->>'website','^https?://(www\.)?','','i'),'/$',''))=lower(regexp_replace(regexp_replace(body->'profile'->>'website','^https?://(www\.)?','','i'),'/$','')))
  ) order by l.id
 $$;
@@ -25,7 +29,7 @@ begin
    if k not in ('region','address','whatsapp','instagram','website','other','contact','contactInfo','origin','owner','needs') or jsonb_typeof(body->'profile'->k) is distinct from 'string' then errors:=array_append(errors,'Coluna não importável: use somente os campos do modelo.');end if;
   end loop;
   if coalesce(body->'profile'->>'whatsapp','')<>'' and length(regexp_replace(body->'profile'->>'whatsapp','\D','','g')) not in (10,11,12,13) then errors:=array_append(errors,'WhatsApp: informe DDD e número, com código 55 opcional.');end if;
-  if coalesce(body->'profile'->>'website','')<>'' and body->'profile'->>'website' !~* '^https?://[^ /]+\.[^ /]+' then errors:=array_append(errors,'Site: informe URL completa iniciada em https:// ou http://.');end if;
+  if coalesce(body->'profile'->>'website','')<>'' and (body->'profile'->>'website' !~* '^https?://[^ /]+\.[^ /]+' or body->'profile'->>'website' ~ '^https?://[^/]*@') then errors:=array_append(errors,'Site: informe URL HTTP/HTTPS completa, sem usuário ou senha no endereço.');end if;
  end if;
  if cardinality(errors)>0 then return jsonb_build_object('status','invalid','errors',errors,'matches','[]'::jsonb);end if;
  payload:=jsonb_build_object('body',body,'stage',initial_stage,'decision',decision,'target',target,'revision',expected_revision,'acknowledged',acknowledged);

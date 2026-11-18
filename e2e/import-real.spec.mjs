@@ -14,6 +14,7 @@ test('CSV: prévia, duplicidade explícita, atualização revisada, falha parcia
   const duplicate={...base,operation_id:randomUUID()}
   expect((await checked(f.owner.client.rpc('hub_import_lead',{...duplicate,decision:'create'}))).status).toBe('review')
   const preview=await checked(f.owner.client.rpc('hub_import_lead',duplicate));expect(preview.matches).toHaveLength(1)
+  expect((await checked(f.owner.client.rpc('hub_import_lead',{...duplicate,body:{name:'Outro nome fictício',city:'Outra cidade',profile:{whatsapp:'+55 (85) 99999-8888'}}}))).matches).toHaveLength(1)
   const conflict=await checked(f.owner.client.rpc('hub_import_lead',{...duplicate,decision:'update',target:a.lead_id,expected_revision:-1}));expect(conflict.status).toBe('conflict')
   expect((await checked(f.owner.client.rpc('hub_import_lead',{...duplicate,decision:'update',target:a.lead_id,expected_revision:preview.matches[0].revision}))).status).toBe('updated')
   expect((await checked(f.owner.client.rpc('hub_import_lead',{...base,operation_id:randomUUID(),initial_stage:'Ganho'}))).status).toBe('invalid')

@@ -34,7 +34,7 @@ export function LeadImport({client,workspace,allowed,saved}:{client:SupabaseClie
    }saved()
   }catch{setError('Conexão interrompida. Retome as linhas pendentes; as confirmadas não serão duplicadas.')}finally{setBusy(false)}
  }
- function rejected(){const quote=(v:string)=>'"'+v.replaceAll('"','""')+'"';const pending=lines.filter(l=>!l.done&&l.status!=='skipped');download([importFields.map(([,label])=>quote(label)).join(';'),...pending.map(l=>importFields.map(([key])=>quote(String(key in l.body?l.body[key as keyof ImportBody]??'':l.body.profile[key]??''))).join(';'))].join('\r\n'),'decifaz-corrigir.csv')}
+ function rejected(){const quote=(v:string)=>'"'+(/^\s*[=+@-]/.test(v)?"'"+v:v).replaceAll('"','""')+'"';const pending=lines.filter(l=>!l.done&&l.status!=='skipped');download([importFields.map(([,label])=>quote(label)).join(';'),...pending.map(l=>importFields.map(([key])=>quote(String(key in l.body?l.body[key as keyof ImportBody]??'':l.body.profile[key]??''))).join(';'))].join('\r\n'),'decifaz-corrigir.csv')}
  return <Page title="Importar estabelecimentos" description="Prévia assistida: nenhuma linha é gravada antes da sua confirmação.">
   <p>Somente cadastro inicial. Interesse, orçamento, diagnóstico confirmado, aceite e Ganho continuam nos fluxos com evidências. Necessidades importadas são informações a verificar.</p>
   <button className="button" onClick={()=>download('Nome;Segmento;Cidade;WhatsApp;Site;Origem\r\nEstabelecimento fictício;Serviços;Fortaleza;(85) 99999-9999;https://example.invalid;Pesquisa fictícia','modelo-estabelecimentos.csv')}>Baixar modelo CSV</button>
