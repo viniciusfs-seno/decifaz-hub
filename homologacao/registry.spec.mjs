@@ -4,7 +4,7 @@ const origin=process.env.HUB_HML_PREVIEW_URL,password=process.env.HUB_HML_REVIEW
 async function nav(page,name){const toggle=page.getByRole('button',{name:'Abrir navegação',exact:true});if(await toggle.isVisible())await toggle.click();await page.getByRole('navigation').getByRole('button',{name,exact:true}).click()}
 test('Prioridades: contratos, obrigações, ata e papéis em HTTPS isolado',async({page,context},info)=>{
  if(!origin||!password)throw Error('Prévia protegida não configurada')
- await page.goto('/');await page.getByLabel('Senha de revisão').fill(password);await page.getByRole('button',{name:'Entrar na homologação'}).click();await page.goto('/__review/persona/admin');await expect(page.getByRole('heading',{name:'Dashboard',exact:true})).toBeVisible()
+ await page.goto('/');await page.getByLabel('Senha de revisão').fill(password);await page.getByRole('button',{name:'Entrar na homologação'}).click();await expect(page.getByRole('heading',{name:'Escolha um perfil fictício',exact:true})).toBeVisible();await page.goto('/__review/persona/admin');await expect(page.getByRole('heading',{name:'Dashboard',exact:true})).toBeVisible()
  const health=await(await context.request.get(origin+'/__health')).json();expect(health.isolated).toBe(true);if(process.env.HUB_HML_EXPECTED_SHA)expect(health.candidate).toBe(process.env.HUB_HML_EXPECTED_SHA)
  await expect(page.getByRole('heading',{name:'Contratos a acompanhar',exact:true})).toBeVisible();await expect(page.getByRole('heading',{name:'Obrigações da Decifaz',exact:true})).toBeVisible();await mkdir('.validation/external-captures',{recursive:true})
  await page.screenshot({path:'.validation/external-captures/prioridades-dashboard-'+info.project.name+'.png',fullPage:false})
