@@ -10,7 +10,7 @@ export const isPending=(status:string)=>!['Paga','Suspensa','Concluída','Cancel
 export function workEntries(leads:Lead[],tasks:SharedActivity[],meetings:Meeting[],projects:SharedProject[]):WorkEntry[]{
  const rows:WorkEntry[]=[
   ...tasks.map(t=>({key:'activity-'+t.id,id:t.id,kind:t.support?'support' as const:'activity' as const,title:t.title,leadId:t.lead_id,projectId:t.project_proposal_id??undefined,owner:t.owner,date:t.due_on??'',status:t.status,detail:t.support?'Suporte':t.project_proposal_id?'Pós-venda':'Comercial'})),
-  ...meetings.map(m=>({key:'meeting-'+m.id,id:m.id,kind:'meeting' as const,title:'Reunião · '+m.participants,leadId:m.leadId,owner:m.owner??'',date:m.date,status:m.state,detail:m.summary||'Diagnóstico comercial'})),
+  ...meetings.map(m=>({key:'meeting-'+m.id,id:m.id,kind:'meeting' as const,title:'Reunião · '+m.participants,leadId:m.leadId,projectId:m.projectId,owner:m.owner??'',date:m.date,status:m.state,detail:m.summary||'Diagnóstico comercial'})),
   ...projects.map(p=>({key:'project-'+p.proposal_id,id:p.proposal_id,kind:'project' as const,title:p.approved.title,leadId:p.lead_id,projectId:p.proposal_id,owner:p.owner,date:p.due_on??'',status:p.status,detail:'Prazo de entrega'})),
   ...leads.filter(l=>l.next&&isPending(l.stage)&&l.stage!=='Ganho'&&!tasks.some(t=>t.lead_id===l.id&&isPending(t.status)&&norm(t.title)===norm(l.next)&&(t.due_on??'')===l.due)).map(l=>({key:'contact-'+l.id,id:l.id,kind:'contact' as const,title:l.next,leadId:l.id,owner:l.owner,date:l.due,status:'Próximo contato',detail:l.stage})),
  ]
