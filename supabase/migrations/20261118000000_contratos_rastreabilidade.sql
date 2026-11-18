@@ -71,6 +71,7 @@ begin
  payload:=jsonb_build_object('contract',c,'revision',expected_revision,'body',body);perform pg_advisory_xact_lock(hashtextextended(w::text||operation_id::text,0));
  select * into cmd from hub_private.registry_commands r where r.workspace_id=w and r.operation_id=hub_save_contract.operation_id;
  if found then if cmd.actor_id<>auth.uid() or cmd.payload<>payload then raise exception 'Operação já utilizada' using errcode='22023';end if;return cmd.result;end if;
+ perform pg_advisory_xact_lock(hashtextextended(w::text||'contract'||c::text,0));
  select * into oldrow from public.hub_contracts where workspace_id=w and id=c for update;
  if found and expected_revision is distinct from oldrow.revision then return jsonb_build_object('status','conflict','current',public.hub_contract_detail(w,c));end if;
  if not found and expected_revision is not null then raise exception 'Contrato indisponível' using errcode='42501';end if;
@@ -89,7 +90,7 @@ begin
  on conflict(workspace_id,id) do update set project_ids=excluded.project_ids,title=excluded.title,owner=excluded.owner,owner_id=excluded.owner_id,status=excluded.status,starts_on=excluded.starts_on,ends_on=excluded.ends_on,renews_on=excluded.renews_on,notice_days=excluded.notice_days,cancel_notice_days=excluded.cancel_notice_days,revision=hub_contracts.revision+1,updated_at=clock_timestamp() returning * into saved;
  insert into hub_private.contract_values values(w,c,(body->>'amount')::numeric,(body->>'monthly')::numeric,coalesce(body->>'conditions',''),case when src.id is not null then jsonb_build_object('id',src.id,'version',src.version,'status',src.status,'record',src.record) end)
  on conflict(workspace_id,id) do update set amount=excluded.amount,monthly=excluded.monthly,conditions=excluded.conditions;
- insert into public.hub_registry_events(workspace_id,kind,record_id,lead_id,contract_id,actor_id,action,after_record,revision) values(w,'contract',c,saved.lead_id,c,auth.uid(),'Confirmação administrativa',jsonb_build_object('confirmation',body->>'confirmation','status',saved.status),saved.revision);
+ insert into public.hub_registry_events(workspace_id,kind,record_id,lead_id,contract_id,actor_id,action,financial,after_record,revision) values(w,'contract',c,saved.lead_id,c,auth.uid(),'Confirmação administrativa',true,jsonb_build_object('confirmation',body->>'confirmation','status',saved.status),saved.revision);
  answer:=jsonb_build_object('status','saved','current',public.hub_contract_detail(w,c));insert into hub_private.registry_commands values(w,operation_id,auth.uid(),payload,answer);return answer;
 end $$;
 create function public.hub_registry_people(w uuid) returns jsonb language plpgsql stable security definer set search_path='' as $$
