@@ -1,3 +1,4 @@
+import {ContactPlanner,ProspectingQueue} from './prospecting'
 import {ProjectMeetings} from './project-meetings'
 import {InternalFinance,InternalAlerts,useInternalFinance} from './internal-finance'
 import {Contracts,RegistryTimeline,RegistryAlerts,type Contract} from './registry'
@@ -81,7 +82,7 @@ export default function PilotApp(){
 
 const navigation=[
  ['Visão Geral',[['dashboard','Dashboard',LayoutDashboard],['revisao','Revisão semanal',ClipboardList]]],
- ['Comercial',[['central','Central comercial',ListTodo],['crm','Captação e CRM',Users],['triagem','Triagem comercial',ClipboardList],['reunioes','Reuniões e diagnósticos',CalendarDays],['propostas','Propostas comerciais',FileCheck2]]],
+ ['Comercial',[['prospeccao','Central de prospecção',ListTodo],['central','Central comercial',ListTodo],['crm','Captação e CRM',Users],['triagem','Triagem comercial',ClipboardList],['reunioes','Reuniões e diagnósticos',CalendarDays],['propostas','Propostas comerciais',FileCheck2]]],
  ['Operação',[['agenda','Agenda operacional',CalendarDays],['projetos','Projetos e entregas',FolderKanban]]],
  ['Gestão',[['indicadores','Indicadores',LayoutDashboard],['financeiro','Financeiro',Wallet],['obrigacoes','Obrigações da Decifaz',Wallet],['rastreabilidade','Rastreabilidade',ClipboardList]]],
  ['Conhecimento',[['conhecimento','Base de conhecimento',BookOpen],['catalogo','Catálogo de soluções',BookOpen]]],
@@ -320,6 +321,7 @@ function SharedCrm(){
    {page==='central'&&<CommercialCenter key={workspace} client={client!} workspace={workspace} revision={revision}
     leads={commercialData.leads} meetings={proposalMeetings}
     openLead={openLead} openProject={openProject}/>}
+   {page==='prospeccao'&&<ProspectingQueue data={commercialData} tasks={allActivities} open={openLead}/>}
    {page==='catalogo'&&<SharedCatalog items={catalog} admin={administrator} save={async draft=>{const r=await client!.rpc('hub_save_solution',{w:workspace,i:draft.id??null,n:draft.name,c:draft.category,d:draft.description,items:draft.scope_items?.filter(s=>s.trim()),enabled:draft.active,expected_revision:draft.revision??null});if(r.error)return;reload(v=>v+1);return r.data}}/>}
    {page==='conhecimento'&&<Knowledge download={false} go={()=>go('reunioes')}/>}
    {page==='financeiro'&&!can(role,'finance')&&<p role="status">Seu papel não permite acesso ao Financeiro.</p>}
@@ -347,12 +349,10 @@ function SharedCrm(){
     <div className="op-dossier-links">{proposals.filter(p=>p.leadId===lead.id).map(p=><button className="card" key={p.id} onClick={()=>setProposalModal({id:p.id})}><small>Proposta · versão {p.version}</small><b>{p.title}</b><span>{p.status}</span></button>)}{projects.filter(p=>p.lead_id===lead.id).map(p=><button className="card" key={p.proposal_id} onClick={()=>openProject(p.proposal_id)}><small>Projeto · {p.status}</small><b>{p.approved.title}</b><span>{p.owner||'Sem responsável'} · {dateLabel(p.due_on??'')}</span><span>{allActivities.filter(a=>a.project_proposal_id===p.proposal_id&&a.support).length} chamados de pós-venda</span></button>)}</div>
     {loadedLead===selected&&meetings.map(item=><div key={item.id} className="list-item"><div><b>{dateLabel(item.date)} · {item.state}</b><p>{item.summary||item.participants}</p></div><button className="button" disabled={busy} onClick={()=>{if(item.projectId)openProject(item.projectId,'reunioes');else{setMeeting(item);setEditor('meeting')}}}>{item.projectId?'Abrir reunião no projeto':'Editar reunião'}</button>{!item.projectId&&item.state==='Realizada'&&<button className="button" disabled={busy||!can(role,'commercial',true)} onClick={()=>setProposalModal({leadId:lead.id,meetingId:item.id})}>Criar proposta</button>}</div>)}
    </section>}
+   {selected&&currentLead&&loadedLead===selected&&<ContactPlanner key={workspace+selected} client={client!} workspace={workspace} lead={currentLead} allowed={can(role,'commercial',true)} saved={()=>reload(v=>v+1)}/>}
    {selected&&loadedLead===selected&&<div className="dashboard-grid">
-    <section className="card panel"><h2>Histórico</h2><fieldset disabled={!can(role,'commercial',true)}>
-     <form className="pilot-fields" onSubmit={e=>{e.preventDefault();if(note.trim())void write(()=>client!.from('hub_interactions').insert({workspace_id:workspace,lead_id:selected,body:note.trim()}).select('id').single(),()=>setNote(''))}}>
-      <label>Nova interação<textarea required value={note} onChange={e=>setNote(e.target.value)}/></label><button className="button" disabled={busy}>Registrar interação</button>
-     </form>
-     </fieldset>{interactions.length?<ul>{interactions.map(entry=><li key={entry.id}>{entry.body} · {dateLabel(entry.created_at)}</li>)}</ul>:<p>Sem interações registradas.</p>}
+    <section className="card panel"><h2>Histórico</h2>
+     {interactions.length?<ul>{interactions.map(entry=><li key={entry.id}>{entry.body} · {dateLabel(entry.created_at)}</li>)}</ul>:<p>Sem interações registradas.</p>}
     </section>
     <section className="card panel"><h2>Atividades</h2><fieldset disabled={!can(role,'commercial',true)}>
      <form className="pilot-fields" onSubmit={e=>{e.preventDefault();if(task.trim())void write(()=>client!.from('hub_activities').insert({workspace_id:workspace,lead_id:selected,title:task.trim(),due_on:due||null}).select('id').single(),()=>{setTask('');setDue('')})}}>
