@@ -5,6 +5,7 @@ import {resolve,extname} from 'node:path'
 import {fileURLToPath} from 'node:url'
 import {spawnSync} from 'node:child_process'
 import {commercialFixture} from './commercial-preview-fixture.mjs'
+import {registryFixture} from './registry-preview-fixture.mjs'
 
 const cookieName='__Host-decifaz_hml'
 const page=body=>'<!doctype html><html lang="pt-BR"><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>Homologação · Decifaz Hub</title><style>body{font:16px system-ui;background:#f5f6fa;color:#1f2433;border-top:5px solid #ff6a13;margin:0}main{max-width:460px;margin:8vh auto;padding:26px}input,button,a{font:inherit}input,button{padding:12px;border-radius:8px;border:1px solid #8f9ab3}label{display:grid;gap:10px}button{background:#ff6a13;margin-top:16px;cursor:pointer}a{color:#3a4a6f;display:block;padding:15px;background:white;margin:12px 0;border-radius:8px}p{line-height:1.6}</style><main><h1>Decifaz Hub</h1>'+body+'</main></html>'
@@ -14,7 +15,7 @@ export function createGateway({origin,password,root,fixture,publicKey,sha='test'
  if(!/^https:\/\/[a-z0-9-]+\.trycloudflare\.com$/.test(origin)||password.length<20||upstream!=='http://127.0.0.1:54321')throw Error('Configuração de homologação inválida')
  const sessions=new Map(),attempts=new Map(),personas={admin:fixture.owner,comercial:fixture.restricted,segunda:fixture.second}
  const storageKey='sb-'+new URL(origin).hostname.split('.')[0]+'-auth-token'
- const allowed=/^\/(auth\/v1\/(?:token|otp|verify|user|logout|signup|settings|recover)(?:\?|$)|rest\/v1\/|functions\/v1\/hub-workspaces(?:\?|$))/
+ const allowed=/^\/(auth\/v1\/(?:token|otp|verify|user|logout|signup|settings|recover)(?:\?|$)|rest\/v1\/|functions\/v1\/hub-workspaces(?:\?|$)|storage\/v1\/object\/(?:authenticated\/)?hub-private-documents\/[0-9a-f-]{36}\/(?:contract|bill)\/[0-9a-f-]{36}\/[0-9a-f-]{36}\.pdf(?:\?|$))/
  const server=createServer(async(req,res)=>{
   res.setHeader('Cache-Control','no-store');res.setHeader('X-Content-Type-Options','nosniff');res.setHeader('X-Frame-Options','DENY');res.setHeader('Referrer-Policy','strict-origin')
   res.setHeader('Permissions-Policy','display-capture=(self),camera=(),microphone=()')
@@ -26,7 +27,8 @@ export function createGateway({origin,password,root,fixture,publicKey,sha='test'
    if(Date.now()>expires)return send(410,page('<p>Esta homologação expirou.</p>'))
    if(req.headers.origin&&req.headers.origin!==origin)return send(403,'Origem recusada','text/plain')
    let body=Buffer.alloc(0)
-   for await(const chunk of req){body=Buffer.concat([body,chunk]);if(body.length>2*1024*1024)return send(413,'Limite excedido','text/plain')}
+   const limit=path.startsWith('/__supabase/storage/v1/object/')?11*1024*1024:2*1024*1024
+   for await(const chunk of req){body=Buffer.concat([body,chunk]);if(body.length>limit)return send(413,'Limite excedido','text/plain')}
    if(path==='/__review/login'&&req.method==='POST'){
     const ip=req.headers['cf-connecting-ip']??req.socket.remoteAddress,now=Date.now(),recent=(attempts.get(ip)??[]).filter(t=>t>now-60000);recent.push(now);attempts.set(ip,recent)
     if(recent.length>15)return send(429,'Aguarde para tentar novamente.','text/plain')
@@ -93,6 +95,7 @@ if(process.argv[1]&&fileURLToPath(import.meta.url)===resolve(process.argv[1])){
  const root=resolve('.validation/hml-dist'),build=spawnSync('npx',['vite','build','--outDir',root],{env,encoding:'utf8',shell})
  if(build.status!==0)throw Error('Build de homologação recusado')
  const fixture=await commercialFixture({VITE_SUPABASE_URL:values.API_URL,VITE_SUPABASE_PUBLISHABLE_KEY:values.PUBLISHABLE_KEY,HUB_TEST_ADMIN_KEY:values.SECRET_KEY||values.SERVICE_ROLE_KEY})
+ await registryFixture(fixture)
  const foreign=await fixture.admin.from('hub_leads').insert({workspace_id:fixture.other,name:'Registro isolado fictício',segment:'Teste',city:'Fortaleza',stage:'Identificado',profile:{}})
  if(foreign.error){await fixture.cleanup();throw Error('Falha na fixture de isolamento')}
  const sha=spawnSync('git',['rev-parse','HEAD'],{encoding:'utf8'}).stdout.trim(),expires=Date.now()+86400000

@@ -70,3 +70,11 @@ Próxima entrega em revisão: [ficha compartilhada e auditoria](docs/ficha-compa
 [Paginação do CRM, busca e exportação completa](docs/crm-paginado.md).
 
 [Fontes e limites do histórico de indicadores e roteiro integrado](docs/historico-indicadores.md).
+
+## Prioridades dos sócios
+
+- [Contratos, documentos privados e rastreabilidade](docs/contratos-rastreabilidade.md): cadastro existente ou derivado de proposta, avisos, revisões e trilha por integrante.
+- [Obrigações, assinaturas e baixa manual](docs/obrigacoes-decifaz.md): competências sem duplicação, valores previstos/pagos/vencidos e comprovantes privados.
+- [Reuniões de projeto](docs/reunioes-projetos.md): atas, decisões e acompanhamento; transmissão entre participantes permanece bloqueada por ambiente de homologação, sem contratação automática.
+
+As entregas partem da main após #26 e são independentes da pilha #27–#29, que continua disponível para revisão. A prévia usa somente contas/documentos fictícios. Verifique em cada PR o SHA, os checks e o estado efetivo de publicação.

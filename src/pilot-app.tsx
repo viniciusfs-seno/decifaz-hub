@@ -1,3 +1,4 @@
+import {ProjectMeetings} from './project-meetings'
 import {InternalFinance,InternalAlerts,useInternalFinance} from './internal-finance'
 import {Contracts,RegistryTimeline,RegistryAlerts,type Contract} from './registry'
 import {ManagementHistory} from './management-history'
@@ -342,7 +343,7 @@ function SharedCrm(){
      <button className="button" disabled={busy||!can(role,'commercial',true)} onClick={()=>setProposalModal({leadId:lead.id})}>Nova proposta</button>
     </div>
     <div className="op-dossier-links">{proposals.filter(p=>p.leadId===lead.id).map(p=><button className="card" key={p.id} onClick={()=>setProposalModal({id:p.id})}><small>Proposta · versão {p.version}</small><b>{p.title}</b><span>{p.status}</span></button>)}{projects.filter(p=>p.lead_id===lead.id).map(p=><button className="card" key={p.proposal_id} onClick={()=>openProject(p.proposal_id)}><small>Projeto · {p.status}</small><b>{p.approved.title}</b><span>{p.owner||'Sem responsável'} · {dateLabel(p.due_on??'')}</span><span>{allActivities.filter(a=>a.project_proposal_id===p.proposal_id&&a.support).length} chamados de pós-venda</span></button>)}</div>
-    {loadedLead===selected&&meetings.map(item=><div key={item.id} className="list-item"><div><b>{dateLabel(item.date)} · {item.state}</b><p>{item.summary||item.participants}</p></div><button className="button" disabled={busy} onClick={()=>{setMeeting(item);setEditor('meeting')}}>Editar reunião</button>{item.state==='Realizada'&&<button className="button" disabled={busy||!can(role,'commercial',true)} onClick={()=>setProposalModal({leadId:lead.id,meetingId:item.id})}>Criar proposta</button>}</div>)}
+    {loadedLead===selected&&meetings.map(item=><div key={item.id} className="list-item"><div><b>{dateLabel(item.date)} · {item.state}</b><p>{item.summary||item.participants}</p></div><button className="button" disabled={busy} onClick={()=>{if(item.projectId)openProject(item.projectId);else{setMeeting(item);setEditor('meeting')}}}>{item.projectId?'Abrir reunião no projeto':'Editar reunião'}</button>{!item.projectId&&item.state==='Realizada'&&<button className="button" disabled={busy||!can(role,'commercial',true)} onClick={()=>setProposalModal({leadId:lead.id,meetingId:item.id})}>Criar proposta</button>}</div>)}
    </section>}
    {selected&&loadedLead===selected&&<div className="dashboard-grid">
     <section className="card panel"><h2>Histórico</h2><fieldset disabled={!can(role,'commercial',true)}>
@@ -378,7 +379,8 @@ function SharedCrm(){
     }))} save={values=>write(()=>client!.from('hub_projects').update(values)
      .eq('workspace_id',workspace).eq('proposal_id',activeProject.proposal_id).select('proposal_id').single())}>
     <ProjectSupport readOnly={!can(role,'projects',true)} client={client!} workspace={workspace} project={activeProject.proposal_id} revision={revision} busy={busy} write={write} projectName={()=>activeProject.approved.title}/>
-    <RegistryTimeline key={workspace+String(can(role,'finance'))} client={client!} workspace={workspace} kind="project" record={activeProject.proposal_id} revision={revision}/>
+    {commercialData.leads.find(l=>l.id===activeProject.lead_id)&&<ProjectMeetings key={workspace+activeProject.proposal_id+String(can(role,'projects',true))+String(can(role,'finance'))} client={client!} workspace={workspace} project={activeProject} contracts={contractRows} lead={commercialData.leads.find(l=>l.id===activeProject.lead_id)!} solutions={catalog} proposals={proposals} financial={can(role,'finance')} editable={can(role,'projects',true)} revision={revision} saved={()=>reload(v=>v+1)}/>}
+    <RegistryTimeline key={workspace+String(can(role,'finance'))} client={client!} workspace={workspace} record={activeProject.proposal_id} revision={revision}/>
    </SharedProjectEditor>}
   </>}
  </main></ViewStateProvider></div></div>
