@@ -1,3 +1,4 @@
+import {openDisclosure,recordTab} from './helpers/portal-ui.mjs'
 import {test,expect} from '@playwright/test'
 import {operationalFixture,checked} from './helpers/operational-fixture.mjs'
 import {mkdir} from 'node:fs/promises'
@@ -11,7 +12,7 @@ test('Operacional: recortes, revisão concorrente, duas sessões, papéis e vín
  try{
   await open(page,f.owner.session);await open(second,f.second.session)
   await expect(page.getByRole('heading',{name:'Fila de ações'})).toBeVisible()
-  await expect(page.getByText('R$ 2.400,00',{exact:true})).toBeVisible()
+  await openDisclosure(page,'Indicadores e funil');await expect(page.getByText('R$ 2.400,00',{exact:true})).toBeVisible()
   await expect(page.getByText('R$ 800,00',{exact:true})).toBeVisible()
   await page.getByRole('button',{name:/Atividades vencidas/}).click()
   await expect(page.getByRole('button',{name:'Vencidas',exact:true})).toHaveAttribute('aria-pressed','true')
@@ -51,7 +52,7 @@ test('Operacional: recortes, revisão concorrente, duas sessões, papéis e vín
   expect((await f.restricted.client.from('hub_projects').select('approved')).error?.code).toBe('42501')
   expect((await f.restricted.client.rpc('hub_review_action',{w:f.other,k:'lead',s:f.prospect,t:'Outra origem',o:'Fictício',d:f.today})).error?.code).toBe('42501')
   await open(second,f.restricted.session)
-  await expect(second.getByText('Valores financeiros são restritos',{exact:false})).toBeVisible()
+   await openDisclosure(second,'Indicadores e funil');await expect(second.getByText('Valores financeiros são restritos',{exact:false})).toBeVisible()
   await expect(second.getByRole('navigation').getByRole('button',{name:'Financeiro',exact:true})).toHaveCount(0)
   expect((await checked(f.owner.client.rpc('hub_update_member_active',{w:f.workspace,u:f.restricted.id,enabled:false,expected_revision:0}))).status).toBe('saved')
   await second.evaluate(()=>window.dispatchEvent(new Event('focus')))

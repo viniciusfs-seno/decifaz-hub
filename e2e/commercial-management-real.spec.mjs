@@ -1,3 +1,4 @@
+import {openDisclosure,recordTab} from './helpers/portal-ui.mjs'
 import {test,expect} from '@playwright/test'
 import {createClient} from '@supabase/supabase-js'
 import {randomUUID} from 'node:crypto'
@@ -125,17 +126,17 @@ test('Comercial e Gerencial: catálogo → triagem → reunião → proposta ver
  await proposalButton.click()
  await quote.getByRole('button',{name:'Abrir projeto a partir do aceite'}).click()
  await expect(page.getByRole('dialog').getByRole('button',{name:'Salvar projeto',exact:true})).toBeVisible()
- await expect(page.getByRole('dialog').getByRole('paragraph').filter({hasText:/Ajustes versão 2/})).toBeVisible()
+ await openDisclosure(page,'Escopo e condições aprovadas');await expect(page.getByRole('dialog').getByRole('paragraph').filter({hasText:/Ajustes versão 2/})).toBeVisible()
  const saved=await checked(second.client.from('hub_projects').select('proposal_id,lead_id').eq('workspace_id',workspace).single())
  const proposal=saved.proposal_id
  const lead=await checked(second.client.from('hub_leads').select('stage').eq('workspace_id',workspace).eq('id',saved.lead_id).single())
  expect(lead.stage).toBe('Ganho')
- await page.getByLabel('Título do chamado').fill('Ajuste E2E')
+ await recordTab(page,'Atividades e suporte');await page.getByLabel('Título do chamado').fill('Ajuste E2E')
  await page.getByLabel('Responsável pelo chamado').fill('Equipe E2E')
  await page.getByRole('button',{name:'Abrir chamado'}).click()
  await expect(page.getByText('Ajuste E2E',{exact:true})).toBeVisible()
 
- await page.getByRole('button',{name:'Cancelar',exact:true}).click()
+ await page.getByRole('dialog').getByRole('button',{name:'Fechar',exact:true}).click()
  await page.getByRole('navigation').getByRole('button',{name:'Indicadores',exact:true}).click()
  await page.getByRole('button',{name:/Conversão ·/}).click()
  await expect(page.getByRole('dialog')).toContainText('Cliente fictício')

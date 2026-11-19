@@ -1,3 +1,4 @@
+import {openDisclosure} from './helpers/portal-ui.mjs'
 import {test,expect} from '@playwright/test'
 import {createClient} from '@supabase/supabase-js'
 import {randomUUID as uuid} from 'node:crypto'
@@ -91,7 +92,7 @@ test('Convites: gestão, Mailpit, primeiro acesso verificado, aceite explícito 
   const adminContext=await browser.newContext();contexts.push(adminContext)
   const page=await adminContext.newPage();page.setDefaultTimeout(15000)
   await page.addInitScript(session=>localStorage.setItem('sb-127-auth-token',JSON.stringify(session)),session)
-  await page.goto(origin);await page.getByRole('button',{name:'Equipe',exact:true}).click()
+  await page.goto(origin);await page.getByRole('button',{name:'Equipe',exact:true}).click();await openDisclosure(page,'Convites de integrantes')
   const form=page.getByRole('form',{name:'Novo convite'})
   await form.getByLabel('E-mail do convite',{exact:true}).fill(recipient)
   await form.getByRole('checkbox',{name:'Operação',exact:true}).check()

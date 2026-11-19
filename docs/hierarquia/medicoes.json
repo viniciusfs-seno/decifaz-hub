@@ -1,0 +1,34 @@
+{
+  "base": "da3fd8abe8da56db6fdc2482eabb015a3b45ba0f",
+  "method": "Mesma fixture fictícia, sem alterações de negócio entre versões; controles visíveis na primeira seção do projeto. Não mede tempo de tarefa ou satisfação.",
+  "measurements": [
+    {
+      "version": "antes",
+      "device": "desktop",
+      "width": 1440,
+      "height": 1000,
+      "projectVisibleControls": 24
+    },
+    {
+      "version": "antes",
+      "device": "celular",
+      "width": 390,
+      "height": 844,
+      "projectVisibleControls": 24
+    },
+    {
+      "version": "depois",
+      "device": "desktop",
+      "width": 1440,
+      "height": 1000,
+      "projectVisibleControls": 12
+    },
+    {
+      "version": "depois",
+      "device": "celular",
+      "width": 390,
+      "height": 844,
+      "projectVisibleControls": 12
+    }
+  ]
+}

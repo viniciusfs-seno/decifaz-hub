@@ -1,5 +1,7 @@
 # Decifaz Hub
 
+Reorganização atual: [hierarquia, componentes, capturas comparativas e roteiro de publicação](docs/hierarquia-e-usabilidade.md). Projetos têm seções por tarefa; contratos e obrigações usam detalhes progressivos; navegação permite localizar uma área. A entrega é de frontend, sem migração ou alteração de Edge.
+
 Revisão de UI/UX do portal compartilhado: [paridade, fluxos, capturas antes/depois, validação e publicação](docs/experiencia-portal.md). A prévia usa somente dados fictícios; a entrega permanece em rascunho para revisão. Não requer migração ou alteração de Edge.
 
 Homologação das quatro entregas empilhadas (#19–#22): [acesso isolado, testes externos, integração e recuperação](docs/homologacao-integrada.md). A publicação autorizada está registrada em [publicação integrada](docs/publicacao-integrada.md).
