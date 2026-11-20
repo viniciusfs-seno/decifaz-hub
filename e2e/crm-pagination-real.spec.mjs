@@ -1,4 +1,5 @@
 import {test,expect} from '@playwright/test'
+import {openDisclosure} from './helpers/portal-ui.mjs'
 import {operationalFixture,checked} from './helpers/operational-fixture.mjs'
 import {sql} from './helpers/local-db.mjs'
 test.use({actionTimeout:15000})
@@ -29,6 +30,7 @@ test('CRM: busca/contagem/exportação completa acima de 1000, ordem estável, f
   const download=page.waitForEvent('download');await page.getByRole('button',{name:'Exportar CRM CSV'}).click();let exported='';for await(const c of await(await download).createReadStream())exported+=c.toString()
   expect(exported.replace(/^\uFEFF/,'').split('\r\n')).toHaveLength(1006)
   await page.getByRole('navigation',{name:'Navegação principal'}).getByRole('button',{name:'Dashboard',exact:true}).click()
+  await openDisclosure(page,'Indicadores e funil')
   await expect(page.getByRole('button',{name:/Estabelecimentos/})).toContainText('1008')
   await page.getByRole('navigation').getByRole('button',{name:'Captação e CRM',exact:true}).click()
   await page.getByLabel('Buscar leads').fill('Volume fictício 100')

@@ -1,0 +1,226 @@
+{
+  "baseline": "fb34f0428ce8141f6e75642f3c0d830e45342b60",
+  "method": "Mesma fixture, contas e registros fictícios para antes/depois; Chromium emulado, fonts.ready; mesmas larguras e temas por par.",
+  "metrics": [
+    {
+      "version": "antes",
+      "device": "desktop",
+      "firstActionTop": 666.6875,
+      "firstActionBottom": 749.390625,
+      "viewportHeight": 1000
+    },
+    {
+      "version": "antes",
+      "device": "desktop",
+      "page": "dashboard",
+      "overflow": 0
+    },
+    {
+      "version": "antes",
+      "device": "desktop",
+      "page": "agenda",
+      "overflow": 0
+    },
+    {
+      "version": "antes",
+      "device": "desktop",
+      "page": "ficha",
+      "overflow": 0
+    },
+    {
+      "version": "antes",
+      "device": "desktop",
+      "page": "contrato",
+      "overflow": 0
+    },
+    {
+      "version": "antes",
+      "device": "desktop",
+      "page": "reuniao",
+      "overflow": 0
+    },
+    {
+      "version": "antes",
+      "device": "desktop",
+      "page": "obrigacoes",
+      "overflow": 0
+    },
+    {
+      "version": "antes",
+      "device": "desktop",
+      "page": "indicadores",
+      "overflow": 0
+    },
+    {
+      "version": "antes",
+      "device": "desktop",
+      "page": "equipe",
+      "overflow": 0
+    },
+    {
+      "version": "antes",
+      "device": "celular",
+      "firstActionTop": 847.796875,
+      "firstActionBottom": 930.5,
+      "viewportHeight": 844
+    },
+    {
+      "version": "antes",
+      "device": "celular",
+      "page": "dashboard",
+      "overflow": 0
+    },
+    {
+      "version": "antes",
+      "device": "celular",
+      "page": "agenda",
+      "overflow": 0
+    },
+    {
+      "version": "antes",
+      "device": "celular",
+      "page": "ficha",
+      "overflow": 0
+    },
+    {
+      "version": "antes",
+      "device": "celular",
+      "page": "contrato",
+      "overflow": 0
+    },
+    {
+      "version": "antes",
+      "device": "celular",
+      "page": "reuniao",
+      "overflow": 0
+    },
+    {
+      "version": "antes",
+      "device": "celular",
+      "page": "obrigacoes",
+      "overflow": 0
+    },
+    {
+      "version": "antes",
+      "device": "celular",
+      "page": "indicadores",
+      "overflow": 0
+    },
+    {
+      "version": "antes",
+      "device": "celular",
+      "page": "equipe",
+      "overflow": 0
+    },
+    {
+      "version": "depois",
+      "device": "desktop",
+      "firstActionTop": 501.21875,
+      "firstActionBottom": 599.71875,
+      "viewportHeight": 1000
+    },
+    {
+      "version": "depois",
+      "device": "desktop",
+      "page": "dashboard",
+      "overflow": 0
+    },
+    {
+      "version": "depois",
+      "device": "desktop",
+      "page": "agenda",
+      "overflow": 0
+    },
+    {
+      "version": "depois",
+      "device": "desktop",
+      "page": "ficha",
+      "overflow": 0
+    },
+    {
+      "version": "depois",
+      "device": "desktop",
+      "page": "contrato",
+      "overflow": 0
+    },
+    {
+      "version": "depois",
+      "device": "desktop",
+      "page": "reuniao",
+      "overflow": 0
+    },
+    {
+      "version": "depois",
+      "device": "desktop",
+      "page": "obrigacoes",
+      "overflow": 0
+    },
+    {
+      "version": "depois",
+      "device": "desktop",
+      "page": "indicadores",
+      "overflow": 0
+    },
+    {
+      "version": "depois",
+      "device": "desktop",
+      "page": "equipe",
+      "overflow": 0
+    },
+    {
+      "version": "depois",
+      "device": "celular",
+      "firstActionTop": 662.5625,
+      "firstActionBottom": 803.0625,
+      "viewportHeight": 844
+    },
+    {
+      "version": "depois",
+      "device": "celular",
+      "page": "dashboard",
+      "overflow": 0
+    },
+    {
+      "version": "depois",
+      "device": "celular",
+      "page": "agenda",
+      "overflow": 0
+    },
+    {
+      "version": "depois",
+      "device": "celular",
+      "page": "ficha",
+      "overflow": 0
+    },
+    {
+      "version": "depois",
+      "device": "celular",
+      "page": "contrato",
+      "overflow": 0
+    },
+    {
+      "version": "depois",
+      "device": "celular",
+      "page": "reuniao",
+      "overflow": 0
+    },
+    {
+      "version": "depois",
+      "device": "celular",
+      "page": "obrigacoes",
+      "overflow": 0
+    },
+    {
+      "version": "depois",
+      "device": "celular",
+      "page": "indicadores",
+      "overflow": 0
+    },
+    {
+      "version": "depois",
+      "device": "celular",
+      "page": "equipe",
+      "overflow": 0
+    }
+  ]
+}

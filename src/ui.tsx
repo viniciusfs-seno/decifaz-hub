@@ -1,6 +1,7 @@
 import {useEffect,useId,useRef,type ReactNode,type FormEvent} from 'react'
 import {X,Inbox} from 'lucide-react'
 import {grade,type Triage} from './domain'
+import {useInvalidField} from './form-guidance'
 export type FieldProps={label:string; value:string|number; on:(v:string)=>void; required?:boolean; type?:string; options?:readonly string[]; placeholder?:string; min?:number; step?:string}
 export function Field({label,value,on,required,type='text',options,placeholder,min,step}:FieldProps){
  return <label className="field"><span>{label}{required && <b> *</b>}</span>{options?<select value={value} onChange={e=>on(e.target.value)} required={required}><option value="">Selecionar</option>{options.map(x=><option key={x}>{x}</option>)}</select>:type==='area'?<textarea value={value} onChange={e=>on(e.target.value)} required={required} placeholder={placeholder}/>:<input type={type} value={value} onChange={type==='date'?undefined:e=>on(e.target.value)} onInput={type==='date'?e=>on(e.currentTarget.value):undefined} required={required} placeholder={placeholder} min={min} step={step}/>}</label>
@@ -22,7 +23,8 @@ export function Dialog({title,subtitle,onClose,children,wide=false}:{title:strin
  },[])
  return <dialog ref={ref} aria-labelledby={titleId} className={wide?'wide':''} onCancel={e=>{e.preventDefault();onClose()}}><div className="dialog-head"><div><h2 id={titleId}>{title}</h2>{subtitle&&<p>{subtitle}</p>}</div><button className="icon" aria-label="Fechar" onClick={onClose}><X size={20}/></button></div>{children}</dialog>
 }
-export function Form({onSave,onClose,children,error,label='Salvar'}:{onSave:()=>void;onClose:()=>void;children:ReactNode;error?:string;label?:string}){
+export function Form({onSave,onClose,children,error,label='Salvar',busy=false,guided=false}:{onSave:()=>void;onClose:()=>void;children:ReactNode;error?:string;label?:string;busy?:boolean;guided?:boolean}){
+ const validation=useInvalidField()
  const submit=(e:FormEvent)=>{e.preventDefault();onSave()}
- return <form onSubmit={submit}><div className="dialog-body">{children}{error&&<p role="alert" className="error">{error}</p>}</div><div className="dialog-foot"><button type="button" className="button" onClick={onClose}>Cancelar</button><button className="button primary">{label}</button></div></form>
+ return <form aria-busy={busy} onInvalidCapture={guided?validation.invalid:undefined} onInputCapture={guided?validation.changed:undefined} onSubmit={submit}><div className="dialog-body">{children}{(error||(guided&&validation.validation))&&<p role="alert" className="error">{error||validation.validation}</p>}</div><div className="dialog-foot"><button type="button" className="button" disabled={busy} onClick={onClose}>Cancelar</button><button className="button primary" disabled={busy}>{label}</button></div></form>
 }

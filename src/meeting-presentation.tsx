@@ -68,7 +68,7 @@ export function MeetingPresentation({meetings,leads}:{meetings:Meeting[];leads:L
  }
 
  const [title,prompt]=script[step]
- return <section className="card panel meeting-presentation" aria-label="Apresentação e tela">
+ return <section className="panel meeting-presentation" aria-label="Apresentação e tela">
   <div>
    <h2>Apresentação e tela</h2>
    <p>Abra a chamada em outra aba e use o compartilhamento da ferramenta de videoconferência para transmitir aos participantes.</p>
@@ -93,10 +93,10 @@ export function MeetingPresentation({meetings,leads}:{meetings:Meeting[];leads:L
    <video ref={video} hidden={!sharing} autoPlay muted playsInline aria-label="Prévia local da tela selecionada"/>
    {error&&<p role="alert">{error}</p>}
   </div>
-  <div>
-   <h3>Roteiro de apresentação</h3>
+  <details>
+   <summary>Roteiro consultivo opcional</summary>
    <label className="field"><span>Etapa do roteiro</span><select value={step} onChange={event=>setStep(Number(event.target.value))}>{script.map(([label],index)=><option key={label} value={index}>{label}</option>)}</select></label>
    <p><strong>{title}</strong></p><p>{prompt}</p>
-  </div>
+  </details>
  </section>
 }

@@ -18,7 +18,7 @@ export function OperationalAgenda({entries,leads,initial={},request=0,open,chang
   <div className="toolbar op-filters">
    <label>Tipo de compromisso<select value={filter.kind??''} onChange={e=>setFilter({...filter,kind:e.target.value as WorkKind|''})}><option value="">Todos os tipos</option>{Object.entries(workKinds).map(([value,label])=><option key={value} value={value}>{label}</option>)}</select></label>
    <label>Responsável<select value={filter.owner??''} onChange={e=>setFilter({...filter,owner:e.target.value})}><option value="">Todos os responsáveis</option>{owners.map(o=><option key={o}>{o}</option>)}</select></label>
-   <label>Buscar na agenda<input value={filter.query??''} onChange={e=>setFilter({...filter,query:e.target.value})} placeholder="Atividade, reunião ou projeto"/></label>
+   <label className="agenda-query">Buscar na agenda<input value={filter.query??''} onChange={e=>setFilter({...filter,query:e.target.value})} placeholder="Atividade, reunião ou projeto"/></label>
    <label>Registros<select value={filter.state} onChange={e=>setFilter({...filter,state:e.target.value as WorkFilter['state']})}><option value="pending">Pendentes</option><option value="all">Todos, inclusive concluídos</option></select></label>
    <button className="button" onClick={()=>setFilter({period:'all',state:'pending'})}>Limpar filtros da agenda</button>
   </div>

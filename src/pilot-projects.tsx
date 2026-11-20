@@ -71,7 +71,7 @@ export function SharedProjectEditor({item,close,save,accept,support,meetings,his
  return <Dialog title={approved.title} subtitle={'Proposta aprovada · v'+approved.version} onClose={close} wide>
   <RecordSummary items={[{label:'Situação',value:item.status},{label:'Responsável',value:item.owner},{label:'Prazo',value:dateLabel(item.due_on??'')}]}/>
   <RecordTabs initial={initialSection} sections={[
-  {id:'resumo',label:'Resumo',content:<fieldset disabled={readOnly} className="registry-fields"><Form onClose={close} onSave={()=>void submit()} label={saving?'Salvando…':'Salvar projeto'} error={error}>
+  {id:'resumo',label:'Resumo',content:<fieldset disabled={readOnly} className="registry-fields"><Form onClose={close} onSave={()=>void submit()} busy={saving} guided label={saving?'Salvando…':'Salvar projeto'} error={error}>
    <h3>Organização do projeto</h3>
    <div className="fields">
     <Field label="Responsável" value={draft.owner} on={owner=>setDraft({...draft,owner})}/>

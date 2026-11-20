@@ -1,0 +1,14 @@
+# Shared product/design configuration remains versionable.
+# Local overrides, helper credentials and review runtime stay on this machine.
+/config.local.json
+/hook.cache.json
+/live/server.json
+/live/roots.json
+/live/inject-journal.json
+/live/sessions/
+/questions/
+/mocks/
+/review/
+/critique/*
+!/critique/ignore.md
+/audit/

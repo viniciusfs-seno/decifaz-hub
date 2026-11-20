@@ -4,6 +4,8 @@ Portal de trabalho compartilhado da Decifaz para a rotina comercial, contratos, 
 
 Guia de operação, cobertura de auditoria, migrações e recuperação: [rotina dos sócios](docs/rotina-socios.md).
 
+Contexto de produto e UI: [PRODUCT.md](PRODUCT.md), [DESIGN.md](DESIGN.md) e [revisão Impeccable da mesa de trabalho](docs/impeccable/mesa-de-trabalho.md), com comparações e validações da branch de revisão.
+
 ## Começar a usar
 
 1. No CRM, cadastre um estabelecimento ou importe um CSV, confira duplicidades e conclua a triagem com evidências. Registre a abordagem e planeje a próxima ação. A Agenda reúne as atividades; concluir pode criar o próximo acompanhamento na mesma transação.

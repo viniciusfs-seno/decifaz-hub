@@ -1,0 +1,246 @@
+[
+  {
+    "section": "Dashboard",
+    "width": 1440,
+    "dark": false,
+    "restricted": false,
+    "overflow": 0,
+    "checked": 50,
+    "contrast": [],
+    "unlabelled": 0
+  },
+  {
+    "section": "Agenda operacional",
+    "width": 1440,
+    "dark": false,
+    "restricted": false,
+    "overflow": 0,
+    "checked": 137,
+    "contrast": [],
+    "unlabelled": 0
+  },
+  {
+    "section": "Captação e CRM",
+    "width": 1440,
+    "dark": false,
+    "restricted": false,
+    "overflow": 0,
+    "checked": 8,
+    "contrast": [],
+    "unlabelled": 0
+  },
+  {
+    "section": "Contratos",
+    "width": 1440,
+    "dark": false,
+    "restricted": false,
+    "overflow": 0,
+    "checked": 9,
+    "contrast": [],
+    "unlabelled": 0
+  },
+  {
+    "section": "Obrigações da Decifaz",
+    "width": 1440,
+    "dark": false,
+    "restricted": false,
+    "overflow": 0,
+    "checked": 18,
+    "contrast": [],
+    "unlabelled": 0
+  },
+  {
+    "section": "Equipe",
+    "width": 1440,
+    "dark": false,
+    "restricted": false,
+    "overflow": 0,
+    "checked": 23,
+    "contrast": [],
+    "unlabelled": 0
+  },
+  {
+    "section": "Agenda texto 200%",
+    "width": 1440,
+    "dark": false,
+    "overflow": 0
+  },
+  {
+    "section": "Dashboard",
+    "width": 768,
+    "dark": true,
+    "restricted": false,
+    "overflow": 0,
+    "checked": 50,
+    "contrast": [],
+    "unlabelled": 0
+  },
+  {
+    "section": "Agenda operacional",
+    "width": 768,
+    "dark": true,
+    "restricted": false,
+    "overflow": 0,
+    "checked": 137,
+    "contrast": [],
+    "unlabelled": 0
+  },
+  {
+    "section": "Captação e CRM",
+    "width": 768,
+    "dark": true,
+    "restricted": false,
+    "overflow": 0,
+    "checked": 8,
+    "contrast": [],
+    "unlabelled": 0
+  },
+  {
+    "section": "Contratos",
+    "width": 768,
+    "dark": true,
+    "restricted": false,
+    "overflow": 0,
+    "checked": 9,
+    "contrast": [],
+    "unlabelled": 0
+  },
+  {
+    "section": "Obrigações da Decifaz",
+    "width": 768,
+    "dark": true,
+    "restricted": false,
+    "overflow": 0,
+    "checked": 18,
+    "contrast": [],
+    "unlabelled": 0
+  },
+  {
+    "section": "Equipe",
+    "width": 768,
+    "dark": true,
+    "restricted": false,
+    "overflow": 0,
+    "checked": 8,
+    "contrast": [],
+    "unlabelled": 0
+  },
+  {
+    "section": "Agenda texto 200%",
+    "width": 768,
+    "dark": true,
+    "overflow": 0
+  },
+  {
+    "section": "Dashboard",
+    "width": 390,
+    "dark": true,
+    "restricted": false,
+    "overflow": 0,
+    "checked": 50,
+    "contrast": [],
+    "unlabelled": 0
+  },
+  {
+    "section": "Agenda operacional",
+    "width": 390,
+    "dark": true,
+    "restricted": false,
+    "overflow": 0,
+    "checked": 137,
+    "contrast": [],
+    "unlabelled": 0
+  },
+  {
+    "section": "Captação e CRM",
+    "width": 390,
+    "dark": true,
+    "restricted": false,
+    "overflow": 0,
+    "checked": 8,
+    "contrast": [],
+    "unlabelled": 0
+  },
+  {
+    "section": "Contratos",
+    "width": 390,
+    "dark": true,
+    "restricted": false,
+    "overflow": 0,
+    "checked": 9,
+    "contrast": [],
+    "unlabelled": 0
+  },
+  {
+    "section": "Obrigações da Decifaz",
+    "width": 390,
+    "dark": true,
+    "restricted": false,
+    "overflow": 0,
+    "checked": 18,
+    "contrast": [],
+    "unlabelled": 0
+  },
+  {
+    "section": "Equipe",
+    "width": 390,
+    "dark": true,
+    "restricted": false,
+    "overflow": 0,
+    "checked": 23,
+    "contrast": [],
+    "unlabelled": 0
+  },
+  {
+    "section": "Agenda texto 200%",
+    "width": 390,
+    "dark": true,
+    "overflow": 0
+  },
+  {
+    "section": "Dashboard",
+    "width": 320,
+    "dark": false,
+    "restricted": true,
+    "overflow": 0,
+    "checked": 41,
+    "contrast": [],
+    "unlabelled": 0
+  },
+  {
+    "section": "Agenda operacional",
+    "width": 320,
+    "dark": false,
+    "restricted": true,
+    "overflow": 0,
+    "checked": 60,
+    "contrast": [],
+    "unlabelled": 0
+  },
+  {
+    "section": "Captação e CRM",
+    "width": 320,
+    "dark": false,
+    "restricted": true,
+    "overflow": 0,
+    "checked": 8,
+    "contrast": [],
+    "unlabelled": 0
+  },
+  {
+    "section": "Contratos",
+    "width": 320,
+    "dark": false,
+    "restricted": true,
+    "overflow": 0,
+    "checked": 8,
+    "contrast": [],
+    "unlabelled": 0
+  },
+  {
+    "section": "Agenda texto 200%",
+    "width": 320,
+    "dark": false,
+    "overflow": 0
+  }
+]

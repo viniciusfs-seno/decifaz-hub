@@ -59,7 +59,7 @@ test('HTTPS externo: Auth, duas sessões, navegação, apresentação e autoriza
  await dialog.getByLabel('Pergunta realizada',{exact:true}).first().check();await dialog.getByLabel('Resposta',{exact:true}).first().fill('SEGREDO INTERNO FICTÍCIO')
  await dialog.getByRole('button',{name:'Voltar à ficha completa'}).click()
  const presentation=dialog.locator('.client-presentation');await presentation.getByLabel('Cardápio digital',{exact:true}).check()
- const popupPromise=context.waitForEvent('page');await presentation.getByRole('button',{name:'Abrir visão do cliente'}).click();const popup=await popupPromise
+ const popupPromise=context.waitForEvent('page');await presentation.getByRole('button',{name:'Abrir apresentação selecionada'}).click();const popup=await popupPromise
  await expect(popup.getByRole('heading',{name:'Cardápio digital',exact:true})).toBeVisible();await expect(popup.locator('body')).not.toContainText('SEGREDO INTERNO');await expect(popup.locator('body')).not.toContainText('Nota interna fictícia');await expect(popup.locator('body')).not.toContainText('Condição fictícia reservada');await expect(popup.locator('body')).not.toContainText('R$')
  await capture(popup,'apresentacao',info.project.name);await popup.close();await capture(page,'reuniao',info.project.name)
  const supportsCapture=await page.evaluate(()=>typeof navigator.mediaDevices?.getDisplayMedia==='function')
