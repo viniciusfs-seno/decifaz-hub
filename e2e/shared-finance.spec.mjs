@@ -1,3 +1,4 @@
+import {recordTab} from './helpers/portal-ui.mjs'
 import {test,expect} from '@playwright/test'
 
 test('financeiro compartilhado exporta o mês e exclui estornos do total recebido',async({page})=>{
@@ -44,18 +45,18 @@ test('financeiro compartilhado exporta o mês e exclui estornos do total recebid
  await expect(page.getByText('Homologação automatizada')).toBeVisible()
  await page.getByRole('button',{name:'Projetos e entregas',exact:true}).click()
  await page.getByRole('button',{name:'Projeto teste',exact:true}).click()
- for(const label of ['Testes dos fluxos críticos concluídos','Entregáveis conferidos com o escopo aprovado','Pendências resolvidas ou acordadas com o cliente'])await page.getByLabel(label).check()
+ await recordTab(page,'Entrega e aceite');for(const label of ['Testes dos fluxos críticos concluídos','Entregáveis conferidos com o escopo aprovado','Pendências resolvidas ou acordadas com o cliente'])await page.getByLabel(label).check()
  await page.getByLabel('Evidência do aceite').fill('Aceite automatizado')
  await page.getByLabel('Criar atividade de pós-venda').check()
  await page.getByRole('button',{name:'Confirmar aceite da entrega'}).click()
  await expect(page.getByText('Entregue',{exact:true})).toBeVisible()
  await page.getByRole('button',{name:'Projeto teste',exact:true}).click()
- await expect(page.getByText('Acompanhamento pós-venda',{exact:true})).toBeVisible()
+ await recordTab(page,'Atividades e suporte');await expect(page.getByText('Acompanhamento pós-venda',{exact:true})).toBeVisible()
  await page.getByLabel('Título do chamado').fill('Ajustar cadastro')
  await page.getByLabel('Responsável pelo chamado').fill('Equipe')
  await page.getByRole('button',{name:'Abrir chamado'}).click()
  await expect(page.getByText('Ajustar cadastro',{exact:true})).toBeVisible()
- await page.getByRole('button',{name:'Cancelar',exact:true}).click()
+ await page.getByRole('dialog').getByRole('button',{name:'Fechar',exact:true}).click()
  await page.getByRole('button',{name:'Agenda operacional',exact:true}).click()
  const status=page.getByLabel('Situação de Ajustar cadastro')
  await status.selectOption('Em andamento')

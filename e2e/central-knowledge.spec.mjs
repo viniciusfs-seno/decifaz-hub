@@ -1,3 +1,4 @@
+import {openDisclosure} from './helpers/portal-ui.mjs'
 import {test,expect} from '@playwright/test'
 
 test.beforeEach(async({page})=>{
@@ -74,7 +75,7 @@ test('Falha financeira preserva CRM, Central e conhecimento',async({page})=>{
 
 test('Dashboard, financeiro e CSV mantêm o mesmo mês nas duas direções',async({page})=>{
  await fixtures(page)
- await page.getByLabel('Mês de análise').fill('2026-10')
+ await openDisclosure(page,'Indicadores e funil');await page.getByLabel('Mês de análise').fill('2026-10')
  await expect(page.getByText('Saldo atrasado no mês')).toBeVisible()
  await page.getByRole('button',{name:'Abrir financeiro neste mês'}).click()
  await expect(page.getByLabel('Mês de referência')).toHaveValue('2026-10')

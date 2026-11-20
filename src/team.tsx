@@ -1,3 +1,5 @@
+import {Disclosure} from './portal-patterns'
+import {norm} from './domain'
 import {useEffect,useState,type FormEvent} from 'react'
 import type {SupabaseClient} from '@supabase/supabase-js'
 import type {Role} from './access'
@@ -10,6 +12,8 @@ type SaveResult=Snapshot&{status:'saved'|'conflict'}|{status:'rejected'|'missing
 const options:[Role,string][]=[['admin','Administração'],['commercial','Comercial'],['operations','Operação'],['finance','Financeiro']]
 
 export function Team({client,workspace,onSaved,sendInviteLink}:{client:SupabaseClient;workspace:string;onSaved:()=>Promise<void>;sendInviteLink:InviteMailer}){
+ const [query,setQuery]=useState(''),[memberState,setMemberState]=useState('all')
+ const matches=(member:Member)=>(memberState==='all'||member.active===(memberState==='active'))&&norm(member.email).includes(norm(query))
  const [members,setMembers]=useState<Member[]>([])
  const [loading,setLoading]=useState(true)
  const [error,setError]=useState('')
@@ -28,15 +32,16 @@ export function Team({client,workspace,onSaved,sendInviteLink}:{client:SupabaseC
  },[client,workspace,revision])
  return <section className="team-members" aria-labelledby="team-heading">
   <h1 id="team-heading">Equipe</h1><p>Administração · Papéis no espaço atual</p>
-  <InviteManager client={client} workspace={workspace} sendLink={sendInviteLink}/>
+  <Disclosure title="Convites de integrantes" description="Criar, reenviar ou revogar convites"><InviteManager client={client} workspace={workspace} sendLink={sendInviteLink}/></Disclosure>
   <details className="card panel team-help"><summary>O que cada papel permite?</summary><dl><dt>Administração</dt><dd>Gerencia a equipe, define preços e registra o aceite comercial.</dd><dt>Comercial</dt><dd>Conduz CRM, triagem, reuniões e escopo das propostas; sem valores protegidos.</dd><dt>Operação</dt><dd>Acompanha projetos, entregas e suporte.</dd><dt>Financeiro</dt><dd>Consulta condições e valores, registra previsões e recebimentos.</dd></dl><p>Os papéis são cumulativos e valem somente neste espaço.</p></details>
   <p>Selecione todos os papéis de cada integrante. Ao salvar, o conjunto anterior será substituído. O espaço precisa manter pelo menos uma pessoa ativa com Administração. Desativar preserva a conta, os papéis e o acesso a outros espaços.</p>
+  <div className="toolbar"><label>Buscar integrante<input type="search" value={query} onChange={e=>setQuery(e.target.value)} placeholder="E-mail do integrante"/></label><label>Estado dos integrantes<select value={memberState} onChange={e=>setMemberState(e.target.value)}><option value="all">Todos</option><option value="active">Ativos</option><option value="inactive">Desativados</option></select></label></div><p className="view-hint">{members.filter(matches).length} de {members.length} integrantes neste recorte</p>
   <button className="button compact" disabled={loading} onClick={()=>refresh(n=>n+1)}>Atualizar equipe</button>
   {loading&&<p role="status">Carregando equipe…</p>}
   {error&&<p role="alert">{error}</p>}
   {notice&&<p role="status">{notice}</p>}
   {!loading&&!error&&members.length===0&&<p>Nenhum integrante neste espaço.</p>}
-  {members.map(member=><MemberEditor key={workspace+member.user_id+':'+member.revision} member={member} save={async (roles,revision):Promise<SaveResult>=>{
+  {members.map(member=><div key={workspace+member.user_id+':'+member.revision} hidden={!matches(member)}><MemberEditor member={member} save={async (roles,revision):Promise<SaveResult>=>{
    setNotice('');setError('')
    const {data,error}=await client.rpc('hub_update_member_roles',{w:workspace,u:member.user_id,r:roles,expected_revision:revision})
    if(error||!data)return {status:'rejected'}
@@ -54,7 +59,7 @@ export function Team({client,workspace,onSaved,sendInviteLink}:{client:SupabaseC
    setNotice(enabled?'Integrante reativado.':'Integrante desativado neste espaço.')
    try{await onSaved()}catch{setError('Estado salvo, mas seu acesso não pôde ser atualizado. Recarregue a página.')}
    return result
-  }}/>) }
+  }}/></div>) }
  </section>
 }
 

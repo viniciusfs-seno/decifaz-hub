@@ -1,4 +1,5 @@
 import {allRows} from './load-all'
+import {Disclosure,RecordSummary,RecordTabs} from './portal-patterns'
 import {useViewState} from './view-state'
 import {useState,type ReactNode} from 'react'
 import type {SupabaseClient} from '@supabase/supabase-js'
@@ -34,7 +35,7 @@ export function SharedProjects({projects,leads,open}:{projects:SharedProject[];l
  </Page>
 }
 
-export function SharedProjectEditor({item,close,save,accept,children,readOnly=false}:{item:SharedProject;close:()=>void;save:(values:ProjectUpdate)=>Promise<boolean>;accept:(values:DeliveryAcceptance)=>Promise<boolean>;children?:ReactNode;readOnly?:boolean}){
+export function SharedProjectEditor({item,close,save,accept,support,meetings,history,initialSection='resumo',readOnly=false}:{item:SharedProject;close:()=>void;save:(values:ProjectUpdate)=>Promise<boolean>;accept:(values:DeliveryAcceptance)=>Promise<boolean>;support?:ReactNode;meetings?:ReactNode;history?:ReactNode;initialSection?:string;readOnly?:boolean}){
  const [draft,setDraft]=useState<ProjectUpdate>({owner:item.owner,due_on:item.due_on,status:item.status,deliverables:item.deliverables})
  const [saving,setSaving]=useState(false)
  const [error,setError]=useState('')
@@ -68,19 +69,24 @@ export function SharedProjectEditor({item,close,save,accept,children,readOnly=fa
   }finally{setSaving(false)}
  }
  return <Dialog title={approved.title} subtitle={'Proposta aprovada · v'+approved.version} onClose={close} wide>
-  <fieldset disabled={readOnly}><Form onClose={close} onSave={()=>void submit()} label={saving?'Salvando…':'Salvar projeto'} error={error}>
-   <h3>Escopo aprovado</h3><p className="details-line">{approved.scope}</p>
-   {approved.services.length>0&&<p>{approved.services.join(' · ')}</p>}
-   {approved.setup!==undefined&&<p>Implantação {money(approved.setup)} · Mensalidade {money(approved.monthly)}</p>}
-   {approved.terms&&<p className="details-line">{approved.terms}</p>}
+  <RecordSummary items={[{label:'Situação',value:item.status},{label:'Responsável',value:item.owner},{label:'Prazo',value:dateLabel(item.due_on??'')}]}/>
+  <RecordTabs initial={initialSection} sections={[
+  {id:'resumo',label:'Resumo',content:<fieldset disabled={readOnly} className="registry-fields"><Form onClose={close} onSave={()=>void submit()} label={saving?'Salvando…':'Salvar projeto'} error={error}>
+   <h3>Organização do projeto</h3>
    <div className="fields">
     <Field label="Responsável" value={draft.owner} on={owner=>setDraft({...draft,owner})}/>
     <Field label="Prazo" type="date" value={draft.due_on??''} on={due=>setDraft({...draft,due_on:due||null})}/>
     <Field label="Situação" options={statuses.filter(status=>status!=='Entregue'||item.status==='Entregue'||item.delivery)} required value={draft.status} on={status=>setDraft({...draft,status:status as ProjectUpdate['status']})}/>
    </div>
    <Field label="Entregáveis operacionais" type="area" value={draft.deliverables} on={deliverables=>setDraft({...draft,deliverables})}/>
-  </Form>
-  <section className="dialog-body"><h3>Homologação e aceite</h3>
+   <Disclosure title="Escopo e condições aprovadas" description={'Proposta · versão '+approved.version}>
+   <p className="details-line">{approved.scope}</p>
+   {approved.services.length>0&&<p>{approved.services.join(' · ')}</p>}
+   {approved.setup!==undefined&&<p>Implantação {money(approved.setup)} · Mensalidade {money(approved.monthly)}</p>}
+   {approved.terms&&<p className="details-line">{approved.terms}</p>}
+   </Disclosure>
+  </Form></fieldset>},
+  {id:'entrega',label:'Entrega e aceite',content:<fieldset disabled={readOnly} className="registry-fields"><section className="dialog-body"><h3>Homologação e aceite</h3>
    {item.delivery?<p>Entrega aceita em {dateLabel(item.delivery.acceptedAt)} · {item.delivery.reference}</p>:<>
     {deliveryChecks.map(([id,label])=><label key={id} className="checkline">
      <input type="checkbox" checked={checks.includes(id)} onChange={e=>setChecks(e.target.checked?[...checks,id]:checks.filter(check=>check!==id))}/>{label}
@@ -92,8 +98,11 @@ export function SharedProjectEditor({item,close,save,accept,children,readOnly=fa
      <Field label="Responsável pela atividade" value={owner} on={setOwner}/><Field label="Prazo da atividade" type="date" value={due} on={setDue}/></div>}
     <button className="button primary" type="button" disabled={saving} onClick={()=>void confirm()}>Confirmar aceite da entrega</button>
    </>}
-  </section>
-  </fieldset>{children}
+  {error&&<p role="alert">{error}</p>}</section></fieldset>},
+  {id:'reunioes',label:'Reuniões',content:meetings},
+  {id:'suporte',label:'Atividades e suporte',content:support},
+  {id:'historico',label:'Histórico',content:history},
+  ]}/>
  </Dialog>
 }
 
