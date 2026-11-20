@@ -58,6 +58,8 @@ jobs:
         run: node scripts/crm-upgrade-validation.mjs --reset-local-fixtures
       - name: Ensaiar prioridades a partir do esquema atual de produção
         run: node scripts/registry-upgrade-validation.mjs --reset-local-fixtures
+      - name: Ensaiar produtividade e recuperação com o frontend do PR 33
+        run: node scripts/productivity-upgrade-validation.mjs --reset-local-fixtures
       - name: Validar transição e recuperação com versões anteriores
         run: node scripts/transition-validation.mjs --reset-local-fixtures
       - if: always()
