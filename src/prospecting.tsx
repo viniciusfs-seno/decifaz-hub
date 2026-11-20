@@ -1,3 +1,4 @@
+import {useSessionDraft} from './session-drafts'
 import {useEffect,useRef,useState} from 'react'
 import type {SupabaseClient} from '@supabase/supabase-js'
 import {active,dateLabel,norm,type Data,type Lead} from './domain'
@@ -33,10 +34,13 @@ export function ProspectingQueue({data,tasks,open}:{data:Data;tasks:SharedActivi
  </Page>
 }
 export function ContactPlanner({client,workspace,lead,allowed,saved}:{client:SupabaseClient;workspace:string;lead:PilotLead;allowed:boolean;saved:()=>void}){
- const [result,setResult]=useState(''),[next,setNext]=useState(lead.profile.next??''),[owner,setOwner]=useState(lead.profile.owner??''),[due,setDue]=useState(lead.profile.due??'')
- const [create,setCreate]=useState(true),[plan,setPlan]=useState(false),[busy,setBusy]=useState(false),[message,setMessage]=useState(''),[revision,setRevision]=useState(lead.revision??0)
+ const [entry,setEntry]=useSessionDraft('contact:'+lead.id,()=>({result:'',next:lead.profile.next??'',owner:lead.profile.owner??'',due:lead.profile.due??'',create:true,plan:false,revision:lead.revision??0}))
+ const {result,next,owner,due,create,plan,revision}=entry
+ const setResult=(result:string)=>setEntry(v=>({...v,result})),setNext=(next:string)=>setEntry(v=>({...v,next})),setOwner=(owner:string)=>setEntry(v=>({...v,owner})),setDue=(due:string)=>setEntry(v=>({...v,due})),setCreate=(create:boolean)=>setEntry(v=>({...v,create})),setPlan=(plan:boolean)=>setEntry(v=>({...v,plan}))
+ const setRevision=(action:number|((v:number)=>number))=>setEntry(v=>({...v,revision:typeof action==='function'?action(v.revision):action}))
+ const [busy,setBusy]=useState(false),[message,setMessage]=useState('')
  const operation=useRef({id:crypto.randomUUID(),payload:''})
- useEffect(()=>{if(plan||result)return;setRevision(previous=>Math.max(previous,lead.revision??0));setNext(lead.profile.next??'');setOwner(lead.profile.owner??'');setDue(lead.profile.due??'')},[lead.revision,plan,result])
+ useEffect(()=>{if(plan||result||(lead.revision??0)<revision)return;setRevision(previous=>Math.max(previous,lead.revision??0));setNext(lead.profile.next??'');setOwner(lead.profile.owner??'');setDue(lead.profile.due??'')},[lead.revision,plan,result,revision])
  async function save(){
   if(busy)return;setBusy(true);setMessage('')
   const body={result,...(plan?{next,owner,due,create_activity:create}:{})},payload=JSON.stringify(body)
@@ -51,5 +55,5 @@ export function ContactPlanner({client,workspace,lead,allowed,saved}:{client:Sup
   }catch{setMessage('Conexão indisponível. Tente novamente; a mesma operação não será duplicada.')}finally{setBusy(false)}
  }
  const links=channelLinks({...lead.profile,whatsapp:lead.profile.whatsapp??'',website:lead.profile.website??'',instagram:lead.profile.instagram??''})
- return <section className="card panel"><h2>Abordagem e próxima ação</h2><div className="actions">{links.map(link=><a key={link.label} className="button" href={link.url} target="_blank" rel="noopener noreferrer">{link.label}</a>)}</div><p className="muted">Abrir um canal não registra contato realizado. Registre abaixo apenas o que aconteceu; hipóteses continuam na triagem.</p><form onSubmit={e=>{e.preventDefault();void save()}}><fieldset disabled={!allowed||busy}><Field label="Resultado da abordagem" type="area" value={result} on={setResult} required={!plan}/><label><input type="checkbox" checked={plan} onChange={e=>setPlan(e.target.checked)}/>Definir próxima ação</label>{plan&&<><Field label="Próxima ação planejada" required value={next} on={setNext}/><div className="fields"><Field label="Responsável da próxima ação" required value={owner} on={setOwner}/><Field label="Prazo da próxima ação" required type="date" value={due} on={setDue}/></div><label><input type="checkbox" checked={create} onChange={e=>setCreate(e.target.checked)}/>Criar atividade vinculada</label></>}<button className="button primary">{busy?'Registrando…':'Salvar abordagem e plano'}</button></fieldset></form>{message&&<p role="status">{message}</p>}{!allowed&&<p>Seu papel permite consultar; registrar uma abordagem exige acesso comercial.</p>}</section>
+ return <section className="card panel contact-planner"><h2>Abordagem e próxima ação</h2><div className="actions">{links.map(link=><a key={link.label} className="button" href={link.url} target="_blank" rel="noopener noreferrer">{link.label}</a>)}</div><p className="muted">Abrir um canal não registra contato realizado. Registre abaixo apenas o que aconteceu; hipóteses continuam na triagem.</p><form onSubmit={e=>{e.preventDefault();void save()}}><fieldset disabled={!allowed||busy}><Field label="Resultado da abordagem" type="area" value={result} on={setResult} required={!plan}/><label><input type="checkbox" checked={plan} onChange={e=>setPlan(e.target.checked)}/>Definir próxima ação</label>{plan&&<><Field label="Próxima ação planejada" required value={next} on={setNext}/><div className="fields"><Field label="Responsável da próxima ação" required value={owner} on={setOwner}/><Field label="Prazo da próxima ação" required type="date" value={due} on={setDue}/></div><label><input type="checkbox" checked={create} onChange={e=>setCreate(e.target.checked)}/>Criar atividade vinculada</label></>}<button className="button primary">{busy?'Registrando…':'Salvar abordagem e plano'}</button></fieldset></form>{message&&<p role="status">{message}</p>}{!allowed&&<p>Seu papel permite consultar; registrar uma abordagem exige acesso comercial.</p>}</section>
 }

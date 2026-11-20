@@ -110,6 +110,15 @@
 }
 
 /* Shared portal: operational density, official Decifaz palette, accessible controls. */
+/* Dedicated record work and proposal stages; records remain in Supabase. */
+.dossier-context{flex-wrap:wrap}.dossier-context h1{flex-basis:100%;margin:0 0 8px}.dossier-context h1:focus{outline:none}
+.next-action-card{border:1px solid var(--decifaz-orange);border-radius:12px;background:var(--soft);padding:16px;margin:18px 0;display:grid;gap:8px}.next-action-card .button{justify-self:start}
+.draft-note{padding:9px 12px;border-left:3px solid var(--decifaz-orange);background:var(--soft);font-size:.78rem;margin:12px 0}
+.proposal-steps{min-width:0}.proposal-steps nav ol{list-style:none;padding:0;margin:0 0 20px;display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:8px}.proposal-steps nav button{background:var(--soft);color:var(--muted);border:1px solid var(--line);border-radius:8px;width:100%;padding:12px;min-height:58px;display:flex;align-items:center;gap:8px;text-align:left;font-weight:600;font-size:.78rem}
+.proposal-steps nav button[aria-current=step]{border-color:var(--decifaz-orange);color:var(--ink);box-shadow:inset 0 -3px var(--decifaz-orange)}.proposal-steps nav button span{border:1px solid var(--line);border-radius:50%;display:grid;place-items:center;width:24px;height:24px;flex:none}
+.proposal-steps section[hidden]{display:none!important}.proposal-steps section>h3{margin-bottom:16px}.proposal-steps section{min-width:0}.proposal-steps .step-actions{display:flex;align-items:center;justify-content:space-between;gap:8px;margin-top:20px;padding-top:14px;border-top:1px solid var(--line);font-size:.75rem}.proposal-steps .details-line{white-space:pre-wrap;margin:12px 0}
+[aria-invalid=true]{outline:2px solid #b94c32;outline-offset:2px}
+@media(max-width:600px){.proposal-steps nav ol{grid-template-columns:1fr;gap:5px}.proposal-steps nav button{min-height:44px;padding:8px 10px}.proposal-steps .step-actions .button{font-size:.72rem;padding:8px}.next-action-card{padding:12px}.dossier-context>span{overflow-wrap:anywhere}}
 .portal-disclosure{border:1px solid var(--line);border-radius:10px;background:var(--paper);margin:12px 0;min-width:0}
 .portal-disclosure>summary{display:flex;align-items:center;gap:12px;padding:15px 18px;cursor:pointer;list-style:none;min-height:52px}
 .portal-disclosure>summary::-webkit-details-marker{display:none}
@@ -187,3 +196,8 @@
 @media(prefers-reduced-motion:reduce){.portal-disclosure>summary svg{transition:none}}
 
 .shared-app .activity-edit{white-space:normal;overflow-wrap:anywhere;text-align:left;max-width:100%}
+.contact-planner fieldset{display:grid;gap:1rem}
+.contact-planner fieldset>label:not(.field){display:flex;align-items:center;gap:.5rem}
+.contact-planner fieldset>.button{justify-self:start}
+
+.next-action-card h3{font-size:.8rem;color:var(--muted);margin:0}.next-action-card strong{font-size:1rem;line-height:1.4}.next-action-card .button{min-height:44px;max-width:100%;white-space:normal}

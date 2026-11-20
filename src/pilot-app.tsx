@@ -1,3 +1,4 @@
+import {SessionDrafts} from './session-drafts'
 import {ActivityEditor} from './activity-editor'
 import {LeadImport} from './lead-import'
 import {ContactPlanner,ProspectingQueue} from './prospecting'
@@ -91,7 +92,7 @@ const navigation=[
  ['Administração',[['contratos','Contratos',FileCheck2],['equipe','Equipe',Users]]],
 ] as const
 const sections=navigation.flatMap(([,items])=>[...items])
-type Section=typeof sections[number][0]|'equipe'|'convites'
+type Section=typeof sections[number][0]|'equipe'|'convites'|'ficha'
 
 function SharedCrm(){
  const [contractId,setContractId]=useState('')
@@ -105,6 +106,7 @@ function SharedCrm(){
  const loadedWorkspace=useRef('')
  const [page,setPage]=useState<Section>(()=>new URLSearchParams(location.search).has('convite')?'convites':'dashboard')
  const [returnPage,setReturnPage]=useState<Section>('crm')
+ const [projectReturn,setProjectReturn]=useState<Section>('projetos')
  const [agendaRequest,setAgendaRequest]=useState(0)
  const [menu,setMenu]=useState(false)
  const [navQuery,setNavQuery]=useState('')
@@ -122,11 +124,16 @@ function SharedCrm(){
   document.documentElement.dataset.theme=dark?'dark':'light'
   try{localStorage.setItem('decifaz-theme',dark?'dark':'light')}catch{/* tema em memória */}
  },[dark])
+ const proposalOpenRequest=useRef(0),proposalRead=useRef(0)
  function go(next:Section){
+  proposalOpenRequest.current++
+  setNotice(message=>message==='Consultando a versão atual da proposta…'?'':message)
+  if(next!=='ficha'&&location.hash.startsWith('#estabelecimento/'))history.pushState(null,'',location.pathname+location.search)
   setNavQuery('')
   setPage(next)
   setMenu(false)
-  setShowForm(false)
+  setShowForm(next==='ficha')
+  if(next==='ficha'&&selected)history.pushState({hubRecord:true},'','#estabelecimento/'+selected)
   setProjectId('')
   window.scrollTo(0,0)
  }
@@ -183,6 +190,8 @@ function SharedCrm(){
  const [billId,setBillId]=useState(''),[contractRows,setContractRows]=useState<Contract[]>([])
  useEffect(()=>{let live=true;setContractRows([]);if(workspace)void allRows(client!.from('hub_contracts').select('*').eq('workspace_id',workspace).order('id')).then(r=>{if(live&&!r.error)setContractRows(r.data as Contract[]??[])});return()=>{live=false}},[workspace,revision])
  function clearWorkspaceData(){
+  if(location.hash.startsWith('#estabelecimento/'))history.replaceState(null,'',location.pathname+location.search)
+  proposalOpenRequest.current++;proposalRead.current++
   setNavQuery('')
   setActivityEditor(undefined)
   setLeads([]);setTriages([]);setFinance(undefined);setProjects([]);setProposals([]);setProposalMeetings([]);setMeetings([]);setAllActivities([]);setCatalog([]);loadedWorkspace.current=''
@@ -221,6 +230,7 @@ function SharedCrm(){
  useEffect(()=>{
   if(!workspace)return
   let current=true
+  const proposalLoad=++proposalRead.current
   const leadsQuery=client!.from('hub_leads').select(leadColumns).eq('workspace_id',workspace).order('name').returns<Lead[]>()
   const triagesQuery=client!.from('hub_triages').select('lead_id,record,scores,completed').eq('workspace_id',workspace).returns<TriageRow[]>()
   if(loadedWorkspace.current!==workspace)setReady(false)
@@ -238,7 +248,7 @@ function SharedCrm(){
    }
    setLeads(result<{data:Lead[]}>(0,'CRM')?.data??[])
    setTriages(result<{data:TriageRow[]}>(1,'Triagem')?.data??[])
-   setProposals(result<{data:Proposal[]}>(2,'Propostas')?.data??[])
+   if(proposalLoad===proposalRead.current)setProposals(result<{data:Proposal[]}>(2,'Propostas')?.data??[])
    setProposalMeetings(result<{data:Meeting[]}>(3,'Reuniões')?.data??[])
    setProjects(result<{data:SharedProject[]}>(4,'Projetos')?.data??[])
    setAllActivities(result<{data:SharedActivity[]}>(6,'Agenda')?.data??[])
@@ -268,6 +278,9 @@ function SharedCrm(){
   return ()=>{current=false}
  },[workspace,selected,revision])
  function select(lead?:Lead){
+  const target='#estabelecimento/'+(lead?.id??'novo')
+  if(location.hash!==target)history[page==='ficha'?'replaceState':'pushState']({hubRecord:true},'',target)
+  setPage('ficha');window.scrollTo(0,0)
   setShowForm(true)
   setSelected(lead?.id??'')
   setDraft(lead?{name:lead.name,segment:lead.segment,city:lead.city,notes:lead.notes}:empty)
@@ -301,8 +314,8 @@ function SharedCrm(){
  const meetingContext={...commercialData,leads:lead?[lead]:[],team:[]}
  const activeProject=projects.find(item=>item.proposal_id===projectId)
  const entries:WorkEntry[]=[...workEntries(commercialData.leads,allActivities,proposalMeetings,projects),...internal.data.bills.map(b=>({key:'bill-'+b.id,id:b.id,kind:'bill' as const,title:internal.data.plans.find(p=>p.id===b.obligation_id)?.title??'Obrigação',leadId:internal.data.plans.find(p=>p.id===b.obligation_id)?.lead_id??'',owner:internal.data.plans.find(p=>p.id===b.obligation_id)?.owner??'',date:b.due_on,status:b.status,detail:'Obrigação da Decifaz'})),...contractRows.filter(c=>c.status==='Vigente').flatMap(c=>[{date:c.renews_on,days:c.notice_days,label:'Aviso de renovação'},{date:c.ends_on,days:c.cancel_notice_days,label:'Aviso de término/cancelamento'}].filter(a=>a.date).map(a=>({key:'contract-'+c.id+a.label,id:c.id,kind:'contract' as const,title:c.title,leadId:c.lead_id,owner:c.owner,date:new Date(Date.parse(a.date+'T12:00:00Z')-a.days*86400000).toISOString().slice(0,10),status:'Pendente',detail:a.label}))) ].sort((a,b)=>(a.date||'9999').localeCompare(b.date||'9999')||a.key.localeCompare(b.key))
- function openLead(id:string){const item=leads.find(l=>l.id===id);if(item){setReturnPage(page);go('crm');select(item)}}
- function openProject(id:string,section='resumo'){setProjectSection(section);setReturnPage(page);go('projetos');setProjectId(id)}
+ function openLead(id:string){const item=leads.find(l=>l.id===id);if(item){setReturnPage(page==='ficha'?'crm':page);go('crm');select(item)}}
+ function openProject(id:string,section='resumo'){setProjectSection(section);setProjectReturn(page);go('projetos');setProjectId(id)}
  function openEntry(entry:WorkEntry){if(entry.kind==='bill'){setBillId(entry.id);go('obrigacoes')}else if(entry.kind==='contract'){setContractId(entry.id);go('contratos')}else if(entry.projectId)openProject(entry.projectId,entry.kind==='meeting'?'reunioes':entry.kind==='support'||entry.kind==='activity'?'suporte':'resumo');else openLead(entry.leadId)}
  function changeActivity(entry:WorkEntry,status:string){
   const item=allActivities.find(a=>a.id===entry.id)
@@ -310,22 +323,52 @@ function SharedCrm(){
   void write(()=>client!.from('hub_activities').update({status}).eq('workspace_id',workspace).eq('id',entry.id).select('id').single())
  }
  function openAgenda(filter:WorkFilter){go('agenda');setAgendaFilter(filter);setAgendaRequest(n=>n+1)}
- const pageLabel=page==='convites'?'Meus convites':page==='equipe'?'Administração / Equipe':sections.find(([id])=>id===page)?.[1]
+ const pageLabel=page==='ficha'?'Ficha do estabelecimento':page==='convites'?'Meus convites':page==='equipe'?'Administração / Equipe':sections.find(([id])=>id===page)?.[1]
+ const recordContext=useRef({page,returnPage})
+ useEffect(()=>{recordContext.current={page,returnPage}},[page,returnPage])
+ useEffect(()=>{
+  if(!ready||!workspace)return
+  let live=true,request=0
+  async function restoreRecord(){
+   const match=location.hash.match(/^#estabelecimento\/([0-9a-f-]{36}|novo)$/i),current=++request
+   if(!match){if(recordContext.current.page==='ficha'){setShowForm(false);setSelected('');setEditor(null);setPage(recordContext.current.returnPage==='ficha'?'crm':recordContext.current.returnPage)}return}
+   if(match[1]==='novo'){setReturnPage('crm');select();return}
+   const result=await client!.from('hub_leads').select(leadColumns).eq('workspace_id',workspace).eq('id',match[1]).maybeSingle()
+   if(!live||request!==current)return
+   if(result.error||!result.data){setError('Não foi possível abrir o estabelecimento neste espaço. Volte ao CRM e tente novamente.');setPage('crm');setShowForm(false);return}
+   const item=result.data as PilotLead;setLeads(rows=>[...rows.filter(row=>row.id!==item.id),item]);setReturnPage('crm');select(item)
+  }
+  void restoreRecord();window.addEventListener('popstate',restoreRecord)
+  return()=>{live=false;window.removeEventListener('popstate',restoreRecord)}
+ },[ready,workspace])
+ useEffect(()=>{if(page!=='ficha')return;const frame=requestAnimationFrame(()=>document.querySelector<HTMLElement>('.dossier-context h1')?.focus());return()=>cancelAnimationFrame(frame)},[page,selected])
+ async function openCurrentProposal(id:string){
+  const selected=proposals.find(p=>p.id===id);if(!selected)return
+  proposalRead.current++
+  const request=++proposalOpenRequest.current,series=selected.seriesId??selected.id
+  setError('');setNotice('Consultando a versão atual da proposta…')
+  try{const result=await loadProposals(client!,workspace,series)
+   if(request!==proposalOpenRequest.current)return
+   setNotice('')
+   if(result.error||!result.data?.length){setError('Não foi possível abrir a versão atual. Atualize a lista e tente novamente.');return}
+   setProposals(rows=>[...rows.filter(p=>(p.seriesId??p.id)!==series),...result.data!]);setProposalModal({id:result.data[0].id});setNotice('')
+  }catch{if(request===proposalOpenRequest.current){setNotice('');setError('Não foi possível abrir a proposta. Atualize a lista e tente novamente.')}}
+ }
  const signOut=()=>void client!.auth.signOut().then(({error})=>{if(error)setError('Não foi possível sair. Tente novamente.')})
  return <div className="app shared-app">
   {menu&&<button className="mobile-scrim" aria-label="Fechar navegação" onClick={()=>setMenu(false)}/>}
   <a className="skip-link" href="#conteudo">Ir para o conteúdo</a>
   <aside id="navegacao-portal" className={'sidebar '+(menu?'open':'')}>
    <button className="brand" onClick={()=>go(workspace?'dashboard':'convites')}><img className="brand-logo" src={import.meta.env.BASE_URL+'identidade/assinatura-horizontal-escuro-selo.svg'} alt="Decifaz"/><small>Portal de trabalho</small></button>
-   <label className="nav-search"><span>Ir para uma área</span><input type="search" aria-label="Buscar área do portal" placeholder="CRM, contratos, agenda…" value={navQuery} onChange={e=>setNavQuery(e.target.value)} onKeyDown={e=>{if(e.key==='Escape')setNavQuery('')}}/></label><nav aria-label="Navegação principal">{workspace&&navigation.map(([label,links])=>{const visible=links.filter(([id,title])=>(!navQuery||norm(label+' '+title).includes(norm(navQuery)))&&(!['financeiro','obrigacoes'].includes(id)||can(role,'finance'))&&(id!=='equipe'||administrator));return visible.length?<div className="nav-group" key={label}><h2>{label}</h2>{visible.map(([id,title,Icon])=><button key={id} aria-current={page===id?'page':undefined} onClick={()=>go(id)}><Icon size={17}/><span>{title}</span></button>)}</div>:null})}<div className="nav-group"><h2>Acesso</h2><button aria-current={page==='convites'?'page':undefined} onClick={()=>go('convites')}><Users size={17}/><span>Meus convites</span></button></div></nav>
+   <label className="nav-search"><span>Ir para uma área</span><input type="search" aria-label="Buscar área do portal" placeholder="CRM, contratos, agenda…" value={navQuery} onChange={e=>setNavQuery(e.target.value)} onKeyDown={e=>{if(e.key==='Escape')setNavQuery('')}}/></label><nav aria-label="Navegação principal">{workspace&&navigation.map(([label,links])=>{const visible=links.filter(([id,title])=>(!navQuery||norm(label+' '+title).includes(norm(navQuery)))&&(!['financeiro','obrigacoes'].includes(id)||can(role,'finance'))&&(id!=='equipe'||administrator));return visible.length?<div className="nav-group" key={label}><h2>{label}</h2>{visible.map(([id,title,Icon])=><button key={id} aria-current={page===id||page==='ficha'&&id==='crm'?'page':undefined} onClick={()=>go(id)}><Icon size={17}/><span>{title}</span></button>)}</div>:null})}<div className="nav-group"><h2>Acesso</h2><button aria-current={page==='convites'?'page':undefined} onClick={()=>go('convites')}><Users size={17}/><span>Meus convites</span></button></div></nav>
   </aside>
   <div className="workspace" inert={menu}><header className="topbar">
    <div className="crumb"><button className="icon mobile-menu" aria-label="Abrir navegação" aria-controls="navegacao-portal" aria-expanded={menu} onClick={()=>setMenu(!menu)}><Menu size={21}/></button><button className="text-button home-link" onClick={()=>go(workspace?'dashboard':'convites')}>Decifaz Hub</button><span className="slash">/</span><b>{pageLabel}</b></div>
    <div className="header-actions">{spaces.length>1&&<label className="space-switcher"><span>Espaço de trabalho</span><select disabled={busy} value={workspace} onChange={e=>{setReady(false);setError('');clearWorkspaceData();setWorkspace(e.target.value);setPage('dashboard')}}>{spaces.map(space=><option key={space.id} value={space.id}>{space.name}</option>)}</select></label>}<button className="icon theme" onClick={()=>setDark(!dark)} aria-label={dark?'Ativar tema claro':'Ativar tema escuro'}>{dark?<Sun size={19}/>:<Moon size={18}/>}</button><button className="button compact" disabled={busy} onClick={signOut}>Sair</button></div>
   </header>
-  <ViewStateProvider key={workspace}><main className="pilot" id="conteudo" tabIndex={-1}>
+  <ViewStateProvider key={workspace}><SessionDrafts key={workspace+JSON.stringify(role)}><main className="pilot" id="conteudo" tabIndex={-1}>
    <div className="workspace-strip row-between"><p><span className="live-dot" aria-hidden="true"/> {spaces.find(space=>space.id===workspace)?.name??'Decifaz Hub'}</p><div className="actions">{loadingData&&ready&&<small role="status">Atualizando dados…</small>}<button className="button compact" disabled={busy||!workspace} onClick={()=>{setError('');void refreshMemberships().then(()=>reload(v=>v+1)).catch(()=>{})}}>Atualizar</button></div></div>
-  {error&&<p role="alert">{error}</p>}
+  {error&&<p role="alert">{error}{!workspace&&<button className="button" onClick={()=>{setError('');void refreshMemberships().catch(()=>{})}}>Tentar novamente o acesso</button>}</p>}
   {moduleErrors.map(label=><p role="alert" key={label}>{label}: não foi possível carregar. Os demais módulos continuam disponíveis.</p>)}
   {notice&&<p role="status">{notice}</p>}
   {!ready&&!error&&<p role="status">Carregando o CRM…</p>}
@@ -351,20 +394,21 @@ function SharedCrm(){
    {page==='financeiro'&&!can(role,'finance')&&<p role="status">Seu papel não permite acesso ao Financeiro.</p>}
    {page==='financeiro'&&can(role,'finance')&&finance&&<SharedFinance key={workspace} client={client!} workspace={workspace} projects={projects} forecasts={finance[0].data??[]} receipts={finance[1].data??[]} expenses={finance[2].data??[]} month={reportMonth} setMonth={setReportMonth} audit={finance[3].data??[]} busy={busy} write={write}/>}
    {(page==='agenda'||page==='reunioes')&&<OperationalAgenda key={workspace+page} request={agendaRequest} entries={entries} leads={commercialData.leads} initial={page==='reunioes'?{kind:'meeting',state:'all'}:agendaFilter} title={page==='reunioes'?'Reuniões e diagnósticos':'Agenda operacional'} activities={page==='agenda'?{user:currentUser,edit:id=>setActivityEditor({item:allActivities.find(a=>a.id===id)}),add:can(role,'commercial',true)?()=>setActivityEditor({}):undefined}:undefined} open={openEntry} busy={busy} canChange={entry=>can(role,entry.projectId?'projects':'commercial',true)} change={changeActivity}/>}
-   {page==='projetos'&&<SharedProjects projects={projects} leads={commercialData.leads} open={id=>{setProjectSection('resumo');setReturnPage('projetos');setProjectId(id)}}/>}
-   {page==='propostas'&&<Proposals data={commercialData} add={()=>setProposalModal({})} open={id=>setProposalModal({id})}/>}
+   {page==='projetos'&&<SharedProjects projects={projects} leads={commercialData.leads} open={id=>{setProjectSection('resumo');setProjectReturn('projetos');setProjectId(id)}}/>}
+   {page==='propostas'&&<Proposals data={commercialData} add={()=>setProposalModal({})} open={id=>void openCurrentProposal(id)}/>}
    {(page==='crm'||page==='triagem')&&!showForm&&<SharedCrmList key={workspace+page} client={client!} workspace={workspace} revision={revision} data={commercialData} triage={page==='triagem'} open={item=>{setReturnPage(page);setLeads(rows=>[...rows.filter(l=>l.id!==item.id),item]);select(item)}} add={()=>{setReturnPage(page);select()}} start={item=>{setReturnPage(page);setLeads(rows=>[...rows.filter(l=>l.id!==item.id),item]);select(item);setEditor('triage')}}/>}
-   {(page==='crm'||page==='triagem')&&showForm&&<>
-    <div className="dossier-context"><button className="button" onClick={()=>{setShowForm(false);setSelected('');setEditor(null);go(returnPage)}}>← Voltar {returnPage==='agenda'?'à agenda':returnPage==='indicadores'?'aos indicadores':returnPage==='central'?'à Central comercial':returnPage==='reunioes'?'às reuniões':returnPage==='triagem'?'à triagem':returnPage==='dashboard'?'ao Dashboard':'à lista'}</button><span>{lead?.name??'Novo estabelecimento'} · {lead?.stage??'Cadastro'}</span></div>
+   {page==='ficha'&&showForm&&<>
+    <div className="dossier-context"><h1 tabIndex={-1}>Ficha do estabelecimento</h1><button className="button" onClick={()=>{setShowForm(false);setSelected('');setEditor(null);go(returnPage)}}>← Voltar {returnPage==='agenda'?'à agenda':returnPage==='indicadores'?'aos indicadores':returnPage==='central'?'à Central comercial':returnPage==='reunioes'?'às reuniões':returnPage==='triagem'?'à triagem':returnPage==='dashboard'?'ao Dashboard':'à lista'}</button><span>{lead?.name??'Novo estabelecimento'} · {lead?.stage??'Cadastro'}</span></div>
     <details className="card panel op-basics" open={!selected}><summary><h2>{selected?'Editar dados do estabelecimento':'Cadastrar estabelecimento'}</h2></summary>
      <LeadDetails key={workspace+':'+selected} lead={currentLead} solutions={catalog} allowed={can(role,'commercial',true)} save={async(body,expected)=>{const r=await client!.rpc('hub_save_lead',{w:workspace,l:selected||null,expected_revision:expected,body});if(r.error)return;return r.data}} onSaved={item=>{setNotice('Ficha salva.');setLeads(rows=>[...rows.filter(l=>l.id!==item.id),item]);select(item);reload(v=>v+1)}}/>
     </details>
    {lead&&<section className="card panel">
-    <div className="op-dossier-head"><div><span className="op-eyebrow">FICHA DO ESTABELECIMENTO</span><h2>Jornada comercial de {lead.name}</h2><p>{lead.segment||'Segmento não informado'} · {lead.city||'Cidade não informada'}</p></div><div className="actions"><span className="tag">{lead.stage}</span><Priority triage={selectedTriage&&fullTriage(selectedTriage)}/></div></div>
+    <div className="op-dossier-head"><div><h2>Jornada comercial de {lead.name}</h2><p>{lead.segment||'Segmento não informado'} · {lead.city||'Cidade não informada'}</p></div><div className="actions"><span className="tag">{lead.stage}</span><Priority triage={selectedTriage&&fullTriage(selectedTriage)}/></div></div>
+    <section className="next-action-card" aria-label="Próxima ação do estabelecimento"><h3>Próxima ação</h3><strong>{lead.next||'Defina a próxima ação'}</strong><p>{lead.owner||'Sem responsável'} · {lead.due?dateLabel(lead.due):'Sem prazo registrado'}</p><button className="button compact" disabled={busy||loadedLead!==selected} onClick={()=>document.querySelector<HTMLElement>('.contact-planner textarea')?.focus()}>{loadedLead!==selected?'Carregando abordagem…':'Registrar abordagem ou planejar contato'}</button></section>
     <div className="op-journey" aria-label="Etapas da jornada">{[['Cadastro',true],['Triagem',!!selectedTriage?.completed],['Reunião',meetings.some(m=>m.state==='Realizada')],['Proposta',proposals.some(p=>p.leadId===lead.id)],['Projeto',projects.some(p=>p.lead_id===lead.id)],['Pós-venda',allActivities.some(a=>a.lead_id===lead.id&&a.support)]].map(([label,done])=><span key={String(label)} data-done={done}>{done?'✓':'○'} {label}</span>)}</div>
     <dl className="lead-contact-summary"><div><dt>Contato no estabelecimento</dt><dd>{lead.contact||'Não informado'}{lead.contactInfo?' · '+lead.contactInfo:''}</dd></div><div><dt>Canais</dt><dd>{[lead.whatsapp,lead.instagram,lead.website,lead.other].filter(Boolean).join(' · ')||'Não informados'}</dd></div><div><dt>Localização</dt><dd>{[lead.address,lead.region,lead.city].filter(Boolean).join(' · ')||'Não informada'}</dd></div><div><dt>Origem e verificação</dt><dd>{[lead.origin,lead.verification].filter(Boolean).join(' · ')||'Não informadas'}</dd></div></dl>
     {lead.needs&&<p>{lead.needs}</p>}
-    {lead.next&&<p>Próxima ação · {lead.next} · {dateLabel(lead.due)}</p>}
+
     <div className="actions">
      <button className="button" disabled={busy||!can(role,'commercial',true)} onClick={()=>setEditor('triage')}>{selectedTriage?'Editar triagem':'Iniciar triagem'}</button>
      <button className="button" disabled={busy||!can(role,'commercial',true)||loadedLead!==selected} onClick={()=>{setMeeting(undefined);setEditor('meeting')}}>Registrar reunião</button>
@@ -393,13 +437,13 @@ function SharedCrm(){
     item={proposals.find(item=>item.id===proposalModal.id)} leadId={proposalModal.leadId} meetingId={proposalModal.meetingId}
     open={id=>setProposalModal({id})} close={()=>setProposalModal(undefined)}
     project={can(role,'projects',true)?item=>{
-     const show=()=>{setReturnPage(page);setProposalModal(undefined);go('projetos');setProjectId(item.id)}
+     const show=()=>{setProjectReturn(page);setProposalModal(undefined);go('projetos');setProjectId(item.id)}
      if(projects.some(project=>project.proposal_id===item.id))show()
      else void write(()=>client!.rpc('hub_open_project',{w:workspace,p:item.id}),show)
     }:undefined} projectExists={id=>projects.some(project=>project.proposal_id===id)}
     save={(item,decision)=>write(()=>saveProposal(client!,workspace,item,decision,administrator))}/>}
    {activeProject&&page==='projetos'&&<SharedProjectEditor readOnly={!can(role,'projects',true)} key={activeProject.proposal_id} item={activeProject} initialSection={projectSection}
-    close={()=>{setProjectId('');if(returnPage!=='projetos')go(returnPage)}} accept={values=>write(()=>client!.rpc('hub_accept_delivery',{
+    close={()=>{setProjectId('');if(projectReturn!=='projetos')go(projectReturn)}} accept={values=>write(()=>client!.rpc('hub_accept_delivery',{
      w:workspace,p:activeProject.proposal_id,c:values.checks,d:values.date,e:values.reference,t:values.title,o:values.owner,due:values.due,
     }))} save={values=>write(()=>client!.from('hub_projects').update(values)
      .eq('workspace_id',workspace).eq('proposal_id',activeProject.proposal_id).select('proposal_id').single())}
@@ -408,5 +452,5 @@ function SharedCrm(){
     history={<RegistryTimeline key={workspace+String(can(role,'finance'))} client={client!} workspace={workspace} record={activeProject.proposal_id} revision={revision}/>}
    />}
   </>}
- </main></ViewStateProvider></div></div>
+ </main></SessionDrafts></ViewStateProvider></div></div>
 }
