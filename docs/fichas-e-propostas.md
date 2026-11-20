@@ -8,7 +8,7 @@ O CRM abre uma página própria em `#estabelecimento/<id>`, com próximo passo, 
 
 Voltar restaura o recorte, página, posição e foco da lista. Abrir um projeto pela ficha e fechar volta à ficha; o retorno posterior à lista mantém o contexto original. Os dados complementares continuam em seções recolhíveis e registros antigos permanecem editáveis.
 
-Rascunhos do cadastro e da abordagem vivem somente na memória da aba enquanto o portal está aberto: não são gravações no Supabase e não sobrevivem a recarga/fechamento. Trocar de espaço, mudar permissões ou sair descarta esse cache. Ao retomar um rascunho, sua revisão original é mantida; uma alteração concorrente exige revisão dos dados atuais antes de novo salvamento. O formulário informa quando há rascunho não salvo.
+Rascunhos do cadastro e da abordagem vivem somente na memória da aba enquanto o portal está aberto: não são gravações no Supabase e não sobrevivem a recarga/fechamento. Trocar de espaço, mudar permissões ou sair descarta esse cache. Um salvamento que já estava em andamento pode concluir no servidor, mas sua resposta não reabre a ficha nem injeta dados no contexto que o usuário abriu depois; a nova consulta do espaço continua sendo a fonte dos dados. Ao retomar um rascunho, sua revisão original é mantida; uma alteração concorrente exige revisão dos dados atuais antes de novo salvamento. O formulário informa quando há rascunho não salvo.
 
 ## Propostas
 

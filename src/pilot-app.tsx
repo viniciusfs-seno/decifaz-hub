@@ -190,6 +190,7 @@ function SharedCrm(){
  const [billId,setBillId]=useState(''),[contractRows,setContractRows]=useState<Contract[]>([])
  useEffect(()=>{let live=true;setContractRows([]);if(workspace)void allRows(client!.from('hub_contracts').select('*').eq('workspace_id',workspace).order('id')).then(r=>{if(live&&!r.error)setContractRows(r.data as Contract[]??[])});return()=>{live=false}},[workspace,revision])
  function clearWorkspaceData(){
+  if(location.hash.startsWith('#estabelecimento/'))history.replaceState(null,'',location.pathname+location.search)
   proposalOpenRequest.current++;proposalRead.current++
   setNavQuery('')
   setActivityEditor(undefined)

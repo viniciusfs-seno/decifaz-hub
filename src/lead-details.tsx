@@ -1,4 +1,4 @@
-import {useEffect,useState} from 'react'
+import {useEffect,useRef,useState} from 'react'
 import {useSessionDraft} from './session-drafts'
 import {useInvalidField} from './form-guidance'
 import type {PilotLead} from './pilot-journey'
@@ -9,6 +9,8 @@ const fields=[['Localização',[['region','Região'],['address','Endereço ou lo
 const editableProfile=new Set<string>([...fields.flatMap(([,items])=>items.map(([key])=>key)),'services'])
 const initial=(lead?:PilotLead)=>({name:lead?.name??'',segment:lead?.segment??'',city:lead?.city??'',notes:lead?.notes??'',profile:{...lead?.profile}})
 export function LeadDetails({lead,solutions,allowed,save,onSaved}:{lead?:PilotLead;solutions:Solution[];allowed:boolean;save:(body:object,revision:number|null)=>Promise<Result|undefined>;onSaved:(lead:PilotLead)=>void}){
+ const live=useRef(true)
+ useEffect(()=>{live.current=true;return()=>{live.current=false}},[])
  const [entry,setEntry,clearDraft]=useSessionDraft('lead:'+(lead?.id??'new'),()=>({draft:initial(lead),revision:lead?.revision??null,dirty:false}))
  const {draft,revision}=entry
  const setDraft=(draft:ReturnType<typeof initial>)=>setEntry({...entry,draft,dirty:true})
@@ -17,7 +19,7 @@ export function LeadDetails({lead,solutions,allowed,save,onSaved}:{lead?:PilotLe
  useEffect(()=>{if(!entry.dirty&&lead&&lead.revision!==entry.revision)setEntry({draft:initial(lead),revision:lead.revision??0,dirty:false})},[lead?.revision,entry.dirty])
  const [busy,setBusy]=useState(false),[message,setMessage]=useState(''),[conflict,setConflict]=useState(false)
  const profile=(key:string,value:string)=>setDraft({...draft,profile:{...draft.profile,[key]:value}})
- return <form className="lead-details" onInvalidCapture={invalid} onInputCapture={changed} onSubmit={async e=>{e.preventDefault();if(busy)return;setBusy(true);setMessage('');try{const profile=Object.fromEntries(Object.entries(draft.profile).filter(([key,value])=>editableProfile.has(key)&&(typeof value==='string'||key==='services'&&Array.isArray(value)&&value.every(v=>typeof v==='string'))));const r=await save({...draft,profile},revision);if(!r)throw Error();if(r.status==='conflict'){setDraft({name:r.current.name,segment:r.current.segment,city:r.current.city,notes:r.current.notes,profile:{...r.current.profile}});setRevision(r.current.revision??0);setConflict(true);setMessage('Outra sessão alterou a ficha. Os dados atuais foram carregados. Revise antes de salvar novamente.')}else{setRevision(r.current.revision??0);setConflict(false);setEntry({draft:initial(r.current),revision:r.current.revision??0,dirty:false});if(!lead)clearDraft();setMessage('Ficha salva.');onSaved(r.current)}}catch{setMessage('Não foi possível salvar a ficha. Confira seu acesso e tente novamente.')}finally{setBusy(false)}}}>
+ return <form className="lead-details" onInvalidCapture={invalid} onInputCapture={changed} onSubmit={async e=>{e.preventDefault();if(busy)return;setBusy(true);setMessage('');try{const profile=Object.fromEntries(Object.entries(draft.profile).filter(([key,value])=>editableProfile.has(key)&&(typeof value==='string'||key==='services'&&Array.isArray(value)&&value.every(v=>typeof v==='string'))));const r=await save({...draft,profile},revision);if(!live.current){if(r?.status==='saved')clearDraft();return}if(!r)throw Error();if(r.status==='conflict'){setDraft({name:r.current.name,segment:r.current.segment,city:r.current.city,notes:r.current.notes,profile:{...r.current.profile}});setRevision(r.current.revision??0);setConflict(true);setMessage('Outra sessão alterou a ficha. Os dados atuais foram carregados. Revise antes de salvar novamente.')}else{setRevision(r.current.revision??0);setConflict(false);setEntry({draft:initial(r.current),revision:r.current.revision??0,dirty:false});if(!lead)clearDraft();setMessage('Ficha salva.');onSaved(r.current)}}catch{if(live.current)setMessage('Não foi possível salvar a ficha. Confira seu acesso e tente novamente.')}finally{if(live.current)setBusy(false)}}}>
   {validation&&<p role="alert">{validation}</p>}
   {entry.dirty&&<p className="draft-note" role="status">Rascunho não salvo · mantido nesta sessão e neste espaço.</p>}
   {!allowed&&<p role="status">Seu papel permite consulta. A edição da ficha exige Administração ou Comercial.</p>}

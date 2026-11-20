@@ -5,6 +5,22 @@ import {randomUUID} from 'node:crypto'
 import {sql} from './helpers/local-db.mjs'
 test.use({actionTimeout:15000})
 
+test('Ficha: resposta de salvamento anterior não reabre o registro depois de trocar de espaço',async({page})=>{
+ test.skip(process.env.HUB_REAL_E2E!=='1','Somente Supabase local.');test.setTimeout(60000)
+ const f=await operationalFixture();let release
+ try{
+  await checked(f.admin.from('hub_members').insert({workspace_id:f.other,user_id:f.owner.id,role:'admin'}))
+  await page.addInitScript(s=>localStorage.setItem('sb-127-auth-token',JSON.stringify(s)),f.owner.session);await page.goto('/');await expect(page.getByRole('heading',{name:'Dashboard',exact:true})).toBeVisible();if(await page.getByLabel('Espaço de trabalho').inputValue()!==f.workspace)await page.getByLabel('Espaço de trabalho').selectOption(f.workspace)
+  await page.getByRole('navigation').getByRole('button',{name:'Captação e CRM',exact:true}).click();await page.getByRole('button',{name:'Studio Aurora · fictício',exact:true}).click();await page.getByText('Editar dados do estabelecimento',{exact:true}).click();await page.getByLabel('Nome',{exact:true}).fill('Gravação tardia fictícia')
+  let arrived;const received=new Promise(r=>{arrived=r}),gate=new Promise(r=>{release=r})
+  await page.route('**/rpc/hub_save_lead',async route=>{const response=await route.fetch();arrived();await gate;await route.fulfill({response})})
+  await page.getByRole('button',{name:'Salvar estabelecimento',exact:true}).click();await received;await page.getByLabel('Espaço de trabalho').selectOption(f.other);await expect(page.getByRole('heading',{name:'Dashboard',exact:true})).toBeVisible();await expect(page.getByRole('main')).toContainText('Outro espaço fictício')
+  const completed=page.waitForResponse(r=>r.url().includes('/rpc/hub_save_lead'));release();await(await completed).finished();await page.evaluate(()=>new Promise(r=>requestAnimationFrame(()=>requestAnimationFrame(r))))
+  await expect(page.getByRole('heading',{name:'Dashboard',exact:true})).toBeVisible();await expect(page.getByLabel('Espaço de trabalho')).toHaveValue(f.other);await expect(page).not.toHaveURL(/estabelecimento/);await expect(page.getByText('Gravação tardia fictícia',{exact:true})).toHaveCount(0)
+  expect((await checked(f.owner.client.from('hub_leads').select('name').eq('workspace_id',f.workspace).eq('id',f.prospect).single())).name).toBe('Gravação tardia fictícia');expect(await checked(f.owner.client.from('hub_leads').select('id').eq('workspace_id',f.other))).toEqual([])
+ }finally{release?.();sql(`delete from public.hub_activity_audit where workspace_id='${f.workspace}';delete from public.hub_lead_audit where workspace_id='${f.workspace}';delete from public.hub_activity_events where workspace_id='${f.workspace}';delete from public.hub_registry_events where workspace_id='${f.workspace}';`);await f.cleanup()}
+})
+
 test('Proposta: abrir uma linha desatualizada consulta a versão atual e preserva o histórico',async({page})=>{
  test.skip(process.env.HUB_REAL_E2E!=='1','Somente Supabase local.');test.setTimeout(60000)
  const f=await operationalFixture(),series=randomUUID(),v2=randomUUID(),body={title:'Versão atual fictícia',scope:'Escopo anterior',services:[],validity:f.today,setup:100,monthly:10,terms:'Condição fictícia'}
