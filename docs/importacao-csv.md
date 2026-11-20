@@ -1,6 +1,6 @@
 # Importação assistida de estabelecimentos
 
-Em revisão; não publicar sem aprovação. Depende da Prospecção (#27) e da pilha publicada de ficha, CRM e histórico (#24–#26). Migração `20261118020000_importacao_csv.sql`; sem Edge/Auth.
+Publicação autorizada nesta rodada, após checks do candidato final. Depende da Prospecção (#27) e da pilha publicada de ficha, CRM e histórico (#24–#26). Migração `20261118020000_importacao_csv.sql`; sem Edge/Auth.
 
 Fluxo: baixar modelo → escolher CSV → mapear colunas → escolher Identificado/Em pesquisa → validar no servidor → conferir dados/erros e possíveis duplicidades → escolher atualizar/criar separado/ignorar → confirmar. Até 1000 linhas e 2 MB por arquivo, UTF-8 ou Windows-1252, separadores `;`, `,` ou tabulação, aspas e quebras internas. O navegador mantém o arquivo somente em memória; não o envia como artefato nem o grava no Git.
 
@@ -21,3 +21,5 @@ Erros por linha não desfazem linhas confirmadas. Linhas inválidas ou sem decis
 ## Publicação e recuperação
 
 Após aprovação e #27: dry-run exclusivo `20261118020000` → aplicar/verificar função, grants, isolamento, revisão, duplicidade concorrente e recibos → frontend. Recuperar frontend #27 mantendo RPC/recibos/auditoria e registros. Não excluir linhas importadas automaticamente como rollback. Testes e resultados finais ficam no PR.
+
+Regressões ampliadas: falha recuperável de rede e retomada do mesmo arquivo após recarregar o navegador, sem novo cadastro para linha já confirmada.
