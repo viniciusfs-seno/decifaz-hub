@@ -47,8 +47,9 @@ test('Atividades: falha no acompanhamento reverte conclusão, auditoria e recibo
  try{
   const initial={w:f.workspace,a:null,expected_revision:null,operation_id:randomUUID(),body:{lead_id:f.prospect,title:'Conclusão atômica fictícia',owner:'Equipe fictícia',due:f.today,status:'Pendente',result:''}}
   const created=await checked(f.owner.client.rpc('hub_save_activity',initial))
+  await checked(f.admin.from('hub_leads').update({profile:{next:initial.body.title,due:f.today}}).eq('workspace_id',f.workspace).eq('id',f.prospect))
   sql(`create function hub_private.${fn}() returns trigger language plpgsql as $$ begin if new.workspace_id='${f.workspace}' and new.after_record->>'title'='Falha fictícia controlada' then raise exception 'Falha de auditoria fictícia';end if;return new;end $$;create trigger ${fn} before insert on public.hub_activity_audit for each row execute function hub_private.${fn}();`)
-  const args={...initial,a:created.current.id,expected_revision:created.current.revision,operation_id:randomUUID(),body:{...initial.body,status:'Concluída',result:'Resultado fictício',followup:{title:'Falha fictícia controlada',owner:'Equipe fictícia',due:f.today}}}
+  const args={...initial,a:created.current.id,expected_revision:created.current.revision,operation_id:randomUUID(),body:{...initial.body,title:'Conclusão com título revisado',status:'Concluída',result:'Resultado fictício',followup:{title:'Falha fictícia controlada',owner:'Equipe fictícia',due:f.today}}}
   const version=await checked(f.owner.client.rpc('hub_workspace_version',{w:f.workspace}))
   expect((await f.owner.client.rpc('hub_save_activity',args)).error).toBeTruthy()
   expect(await checked(f.owner.client.rpc('hub_workspace_version',{w:f.workspace}))).toBe(version)
@@ -56,6 +57,7 @@ test('Atividades: falha no acompanhamento reverte conclusão, auditoria e recibo
   expect((await checked(f.admin.from('hub_activity_audit').select('id').eq('workspace_id',f.workspace).eq('activity_id',created.current.id)))).toHaveLength(1)
   sql(`drop trigger ${fn} on public.hub_activity_audit;drop function hub_private.${fn}();`)
   const retried=await checked(f.owner.client.rpc('hub_save_activity',args));expect(retried.status).toBe('saved')
+  expect((await checked(f.owner.client.from('hub_leads').select('profile').eq('workspace_id',f.workspace).eq('id',f.prospect).single())).profile.next).toBe('Falha fictícia controlada')
   expect((await checked(f.owner.client.rpc('hub_save_activity',args))).followup_id).toBe(retried.followup_id)
   const project={...initial,operation_id:randomUUID(),body:{...initial.body,lead_id:f.lead,project_id:f.proposal,title:'Operação fictícia'}}
   expect((await f.restricted.client.rpc('hub_save_activity',project)).error?.code).toBe('42501')

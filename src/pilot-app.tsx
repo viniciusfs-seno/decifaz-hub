@@ -304,13 +304,11 @@ function SharedCrm(){
  function openLead(id:string){const item=leads.find(l=>l.id===id);if(item){setReturnPage(page);go('crm');select(item)}}
  function openProject(id:string,section='resumo'){setProjectSection(section);setReturnPage(page);go('projetos');setProjectId(id)}
  function openEntry(entry:WorkEntry){if(entry.kind==='bill'){setBillId(entry.id);go('obrigacoes')}else if(entry.kind==='contract'){setContractId(entry.id);go('contratos')}else if(entry.projectId)openProject(entry.projectId,entry.kind==='meeting'?'reunioes':entry.kind==='support'||entry.kind==='activity'?'suporte':'resumo');else openLead(entry.leadId)}
- function openProject(id:string){setReturnPage(page);go('projetos');setProjectId(id)}
  function changeActivity(entry:WorkEntry,status:string){
   const item=allActivities.find(a=>a.id===entry.id)
   if(status==='Concluída'&&item){setActivityEditor({item,initialStatus:status});return}
   void write(()=>client!.from('hub_activities').update({status}).eq('workspace_id',workspace).eq('id',entry.id).select('id').single())
  }
- function openEntry(entry:WorkEntry){if(entry.projectId)openProject(entry.projectId);else openLead(entry.leadId)}
  function openAgenda(filter:WorkFilter){go('agenda');setAgendaFilter(filter);setAgendaRequest(n=>n+1)}
  const pageLabel=page==='convites'?'Meus convites':page==='equipe'?'Administração / Equipe':sections.find(([id])=>id===page)?.[1]
  const signOut=()=>void client!.auth.signOut().then(({error})=>{if(error)setError('Não foi possível sair. Tente novamente.')})

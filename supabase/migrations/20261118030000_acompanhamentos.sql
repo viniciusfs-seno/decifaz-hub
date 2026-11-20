@@ -37,7 +37,7 @@ begin
 end $$;
 create function public.hub_save_activity(w uuid,a uuid,expected_revision bigint,operation_id uuid,body jsonb)
 returns jsonb language plpgsql security definer set search_path='' as $$
-declare task public.hub_activities; receipt hub_private.command_receipts; payload jsonb; answer jsonb; lead uuid; project uuid; assigned uuid; follow jsonb; follow_id uuid; next_assigned uuid; conclusion boolean;
+declare task public.hub_activities; receipt hub_private.command_receipts; payload jsonb; answer jsonb; lead uuid; project uuid; assigned uuid; follow jsonb; follow_id uuid; next_assigned uuid; conclusion boolean; previous_title text; previous_due date;
 begin
  if not public.hub_can(w,'commercial') then raise exception 'Acesso negado' using errcode='42501';end if;
  if operation_id is null or jsonb_typeof(body) is distinct from 'object' or length(body::text)>30000
@@ -68,6 +68,7 @@ begin
   if next_assigned is not null and not exists(select 1 from public.hub_members where workspace_id=w and user_id=next_assigned and active) then raise exception 'Responsável indisponível' using errcode='22023';end if;
  end if;
  conclusion:=body->>'status'='Concluída' and (a is null or task.status<>'Concluída');
+ previous_title:=task.title;previous_due:=task.due_on;
  if a is null then
   insert into public.hub_activities(workspace_id,lead_id,project_proposal_id,title,owner,due_on,status,result,assigned_user_id)
   values(w,lead,project,btrim(body->>'title'),body->>'owner',nullif(body->>'due','')::date,body->>'status',coalesce(body->>'result',''),assigned) returning * into task;
@@ -84,8 +85,8 @@ begin
  -- Only replace the matching commercial next action; preserve unrelated edits.
  if conclusion and public.hub_can(w,'commercial',true) then
   update public.hub_leads set profile=profile||jsonb_build_object('next',coalesce(follow->>'title',''),'owner',coalesce(follow->>'owner',profile->>'owner',''),'due',coalesce(follow->>'due',''))
-  where workspace_id=w and id=lead and profile->>'next'=task.title
-   and coalesce(profile->>'due','')=coalesce(task.due_on::text,'');
+  where workspace_id=w and id=lead and profile->>'next'=previous_title
+   and coalesce(profile->>'due','')=coalesce(previous_due::text,'');
  end if;
  answer:=jsonb_build_object('status','saved','current',to_jsonb(task),'followup_id',follow_id);
  insert into hub_private.command_receipts values(w,operation_id,auth.uid(),'activity',payload,answer);
