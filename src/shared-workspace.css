@@ -196,3 +196,6 @@
 @media(prefers-reduced-motion:reduce){.portal-disclosure>summary svg{transition:none}}
 
 .shared-app .activity-edit{white-space:normal;overflow-wrap:anywhere;text-align:left;max-width:100%}
+.contact-planner fieldset{display:grid;gap:1rem}
+.contact-planner fieldset>label:not(.field){display:flex;align-items:center;gap:.5rem}
+.contact-planner fieldset>.button{justify-self:start}
