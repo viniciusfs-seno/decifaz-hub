@@ -67,6 +67,8 @@ jobs:
         run: node scripts/registry-upgrade-validation.mjs --reset-local-fixtures
       - name: Ensaiar produtividade e recuperação com o frontend do PR 33
         run: node scripts/productivity-upgrade-validation.mjs --reset-local-fixtures
+      - name: Ensaiar busca e recuperação a partir do esquema de produtividade
+        run: node scripts/search-upgrade-validation.mjs --reset-local-fixtures
       - name: Validar transição e recuperação com versões anteriores
         run: node scripts/transition-validation.mjs --reset-local-fixtures
       - if: always()

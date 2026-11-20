@@ -372,7 +372,7 @@ function SharedCrm(){
   return true
  }
  useEffect(()=>{
-  const shortcut=(event:KeyboardEvent)=>{if(workspace&&ready&&(event.ctrlKey||event.metaKey)&&event.key.toLowerCase()==='k'&&!document.querySelector('[role="dialog"]')){event.preventDefault();setSearchOpen(true)}}
+  const shortcut=(event:KeyboardEvent)=>{if(workspace&&ready&&(event.ctrlKey||event.metaKey)&&event.key.toLowerCase()==='k'&&!document.querySelector('dialog[open],[role="dialog"]')){event.preventDefault();setSearchOpen(true)}}
   document.addEventListener('keydown',shortcut);return()=>document.removeEventListener('keydown',shortcut)
  },[workspace,ready])
  const signOut=()=>void client!.auth.signOut().then(({error})=>{if(error)setError('Não foi possível sair. Tente novamente.')})

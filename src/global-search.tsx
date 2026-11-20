@@ -19,7 +19,7 @@ export function GlobalSearch({client,workspace,close,open}:{client:SupabaseClien
   }).catch(()=>{if(current){setBusy(false);setError('Não foi possível buscar neste espaço. Tente novamente.')}})},200)
   return()=>{current=false;controller.abort();clearTimeout(timer)}
  },[client,workspace,query,retry])
- return <Dialog title="Buscar registros" subtitle="Estabelecimentos, projetos e contratos do espaço atual" onClose={close} wide><div className="dialog-body global-record-search">
+ return <Dialog title="Buscar registros" subtitle="Estabelecimentos, projetos e contratos do espaço atual" onClose={close} wide><div className="dialog-body global-record-search" onKeyDown={event=>{if(event.key==='Escape'){event.preventDefault();event.stopPropagation();close()}}}>
   <label className="field">Nome ou cidade<input ref={input} type="search" maxLength={100} value={query} onChange={e=>setQuery(e.target.value)} placeholder="Digite pelo menos dois caracteres" autoComplete="off"/></label>
   <p className="muted">Somente registros autorizados · até 20 resultados por busca. Notas internas, valores e documentos ficam fora da busca.</p>
   {busy&&<p role="status">Buscando neste espaço…</p>}
