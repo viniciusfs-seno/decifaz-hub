@@ -185,3 +185,5 @@
  .shared-app .record-table td[data-label]:before{content:attr(data-label);font-weight:500;color:var(--muted);font-size:.74rem}
 }
 @media(prefers-reduced-motion:reduce){.portal-disclosure>summary svg{transition:none}}
+
+.shared-app .activity-edit{white-space:normal;overflow-wrap:anywhere;text-align:left;max-width:100%}

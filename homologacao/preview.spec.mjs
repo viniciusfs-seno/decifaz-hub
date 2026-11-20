@@ -89,7 +89,7 @@ test('HTTPS externo: Auth, duas sessões, navegação, apresentação e autoriza
   await nav(second,'Dashboard');await openDisclosure(second,'Indicadores e funil');await expect(second.getByText('Valores financeiros são restritos',{exact:false})).toBeVisible()
   const activity=(await checked(admin.from('hub_activities').select('id,title').eq('workspace_id',f.workspace).eq('title','Confirmar prioridade da automação')))[0]
   await checked(admin.from('hub_activities').update({title:'Atualização externa em duas sessões'}).eq('id',activity.id))
-  await second.evaluate(()=>window.dispatchEvent(new Event('focus')));await expect(second.getByRole('button',{name:/Atualização externa em duas sessões/})).toBeVisible()
+  const refreshStarted=Date.now();await second.bringToFront();await second.evaluate(()=>window.dispatchEvent(new Event('focus')));await expect(second.getByRole('button',{name:/Atualização externa em duas sessões/})).toBeVisible({timeout:25000});console.log('Atualização compartilhada por HTTPS: '+(Date.now()-refreshStarted)+' ms.')
   await checked(admin.from('hub_activities').update({title:activity.title}).eq('id',activity.id))
   const member=(await checked(admin.rpc('hub_list_members',{w:f.workspace}))).find(m=>m.user_id===f.restricted)
   const disabled=await checked(admin.rpc('hub_update_member_active',{w:f.workspace,u:f.restricted,enabled:false,expected_revision:member.revision}));expect(disabled.status).toBe('saved')
@@ -262,4 +262,36 @@ test('HTTPS próxima entrega: ficha concorrente, paginação/CSV completo e hist
  const download=page.waitForEvent('download');await page.getByRole('button',{name:'Exportar CRM CSV'}).click();let csv='';for await(const c of await(await download).createReadStream())csv+=c.toString();expect(csv.replace(/^\uFEFF/,'').split('\r\n')).toHaveLength(28)
  await capture(page,'crm-paginado',info.project.name)
  await nav(page,'Indicadores');await expect(page.getByRole('heading',{name:'Histórico verificável por mês'})).toBeVisible();await expect(page.getByRole('button',{name:'Exportar histórico CSV'})).toBeEnabled();await capture(page,'historico-mensal',info.project.name)
+})
+
+test('HTTPS produtividade: CSV, abordagem e acompanhamento entre sessões',async({page,context,browser},info)=>{
+ await persona(page,'comercial')
+ const f=await(await context.request.get(origin+'/__review/fixtures')).json()
+ const label='Rotina externa fictícia '+Date.now(),follow='Retorno '+label
+ await nav(page,'Importar estabelecimentos')
+ await page.getByLabel('Arquivo CSV').setInputFiles({name:'homologacao-ficticia.csv',mimeType:'text/csv',buffer:Buffer.from('Nome;Segmento;Cidade;Site\r\n'+label+';Serviços;Fortaleza;https://example.invalid')})
+ await page.getByRole('button',{name:'Validar e mostrar prévia',exact:true}).click()
+ // The shared fictitious host can flag the previously seeded website: choose explicitly.
+ const row=page.getByRole('row').filter({hasText:'2 · '+label})
+ await row.getByRole('combobox',{name:'Ação da linha 2',exact:true}).selectOption('create')
+ await page.getByRole('button',{name:'Confirmar linhas selecionadas',exact:true}).click();await expect(row).toContainText('Criada')
+ await nav(page,'Captação e CRM');await page.getByLabel('Buscar leads').fill(label);await page.getByRole('button',{name:label,exact:true}).click()
+ await page.getByLabel(/^Resultado da abordagem/).fill('Contato fictício registrado; sem diagnóstico presumido.')
+ await page.getByLabel('Definir próxima ação').check();await page.getByLabel(/^Próxima ação planejada/).fill(label);await page.getByLabel(/^Responsável da próxima ação/).fill('Equipe fictícia');const today=new Intl.DateTimeFormat('sv-SE',{timeZone:'America/Fortaleza'}).format(new Date());await page.getByLabel(/^Prazo da próxima ação/).fill(today)
+ await page.getByRole('button',{name:'Salvar abordagem e plano',exact:true}).click();await expect(page.getByText('Abordagem registrada.',{exact:true})).toBeVisible()
+ const second=await browser.newContext({viewport:{width:1440,height:1000}})
+ try{
+  const other=await second.newPage();await other.goto('/');await other.getByLabel('Senha de revisão').fill(password);await other.getByRole('button',{name:'Entrar na homologação'}).click();await persona(other,'segunda');await nav(other,'Agenda operacional');await other.getByLabel('Buscar na agenda').fill(follow)
+  await nav(page,'Agenda operacional');await page.getByLabel('Buscar na agenda').fill(label)
+  await page.getByRole('button',{name:'Editar acompanhamento',exact:true}).click();const dialog=page.getByRole('dialog')
+  await dialog.getByRole('combobox',{name:'Conta responsável',exact:true}).selectOption(f.restricted)
+  await dialog.getByRole('combobox',{name:/Situação da atividade/}).selectOption('Concluída');await dialog.getByLabel('Resultado da atividade',{exact:true}).fill('Resultado fictício com próximo retorno.')
+  await dialog.getByLabel('Criar próximo acompanhamento nesta conclusão').check();await dialog.getByLabel(/^Título do próximo acompanhamento/).fill(follow);await dialog.getByRole('combobox',{name:'Conta do próximo responsável',exact:true}).selectOption(f.restricted);await dialog.getByLabel(/^Prazo do próximo acompanhamento/).fill(today)
+  await dialog.getByRole('button',{name:'Salvar acompanhamento',exact:true}).click();await expect(dialog).toHaveCount(0)
+  await page.getByLabel('Buscar na agenda').fill(follow);await page.getByRole('button',{name:'Minhas atividades',exact:true}).click();await expect(page.getByRole('button',{name:follow,exact:true})).toBeVisible()
+  await expect(other.getByRole('button',{name:follow,exact:true})).toBeVisible({timeout:30000})
+  expect(await page.evaluate(()=>document.documentElement.scrollWidth<=innerWidth+1)).toBe(true)
+  await capture(page,'produtividade-agenda',info.project.name)
+  await nav(page,'Central de prospecção');await page.getByLabel('Buscar na prospecção').fill(label);await expect(page.getByRole('button',{name:label,exact:true})).toBeVisible();await capture(page,'produtividade-fila',info.project.name)
+ }finally{await second.close()}
 })

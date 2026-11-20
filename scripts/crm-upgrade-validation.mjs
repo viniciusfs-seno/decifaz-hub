@@ -26,9 +26,9 @@ async function verify(ref,label){
 const evidence={candidate,baseline,phases:[],recovery:'frontend #23 com banco expandido e restrições preservadas'}
 try{
  cli(['db','reset','--local','--version','20261116050000','--no-seed','--yes']);f=await operationalFixture(env)
- const digest=()=>sql(`select md5(jsonb_build_object('members',(select jsonb_agg(to_jsonb(x) order by user_id) from public.hub_members x where workspace_id='${f.workspace}'),'leads',(select jsonb_agg(to_jsonb(x)-'revision' order by id) from public.hub_leads x where workspace_id='${f.workspace}'),'proposals',(select jsonb_agg(to_jsonb(x) order by id) from public.hub_proposals x where workspace_id='${f.workspace}'),'activities',(select jsonb_agg(to_jsonb(x) order by id) from public.hub_activities x where workspace_id='${f.workspace}'))::text);`)
+ const digest=()=>sql(`select md5(jsonb_build_object('members',(select jsonb_agg(to_jsonb(x) order by user_id) from public.hub_members x where workspace_id='${f.workspace}'),'leads',(select jsonb_agg(to_jsonb(x)-'revision' order by id) from public.hub_leads x where workspace_id='${f.workspace}'),'proposals',(select jsonb_agg(to_jsonb(x) order by id) from public.hub_proposals x where workspace_id='${f.workspace}'),'activities',(select jsonb_agg(to_jsonb(x)-'revision'-'assigned_user_id'-'result'-'completed_at' order by id) from public.hub_activities x where workspace_id='${f.workspace}'))::text);`)
  const before=digest();await verify(baseline,'base-23')
- for(const version of ['20261117010000','20261117020000','20261117030000']){
+ for(const version of files.map(f=>f.slice(0,14)).filter(v=>v>='20261117010000')){
   const phase=join(root,version),dir=join(phase,'supabase');mkdirSync(join(dir,'migrations'),{recursive:true});copyFileSync('supabase/config.toml',join(dir,'config.toml'))
   for(const file of files.filter(f=>f.slice(0,14)<=version))copyFileSync(join('supabase/migrations',file),join(dir,'migrations',file))
   const output=cli(['db','push','--local','--skip-vault','--dry-run','--yes','--workdir',phase,'--output-format','stream-json'])
@@ -36,6 +36,7 @@ try{
   if(report?.migrations?.length!==1||!report.migrations[0].startsWith(version))throw Error('Dry-run não exclusivo: '+version)
   cli(['db','push','--local','--skip-vault','--yes','--workdir',phase]);if(digest()!==before)throw Error('Registros anteriores alterados')
   await verify(baseline,'recuperacao-'+version)
+  if(version>='20261118010000')await verify('919fb67223afe1e3bbff460f0ff4ae503410c4d0','recuperacao-26-'+version)
   if((await f.restricted.client.from('hub_proposals').select('record')).error?.code!=='42501')throw Error('JSON financeiro liberado')
   evidence.phases.push({version,exclusiveDryRun:true,preserved:true,previousFrontend:true})
  }

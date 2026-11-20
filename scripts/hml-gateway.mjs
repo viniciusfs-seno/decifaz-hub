@@ -1,4 +1,4 @@
-import {createServer} from 'node:http'
+import {createServer,request as httpRequest} from 'node:http'
 import {randomBytes,timingSafeEqual} from 'node:crypto'
 import {readFile,writeFile,stat} from 'node:fs/promises'
 import {resolve,extname} from 'node:path'
@@ -19,7 +19,7 @@ export function createGateway({origin,password,root,fixture,publicKey,sha='test'
  const server=createServer(async(req,res)=>{
   res.setHeader('Cache-Control','no-store');res.setHeader('X-Content-Type-Options','nosniff');res.setHeader('X-Frame-Options','DENY');res.setHeader('Referrer-Policy','strict-origin')
   res.setHeader('Permissions-Policy','display-capture=(self),camera=(),microphone=()')
-  res.setHeader('Content-Security-Policy',"default-src 'self'; script-src 'self' 'unsafe-inline'; style-src 'self' 'unsafe-inline'; img-src 'self' data:; connect-src 'self'; object-src 'none'; base-uri 'self'; frame-ancestors 'none'")
+  res.setHeader('Content-Security-Policy',"default-src 'self'; script-src 'self' 'unsafe-inline'; style-src 'self' 'unsafe-inline'; img-src 'self' data:; connect-src 'self' "+origin.replace('https:','wss:')+"; object-src 'none'; base-uri 'self'; frame-ancestors 'none'")
   const send=(status,body,type='text/html; charset=utf-8')=>{res.statusCode=status;res.setHeader('Content-Type',type);res.end(body)}
   try{
    const url=new URL(req.url,origin),path=url.pathname
@@ -82,6 +82,24 @@ export function createGateway({origin,password,root,fixture,publicKey,sha='test'
    if(extname(file)==='.html')content=Buffer.from(content.toString().replace('<body>','<body><div style="padding:8px 16px;background:#ffeddf;color:#1f2433;font:13px system-ui">HOMOLOGAÇÃO · DADOS FICTÍCIOS · <a href="/__review">Trocar perfil</a> · candidato '+sha.slice(0,7)+'</div>'))
    return send(200,content,types[extname(file)]??'application/octet-stream')
   }catch{return send(502,'Homologação temporariamente indisponível','text/plain')}
+ })
+ server.on('upgrade',(req,socket,head)=>{
+  const token=req.headers.cookie?.split(';').map(s=>s.trim()).find(s=>s.startsWith(cookieName+'='))?.slice(cookieName.length+1),until=Math.min(expires,sessions.get(token)??0)
+  let url;try{url=new URL(req.url,origin)}catch{socket.end('HTTP/1.1 400 Bad Request\r\nConnection: close\r\n\r\n');return}
+  if(until<Date.now()||req.headers.origin!==origin||!/^\/__supabase\/realtime\/v1\/websocket\/?$/.test(url.pathname)){
+   socket.end('HTTP/1.1 401 Unauthorized\r\nConnection: close\r\n\r\n');return
+  }
+  const headers={...req.headers,host:'127.0.0.1:54321'};delete headers.cookie
+  const proxy=httpRequest(upstream+url.pathname.slice('/__supabase'.length)+url.search,{headers,method:'GET'})
+  proxy.on('upgrade',(response,upstreamSocket,upstreamHead)=>{
+   socket.write('HTTP/1.1 101 Switching Protocols\r\n'+Object.entries(response.headers).map(([k,v])=>k+': '+v).join('\r\n')+'\r\n\r\n')
+   if(upstreamHead.length)socket.write(upstreamHead);if(head.length)upstreamSocket.write(head)
+   const timer=setTimeout(()=>{socket.destroy();upstreamSocket.destroy()},until-Date.now());timer.unref()
+   socket.pipe(upstreamSocket);upstreamSocket.pipe(socket)
+   socket.on('close',()=>{clearTimeout(timer);upstreamSocket.destroy()});upstreamSocket.on('error',()=>socket.destroy());socket.on('error',()=>upstreamSocket.destroy())
+  })
+  proxy.on('response',()=>socket.end('HTTP/1.1 502 Bad Gateway\r\nConnection: close\r\n\r\n'))
+  proxy.on('error',()=>socket.destroy());socket.on('error',()=>proxy.destroy());proxy.end()
  })
  return server
 }
