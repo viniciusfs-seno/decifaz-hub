@@ -189,20 +189,20 @@ function SharedCrm(){
   setSelected('');setLoadedLead('');setInteractions([]);setTasks([]);setProjectId('');setProposalModal(undefined);setEditor(null);setMeeting(undefined);setShowForm(false)
  }
  useEffect(()=>{
-  let current=true,seenVersion:string|undefined,timer:number|undefined,inFlight=false
+  let current=true,seenVersion:string|undefined,timer:number|undefined,inFlight=false,pendingForce=false
   const refresh=async(force=false)=>{
-   if(inFlight)return;inFlight=true
+   if(inFlight){pendingForce ||= force;return}inFlight=true
    try{await refreshMemberships();if(!current||!workspace)return;const r=await client!.rpc('hub_workspace_version',{w:workspace});if(!current)return
     if(force||!r.error&&seenVersion!==String(r.data))reload(v=>v+1)
     if(!r.error)seenVersion=String(r.data)
-   }catch{/* erro visível; não encerrar Auth nem outros espaços */}finally{inFlight=false}
+   }catch{/* erro visível; não encerrar Auth nem outros espaços */}finally{inFlight=false;if(current&&pendingForce){pendingForce=false;void refresh(true)}}
   }
   const focus=()=>void refresh(true)
   const schedule=()=>{clearTimeout(timer);timer=window.setTimeout(()=>void refresh(),400)}
   const broadcast=new BroadcastChannel('decifaz-work-'+workspace);broadcast.onmessage=schedule
   const realtime=workspace?client!.channel('workspace-'+workspace).on('postgres_changes',{event:'*',schema:'public',table:'hub_leads',filter:'workspace_id=eq.'+workspace},schedule).on('postgres_changes',{event:'*',schema:'public',table:'hub_activities',filter:'workspace_id=eq.'+workspace},schedule).on('postgres_changes',{event:'*',schema:'public',table:'hub_interactions',filter:'workspace_id=eq.'+workspace},schedule).on('postgres_changes',{event:'*',schema:'public',table:'hub_triages',filter:'workspace_id=eq.'+workspace},schedule).subscribe():undefined
   window.addEventListener('focus',focus)
-  const interval=window.setInterval(()=>void refresh(),15000)
+  const interval=window.setInterval(()=>void refresh(true),15000)
   return ()=>{current=false;window.removeEventListener('focus',focus);window.clearInterval(interval);clearTimeout(timer);broadcast.close();if(realtime)void client!.removeChannel(realtime);membershipRequest.current++}
  },[workspace])
  function changed(){const channel=new BroadcastChannel('decifaz-work-'+workspace);channel.postMessage('changed');channel.close();reload(v=>v+1)}
@@ -335,8 +335,8 @@ function SharedCrm(){
 
    {page==='dashboard'&&<OperationalDashboard key={workspace} attention={<><RegistryAlerts client={client!} workspace={workspace} revision={revision} openContract={id=>{setContractId(id);go('contratos')}}/>{can(role,'finance')&&<InternalAlerts loading={internal.loading} plans={internal.data.plans} bills={internal.data.bills} open={id=>{setBillId(id);go('obrigacoes')}}/>}</>} data={commercialData} entries={entries} projects={projects} errors={moduleErrors} finance={finance} financial={can(role,'finance')} month={reportMonth} setMonth={setReportMonth} openLead={openLead} openProject={openProject} openEntry={openEntry} openAgenda={openAgenda} openFinance={()=>go('financeiro')} addLead={()=>{setReturnPage('dashboard');go('crm');select()}}/>}
    {can(role,'finance')&&internal.error&&<p role="alert">{internal.error}</p>}
-   {page==='obrigacoes'&&(can(role,'finance')?<InternalFinance key={workspace} client={client!} workspace={workspace} plans={internal.data.plans} bills={internal.data.bills} leads={commercialData.leads} contracts={contractRows} projects={projects} openBill={billId} saved={()=>reload(v=>v+1)}/>:<p role="status">Seu papel não permite consultar obrigações financeiras.</p>)}
-   {page==='contratos'&&<Contracts key={workspace} client={client!} workspace={workspace} admin={administrator} financial={can(role,'finance')} leads={commercialData.leads} proposals={proposals} projects={projects} openId={contractId} onSaved={()=>reload(v=>v+1)}/>}
+   {page==='obrigacoes'&&(can(role,'finance')?<InternalFinance revision={revision} key={workspace} client={client!} workspace={workspace} plans={internal.data.plans} bills={internal.data.bills} leads={commercialData.leads} contracts={contractRows} projects={projects} openBill={billId} saved={()=>reload(v=>v+1)}/>:<p role="status">Seu papel não permite consultar obrigações financeiras.</p>)}
+   {page==='contratos'&&<Contracts revision={revision} key={workspace} client={client!} workspace={workspace} admin={administrator} financial={can(role,'finance')} leads={commercialData.leads} proposals={proposals} projects={projects} openId={contractId} onSaved={()=>reload(v=>v+1)}/>}
    {page==='rastreabilidade'&&<RegistryTimeline key={workspace+String(can(role,'finance'))} client={client!} workspace={workspace} revision={revision}/>}
    {page==='revisao'&&<WeeklyClosure revision={revision} client={client!} workspace={workspace} admin={administrator} leads={commercialData.leads} tasks={allActivities} onSaved={()=>reload(v=>v+1)} openLead={openLead}/>}
    {page==='indicadores'&&<ManagementIndicators history={filter=><ManagementHistory client={client!} workspace={workspace} filter={filter} financial={can(role,'finance')} revision={revision}/>} data={commercialData} projects={projects} tasks={allActivities} forecasts={finance?.[0].data??[]} receipts={finance?.[1].data??[]} financial={can(role,'finance')&&!!finance} openLead={openLead} openProject={openProject}/>}
