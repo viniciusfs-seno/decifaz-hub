@@ -88,10 +88,17 @@ test('HTTPS externo: Auth, duas sessões, navegação, apresentação e autoriza
   expect((await restricted.rpc('hub_close_week',{w:f.workspace,start_on:'2026-11-09',expected_revision:0,summary_text:'Não autorizado',decision_text:'',planned:[]})).error?.code).toBe('42501')
   const otherRows=await checked(restricted.from('hub_leads').select('id').eq('workspace_id',f.other));expect(otherRows.length).toBeGreaterThan(0)
   await nav(second,'Dashboard');await openDisclosure(second,'Indicadores e funil');await expect(second.getByText('Valores financeiros são restritos',{exact:false})).toBeVisible()
-  const activity=(await checked(admin.from('hub_activities').select('id,title').eq('workspace_id',f.workspace).eq('title','Confirmar prioridade da automação')))[0]
-  await checked(admin.from('hub_activities').update({title:'Atualização externa em duas sessões'}).eq('id',activity.id))
-  const refreshStarted=Date.now();await second.bringToFront();await second.evaluate(()=>window.dispatchEvent(new Event('focus')));await expect(second.getByRole('button',{name:/Atualização externa em duas sessões/})).toBeVisible({timeout:25000});console.log('Atualização compartilhada por HTTPS: '+(Date.now()-refreshStarted)+' ms.')
-  await checked(admin.from('hub_activities').update({title:activity.title}).eq('id',activity.id))
+  // Desktop scenarios create more tasks before WebKit runs. The dashboard shows
+  // only seven priorities: prove a visible item updates, rather than expecting
+  // one fixed fixture to remain inside that bounded queue.
+  const candidates=await checked(admin.from('hub_activities').select('id,title').eq('workspace_id',f.workspace).in('status',['Pendente','Em andamento']).order('due_on').order('id'))
+  let activity
+  for(const row of candidates)if(await second.locator('.op-queue button').filter({has:second.getByText(row.title,{exact:true})}).count()){activity=row;break}
+  expect(activity,'Há uma atividade visível para conferir a atualização compartilhada').toBeTruthy()
+  try{
+   await checked(admin.from('hub_activities').update({title:'Atualização externa em duas sessões'}).eq('id',activity.id))
+   await second.bringToFront();await second.evaluate(()=>window.dispatchEvent(new Event('focus')));await expect(second.getByRole('button',{name:/Atualização externa em duas sessões/})).toBeVisible({timeout:25000})
+  }finally{await checked(admin.from('hub_activities').update({title:activity.title}).eq('id',activity.id))}
   const member=(await checked(admin.rpc('hub_list_members',{w:f.workspace}))).find(m=>m.user_id===f.restricted)
   const disabled=await checked(admin.rpc('hub_update_member_active',{w:f.workspace,u:f.restricted,enabled:false,expected_revision:member.revision}));expect(disabled.status).toBe('saved')
   try{
