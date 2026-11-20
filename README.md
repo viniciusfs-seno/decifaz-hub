@@ -2,6 +2,8 @@
 
 Portal de trabalho compartilhado da Decifaz para a rotina comercial, contratos, projetos, reuniões e obrigações internas. React, TypeScript e Vite na Vercel; Supabase Auth, PostgreSQL, RLS e Edge fornecem persistência e autorização por espaço e papéis cumulativos.
 
+Guia de operação, cobertura de auditoria, migrações e recuperação: [rotina dos sócios](docs/rotina-socios.md).
+
 ## Começar a usar
 
 1. No CRM, cadastre um estabelecimento ou importe um CSV, confira duplicidades e conclua a triagem com evidências. Registre a abordagem e planeje a próxima ação. A Agenda reúne as atividades; concluir pode criar o próximo acompanhamento na mesma transação.
