@@ -1,5 +1,7 @@
 # Obrigações da Decifaz
 
+Publicação confirmada no [PR #31](https://github.com/viniciusfs-seno/decifaz-hub/pull/31), merge `995943a21bd45816ab7b7c4f4576d9bae89c7a25`, migração `20261118001000` já aplicada. As bases e sequências abaixo registram o contexto original da entrega; não são instruções para reaplicar migrações em produção. Consulte a [rotina atual, fases e recuperação](rotina-socios.md).
+
 Depende de #30 (contratos e registro de eventos). Entrega independente da videoconferência e da pilha comercial #27–#29. Migração `20261118001000_obrigacoes_decifaz.sql`, depois de `20261118000000`.
 
 ## Rotina

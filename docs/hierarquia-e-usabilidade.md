@@ -1,5 +1,7 @@
 # Hierarquia e usabilidade do portal
 
+Publicação confirmada no [PR #33](https://github.com/viniciusfs-seno/decifaz-hub/pull/33), merge `7d1a4750cda3058f4d3d7aaf2f623472f8691ef0`. As bases e sequências abaixo registram o contexto original da entrega; não são instruções para reaplicar migrações em produção. Consulte a [rotina atual, fases e recuperação](rotina-socios.md).
+
 Base: main `da3fd8abe8da56db6fdc2482eabb015a3b45ba0f`, após a publicação da gestão de reuniões do #32. Revisão motivada pela sobrecarga da interface: esta rodada trata arquitetura da informação, sequência das tarefas, densidade e componentes, preservando contratos de API, RLS, papéis e auditoria. Não há migração ou publicação de Edge.
 
 ## Revisão dirigida
@@ -59,7 +61,7 @@ Roteiro de cinco minutos: localizar Projetos na busca lateral; abrir uma ficha e
 
 ## Próximas entregas
 
-1. Produtividade: atualizar as bases e revalidar #27 → #28 → #29 (prospecção, importação e acompanhamentos) antes de qualquer integração. A pilha está preservada, não publicada por esta entrega.
-2. Trabalho por contexto: ficha de estabelecimento em página inteira, próxima ação mais evidente e proposta em etapas; busca global exige consulta paginada/autorizada própria.
+1. Produtividade: #27 → #28 → #29 recuperados e publicados, com bases/diffs revalidados, migrações antes do frontend e preservação da hierarquia. Registros atuais na rotina dos sócios.
+2. Trabalho por contexto: ficha dedicada e proposta em etapas no #34; busca global autorizada em entrega própria. Estado efetivo e recuperação na rotina dos sócios.
 3. Reuniões: escolher ambiente/provedor de homologação e provar imagem entre dois participantes antes de anunciar transmissão. Captura local e chamada externa continuam identificadas separadamente.
 4. Qualidade contínua: revisar formulários com usuários, navegação assistiva e acessibilidade completa; esta rodada não equivale a certificação WCAG.

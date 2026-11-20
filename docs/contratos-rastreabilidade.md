@@ -1,6 +1,8 @@
 # Contratos e rastreabilidade
 
-Base independente: main após #26 (`e370a62`). #27–#29 permanecem intactos; esta prioridade não depende da prospecção. Migração `20261118000000`, anterior às migrações ainda não publicadas da pilha #27–#29, evitando inversão da ordem futura.
+Publicação confirmada no [PR #30](https://github.com/viniciusfs-seno/decifaz-hub/pull/30), merge `e5165a9aa1de253f9e372513c252e37a92c3a019`, migração `20261118000000` já aplicada. As bases e sequências abaixo registram o contexto original da entrega; não são instruções para reaplicar migrações em produção. Consulte a [rotina atual, fases e recuperação](rotina-socios.md).
+
+Contexto original — base independente: main após #26 (`e370a62`). #27–#29 permanecem intactos; esta prioridade não depende da prospecção. Migração `20261118000000`, anterior às migrações da pilha #27–#29, então ainda não publicadas, evitando inversão da ordem futura.
 
 Administração cadastra contratos existentes ou referencia uma proposta/versão e seus projetos do mesmo estabelecimento/espaço. A origem fica imutável e o snapshot da proposta é preservado. Estados de contrato, proposta e projeto são independentes: cadastrar/ativar contrato não aceita proposta, não marca Ganho e não abre projeto. Toda gravação exige confirmação, revisão e vínculo administrativo ativo; conflito devolve o registro vigente. Operação repetida pelo mesmo ator/payload é idempotente.
 
