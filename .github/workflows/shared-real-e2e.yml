@@ -28,6 +28,7 @@ jobs:
         with:
           version: 3.0.0
       - run: npm ci
+      - run: bash scripts/prepare-browser-deps.sh
       - run: npx playwright install --with-deps chromium
       - name: Diagnosticar portas locais do runner
         run: |

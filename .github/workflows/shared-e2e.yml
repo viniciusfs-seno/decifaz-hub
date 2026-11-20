@@ -27,6 +27,7 @@ jobs:
       - run: npm run check
       - run: npm test
       - run: npm run build
+      - run: bash scripts/prepare-browser-deps.sh
       - run: npx playwright install --with-deps chromium
       - run: npm run test:e2e -- shared-finance.spec.mjs central-knowledge.spec.mjs
       - name: Regressão do modo local
@@ -51,14 +52,7 @@ jobs:
           cache: npm
       - run: npm ci
       - name: Preparar rede para dependências dos navegadores
-        run: |
-          # Some EC2 mirrors stall downloading WebKit dependencies before tests start.
-          for source in /etc/apt/sources.list /etc/apt/sources.list.d/ubuntu.sources; do
-            if [ -f "$source" ]; then
-              sudo sed -i -E 's#https?://[^/]*\.ec2\.archive\.ubuntu\.com/ubuntu/?#http://archive.ubuntu.com/ubuntu/#g' "$source"
-            fi
-          done
-          printf 'Acquire::http::Timeout "30";\nAcquire::https::Timeout "30";\nAcquire::Retries "2";\n' | sudo tee /etc/apt/apt.conf.d/99-hub-network >/dev/null
+        run: bash scripts/prepare-browser-deps.sh
       - run: npx playwright install --with-deps chromium webkit
       - run: xvfb-run npx playwright test --config homologacao.config.mjs
       - uses: actions/upload-artifact@v4
