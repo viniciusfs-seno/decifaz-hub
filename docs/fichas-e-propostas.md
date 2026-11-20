@@ -4,7 +4,7 @@ Continuação da produtividade #27–#29, preservando contratos, reuniões e obr
 
 ## Ficha do estabelecimento
 
-O CRM abre uma página própria em `#estabelecimento/<id>`, com próximo passo, responsável, prazo, canais, jornada, atividades e histórico. O endereço resolve o registro no espaço autenticado pelo servidor; um identificador alheio não retorna nomes nem conteúdo. A consulta não muda automaticamente de espaço. Navegação e rascunhos são separados por espaço/permissões.
+O CRM abre uma página própria em `#estabelecimento/<id>`, com próximo passo, responsável e prazo antes dos detalhes de jornada e contato, seguidos de atividades e histórico. A ação principal fica acessível na primeira tela do celular para os cenários validados. O endereço resolve o registro no espaço autenticado pelo servidor; um identificador alheio não retorna nomes nem conteúdo. A consulta não muda automaticamente de espaço. Navegação e rascunhos são separados por espaço/permissões.
 
 Voltar restaura o recorte, página, posição e foco da lista. Abrir um projeto pela ficha e fechar volta à ficha; o retorno posterior à lista mantém o contexto original. Os dados complementares continuam em seções recolhíveis e registros antigos permanecem editáveis.
 
