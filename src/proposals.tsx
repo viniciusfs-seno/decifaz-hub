@@ -1,3 +1,4 @@
+import {ProposalSteps} from './proposal-steps'
 import {useState} from 'react'
 import {useViewState} from './view-state'
 import type {Solution} from './shared-catalog'
@@ -54,21 +55,36 @@ export function ProposalEditor({data,item,leadId='',meetingId='',save,close,open
   try{if(await save(item,{status:decision,date:when,note:evidence.trim()}))close()
   else setError('O andamento não foi salvo. Confira a versão atual, a etapa do CRM e a data do ocorrido.')}finally{setSaving(false)}
  }
- const controls=<><div className="fields">
- <label className="field"><span>Estabelecimento *</span><select value={p.leadId} required disabled={!!item} onChange={e=>set({...p,leadId:e.target.value,meetingId:''})}><option value="">Selecionar</option>{data.leads.map(l=><option value={l.id} key={l.id}>{l.name}</option>)}</select></label>
- <label className="field"><span>Diagnóstico de reunião</span><select value={p.meetingId??''} onChange={e=>setField('meetingId',e.target.value)}><option value="">Sem diagnóstico vinculado</option>{meetings.map(m=><option key={m.id} value={m.id}>{dateLabel(m.date)} · {m.summary.slice(0,65)}</option>)}</select></label>
- <Field label="Título" required value={p.title} on={v=>setField('title',v)}/><Field label="Validade" required type="date" value={p.validity} on={v=>setField('validity',v)}/>
- {canSetPrices&&<><Field label="Implantação (R$)" required type="number" min={0} step="0.01" value={amount} on={setAmount}/><Field label="Mensalidade (R$)" required type="number" min={0} step="0.01" value={monthly} on={setMonthly}/></>}
- </div>{meeting&&<div className="callout"><div><b>Diagnóstico interno · {dateLabel(meeting.date)}</b><p>{meeting.summary}</p></div></div>}
- <Choices items={[...new Set([...(catalog?catalog.filter(s=>s.active).map(s=>s.name):solutions),...p.services])]} value={p.services} on={services=>set({...p,services})}/>{catalog&&<button type="button" className="button compact" onClick={()=>set({...p,scope:[...new Set([...p.scope.split("\n"),...catalog.filter(s=>p.services.includes(s.name)).flatMap(s=>s.scope_items)])].filter(Boolean).join("\n")})}>Incluir itens do catálogo no escopo</button>}
- <Field label="Escopo e entregáveis" required type="area" value={p.scope} on={v=>setField('scope',v)}/>{canSetPrices&&<Field label="Condições, limites e dependências" type="area" value={p.terms} on={v=>setField('terms',v)}/>}</>
+ const controls=<ProposalSteps steps={[
+  {id:'scope',title:'Serviços e escopo',content:<>
+   <div className="fields"><label className="field"><span>Estabelecimento *</span><select value={p.leadId} required disabled={!!item} onChange={e=>set({...p,leadId:e.target.value,meetingId:''})}><option value="">Selecionar</option>{data.leads.map(l=><option value={l.id} key={l.id}>{l.name}</option>)}</select></label>
+   <label className="field"><span>Diagnóstico de reunião</span><select value={p.meetingId??''} onChange={e=>setField('meetingId',e.target.value)}><option value="">Sem diagnóstico vinculado</option>{meetings.map(m=><option key={m.id} value={m.id}>{dateLabel(m.date)} · {m.summary.slice(0,65)}</option>)}</select></label>
+   <Field label="Título" required value={p.title} on={v=>setField('title',v)}/></div>
+   {meeting&&<div className="callout"><div><b>Diagnóstico interno · {dateLabel(meeting.date)}</b><p>{meeting.summary}</p></div></div>}
+   <Choices items={[...new Set([...(catalog?catalog.filter(s=>s.active).map(s=>s.name):solutions),...p.services])]} value={p.services} on={services=>set({...p,services})}/>
+   {catalog&&<button type="button" className="button compact" onClick={()=>set({...p,scope:[...new Set([...p.scope.split("\n"),...catalog.filter(s=>p.services.includes(s.name)).flatMap(s=>s.scope_items)])].filter(Boolean).join("\n")})}>Incluir itens do catálogo no escopo</button>}
+   <Field label="Escopo e entregáveis" required type="area" value={p.scope} on={v=>setField('scope',v)}/>
+  </>},
+  {id:'values',title:'Valores e condições',content:<>
+   <Field label="Validade" required type="date" value={p.validity} on={v=>setField('validity',v)}/>
+   {canSetPrices?<><div className="fields"><Field label="Implantação (R$)" required type="number" min={0} step="0.01" value={amount} on={setAmount}/><Field label="Mensalidade (R$)" required type="number" min={0} step="0.01" value={monthly} on={setMonthly}/></div><Field label="Condições, limites e dependências" type="area" value={p.terms} on={v=>setField('terms',v)}/></>:<p className="muted">A definição de preços e condições é reservada à Administração. Seu escopo será salvo preservando os valores vigentes no servidor.</p>}
+   {!canSetPrices&&financial&&item&&<dl className="record-summary"><div><dt>Implantação registrada</dt><dd>{p.setup===undefined?'Não definida':money(p.setup)}</dd></div><div><dt>Mensalidade registrada</dt><dd>{p.monthly===undefined?'Não definida':money(p.monthly)}</dd></div></dl>}
+  </>},
+  {id:'review',title:'Revisão e encaminhamento',content:<>
+   <p><b>{p.title||'Título pendente'}</b> · {lead?.name||'Estabelecimento pendente'} · {revision?'Nova versão':item?'Versão '+item.version:'Rascunho inicial'}</p>
+   <p>Validade: {dateLabel(p.validity)}</p><p>{p.services.join(' · ')||'Nenhum serviço selecionado'}</p><p className="details-line">{p.scope||'Escopo pendente'}</p>
+   {financial&&<p>Implantação: {money(Number(amount))} · Mensalidade: {money(Number(monthly))}</p>}
+   {financial&&p.terms&&<p className="details-line">{p.terms}</p>}
+   <p className="muted">Salve o rascunho para registrar esta versão. O envio exige data e contexto; o aceite exige confirmação administrativa explícita e continua separado da abertura do projeto.</p>
+  </>},
+ ]}/>
  return <Dialog title={revision?'Nova revisão':item?item.title:'Nova proposta'} subtitle={item?'Versão '+item.version+' · '+item.status:lead?.name} onClose={close} wide>
  {editable?<Form onClose={close} onSave={saveDraft} error={error} label={saving?"Salvando…":"Salvar rascunho"}>{controls}</Form>:<div className="dialog-body">
  <div className="actions"><Tag>{item?.status}</Tag><Tag>v{item?.version}</Tag>{item?.sentAt&&<Tag>Envio registrado em {dateLabel(item.sentAt)}</Tag>}</div>
  <p className="muted">{lead?.name} · Validade {dateLabel(p.validity)}</p>
  {meeting&&<div className="callout"><div><b>Diagnóstico vinculado · {dateLabel(meeting.date)}</b><p>{meeting.summary}</p></div></div>}
  {financial&&<div className="lead-summary"><div><span>Implantação</span><b>{p.setup===undefined?'Restrito':money(p.setup)}</b></div><div><span>Mensalidade</span><b>{p.monthly===undefined?'Restrito':money(p.monthly)}</b></div></div>}
- <h3>Escopo</h3><p className="details-line">{p.scope}</p>{p.services.length>0&&<p>{p.services.join(' · ')}</p>}{p.terms&&<p className="details-line">{p.terms}</p>}
+ <h3>Escopo</h3><p className="details-line">{p.scope}</p>{p.services.length>0&&<p>{p.services.join(' · ')}</p>}{financial&&p.terms&&<p className="details-line">{p.terms}</p>}
  {project&&item?.status==='Aceita'&&(lead?.stage==='Ganho'||hasProject)&&<div><button className="button primary" onClick={()=>project(item)}>{hasProject?'Abrir projeto vinculado':'Abrir projeto a partir do aceite'}</button></div>}
  {!readOnly&&latest&&item?.status!=='Aceita'&&<div><button className="button" onClick={()=>{setError('');setRevision(true)}}>Criar nova versão</button></div>}
  </div>}

@@ -21,7 +21,8 @@
       "feat/hierarquia-experiencia": false,
       "feat/central-prospeccao": false,
       "feat/importacao-csv": false,
-      "feat/atividades-acompanhamentos": false
+      "feat/atividades-acompanhamentos": false,
+      "feat/fichas-propostas": false
     }
   }
 }

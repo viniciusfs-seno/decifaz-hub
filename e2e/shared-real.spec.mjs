@@ -1,3 +1,4 @@
+import {proposalStep} from './helpers/portal-ui.mjs'
 import {openDisclosure,recordTab} from './helpers/portal-ui.mjs'
 import {test,expect} from '@playwright/test'
 import {createClient} from '@supabase/supabase-js'
@@ -77,7 +78,7 @@ test('membros compartilham chamados e lançamentos financeiros com isolamento',a
  await expect(quote.getByText('Diagnóstico fictício de automação',{exact:true})).toBeVisible()
  await quote.getByLabel(/^Título/).fill('Projeto E2E')
  await quote.getByLabel('Escopo e entregáveis').fill('Escopo de teste')
- await quote.getByLabel('Implantação (R$)').fill('100')
+ await proposalStep(quote,'Valores e condições');await quote.getByLabel('Implantação (R$)').fill('100')
  await quote.getByRole('button',{name:'Salvar rascunho'}).click()
  await expect(quote).toHaveCount(0)
  await page.getByRole('button',{name:'Propostas comerciais',exact:true}).click()

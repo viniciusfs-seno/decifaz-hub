@@ -1,3 +1,4 @@
+import {proposalStep} from './helpers/portal-ui.mjs'
 import {openDisclosure,recordTab} from './helpers/portal-ui.mjs'
 import {test,expect} from '@playwright/test'
 import {createClient} from '@supabase/supabase-js'
@@ -92,7 +93,7 @@ test('Comercial e Gerencial: catálogo → triagem → reunião → proposta ver
  await quote.getByLabel('Automação consultiva E2E',{exact:true}).check()
  await quote.getByLabel('Escopo e entregáveis').fill('Escopo de teste')
  await quote.getByRole('button',{name:'Incluir itens do catálogo no escopo'}).click()
- await quote.getByLabel('Implantação (R$)').fill('100')
+ await proposalStep(quote,'Valores e condições');await quote.getByLabel('Implantação (R$)').fill('100')
  await quote.getByRole('button',{name:'Salvar rascunho'}).click()
  await expect(quote).toHaveCount(0)
  await page.getByRole('button',{name:'Propostas comerciais',exact:true}).click()

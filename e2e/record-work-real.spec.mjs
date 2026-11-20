@@ -1,0 +1,32 @@
+import {test,expect} from '@playwright/test'
+import {operationalFixture,checked} from './helpers/operational-fixture.mjs'
+import {sql} from './helpers/local-db.mjs'
+test.use({actionTimeout:15000})
+test('Ficha dedicada: rascunho entre áreas, revisão original, URL e proposta em etapas',async({page})=>{
+ test.skip(process.env.HUB_REAL_E2E!=='1','Somente Supabase local.');test.setTimeout(150000)
+ const f=await operationalFixture()
+ const nav=async name=>{const menu=page.getByRole('button',{name:'Abrir navegação',exact:true});if(await menu.isVisible())await menu.click();await page.getByRole('navigation',{name:'Navegação principal'}).getByRole('button',{name,exact:true}).click()}
+ try{
+  await page.addInitScript(s=>localStorage.setItem('sb-127-auth-token',JSON.stringify(s)),f.owner.session);await page.goto('/')
+  await nav('Captação e CRM');await page.getByLabel('Buscar leads').fill('Studio Aurora');await page.getByRole('button',{name:'Studio Aurora · fictício',exact:true}).click()
+  await expect(page).toHaveURL(new RegExp('#estabelecimento/'+f.prospect+'$'));await expect(page.getByRole('heading',{name:'Ficha do estabelecimento',exact:true})).toBeVisible()
+  await page.getByText('Editar dados do estabelecimento',{exact:true}).click();await page.getByLabel('Nome',{exact:true}).fill('Rascunho fictício de pesquisa')
+  await page.getByLabel(/^Resultado da abordagem/).fill('Rascunho fictício ainda não registrado')
+  await nav('Agenda operacional');await nav('Captação e CRM');await expect(page.getByLabel('Buscar leads')).toHaveValue('Studio Aurora');await page.getByRole('button',{name:'Studio Aurora · fictício',exact:true}).click()
+  await page.getByText('Editar dados do estabelecimento',{exact:true}).click();await expect(page.getByLabel('Nome',{exact:true})).toHaveValue('Rascunho fictício de pesquisa');await expect(page.getByLabel(/^Resultado da abordagem/)).toHaveValue('Rascunho fictício ainda não registrado')
+  const actual=await checked(f.second.client.from('hub_leads').select('revision').eq('workspace_id',f.workspace).eq('id',f.prospect).single())
+  await checked(f.second.client.rpc('hub_save_lead',{w:f.workspace,l:f.prospect,expected_revision:actual.revision,body:{name:'Nome conferido na segunda sessão'}}))
+  await page.getByRole('button',{name:'Salvar estabelecimento',exact:true}).click();await expect(page.getByRole('alert')).toContainText('Outra sessão alterou a ficha');await expect(page.getByLabel('Nome',{exact:true})).toHaveValue('Nome conferido na segunda sessão')
+  await nav('Dashboard');await page.goto('/#estabelecimento/'+f.prospect);await expect(page.getByRole('heading',{name:'Jornada comercial de Nome conferido na segunda sessão',exact:true})).toBeVisible()
+  await page.getByRole('button',{name:'Nova proposta',exact:true}).click()
+  const d=page.getByRole('dialog'),steps=d.getByRole('navigation',{name:'Etapas da proposta'})
+  await d.getByLabel('Título',{exact:false}).fill('Proposta fictícia em etapas');await d.getByLabel(/^Escopo e entregáveis/).fill('Entrega fictícia preservada na versão')
+  await steps.getByRole('button',{name:/Valores e condições/}).click();await d.getByLabel(/^Validade/).fill('');await steps.getByRole('button',{name:/Revisão e encaminhamento/}).click();await d.getByRole('button',{name:'Salvar rascunho',exact:true}).click()
+  await expect(steps.getByRole('button',{name:/Valores e condições/})).toHaveAttribute('aria-current','step');await expect(d.getByLabel(/^Validade/)).toBeFocused();await expect(d.getByRole('alert')).toContainText('primeira pendência')
+  await d.getByLabel(/^Validade/).fill(f.today);await d.getByLabel(/^Implantação/).fill('350');await d.getByLabel(/^Mensalidade/).fill('70');await steps.getByRole('button',{name:/Revisão e encaminhamento/}).click();await expect(d).toContainText('R$ 350,00');await d.getByRole('button',{name:'Salvar rascunho',exact:true}).click();await expect(d).toHaveCount(0)
+  const row=await checked(f.owner.client.from('hub_proposals_visible').select('record,version').eq('workspace_id',f.workspace).eq('record->>title','Proposta fictícia em etapas').single());expect(row.version).toBe(1);expect(row.record.scope).toBe('Entrega fictícia preservada na versão')
+  const restricted=await checked(f.restricted.client.from('hub_proposals_visible').select('record').eq('workspace_id',f.workspace));for(const item of restricted)for(const key of ['setup','monthly','terms'])expect(item.record).not.toHaveProperty(key)
+  await page.setViewportSize({width:390,height:844});await page.getByRole('button',{name:'Ativar tema escuro',exact:true}).click();expect(await page.evaluate(()=>document.documentElement.scrollWidth<=innerWidth+1)).toBe(true)
+  await nav('Captação e CRM');await page.getByLabel('Buscar leads').fill('Café Horizonte');await page.getByRole('button',{name:'Café Horizonte · fictício',exact:true}).click();await page.getByRole('button',{name:/^Projeto · Em andamento/}).click();await page.getByRole('dialog').getByRole('button',{name:'Fechar',exact:true}).click();await expect(page.getByRole('heading',{name:'Jornada comercial de Café Horizonte · fictício',exact:true})).toBeVisible();await page.getByRole('button',{name:'← Voltar à lista',exact:true}).click();await expect(page.getByLabel('Buscar leads')).toHaveValue('Café Horizonte');await expect(page.locator('[data-crm-lead="'+f.lead+'"]')).toBeFocused()
+ }finally{sql(`delete from public.hub_activity_audit where workspace_id='${f.workspace}';delete from public.hub_lead_audit where workspace_id='${f.workspace}';delete from public.hub_activity_events where workspace_id='${f.workspace}';delete from public.hub_registry_events where workspace_id='${f.workspace}';`);await f.cleanup()}
+})

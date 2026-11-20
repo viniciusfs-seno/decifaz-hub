@@ -1,3 +1,4 @@
+import {proposalStep} from '../e2e/helpers/portal-ui.mjs'
 import {openDisclosure,recordTab} from '../e2e/helpers/portal-ui.mjs'
 import {test,expect} from '@playwright/test'
 import {createClient} from '@supabase/supabase-js'
@@ -172,7 +173,7 @@ test('HTTPS externo: jornada comercial completa persistida até fechamento',asyn
  await quote.getByLabel(solutionTitle,{exact:true}).check()
  await quote.getByLabel('Escopo e entregáveis').fill('Escopo de teste')
  await quote.getByRole('button',{name:'Incluir itens do catálogo no escopo'}).click()
- await quote.getByLabel('Implantação (R$)').fill('100')
+ await proposalStep(quote,'Valores e condições');await quote.getByLabel('Implantação (R$)').fill('100')
  await quote.getByRole('button',{name:'Salvar rascunho'}).click()
  await expect(quote).toHaveCount(0)
  await page.getByRole('button',{name:'Propostas comerciais',exact:true}).click()

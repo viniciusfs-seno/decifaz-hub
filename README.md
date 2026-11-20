@@ -86,3 +86,5 @@ Próxima entrega em revisão: [ficha compartilhada e auditoria](docs/ficha-compa
 As entregas partem da main após #26 e são independentes da pilha #27–#29, que continua disponível para revisão. A prévia usa somente contas/documentos fictícios. Verifique em cada PR o SHA, os checks e o estado efetivo de publicação.
 
 [Central de Prospecção e planejamento de abordagem](docs/prospeccao.md).
+
+[Ficha dedicada, rascunhos de sessão e proposta em etapas](docs/fichas-e-propostas.md).
