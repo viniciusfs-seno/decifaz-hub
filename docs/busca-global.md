@@ -20,7 +20,7 @@ Recuperar o frontend anterior mantendo a RPC e todas as políticas, views, revis
 
 Dashboard e Agenda apresentam vencimentos e permitem abrir a origem. Ocorrências são geradas ao consultar o financeiro, até o horizonte documentado de 366 dias. Avisos são internos, ao abrir o portal; não há disparo externo ou execução agendada com o portal fechado. Consulte `obrigacoes-decifaz.md` para as regras de fim de mês, pausa, cancelamento e baixa.
 
-A rastreabilidade de contratos, projetos, reuniões, obrigações, ocorrências, pagamentos e anexos é registrada no servidor com ator e data desde as respectivas migrações de 18/11/2026. Não há reconstrução anterior, auditoria de leitura/download ou de ações feitas no fornecedor externo. CRM, atividades e papéis mantêm auditorias próprias. Eventos financeiros continuam restritos. Recuperação preserva os registros e permissões.
+A rastreabilidade de contratos, projetos, reuniões, obrigações, ocorrências, pagamentos e anexos é registrada no servidor com ator e data desde a publicação das respectivas migrações, identificadas pela série 20261118. Não há reconstrução anterior, auditoria de leitura/download ou de ações feitas no fornecedor externo. CRM, atividades e papéis mantêm auditorias próprias. Eventos financeiros continuam restritos. Recuperação preserva os registros e permissões.
 
 ## Validação
 

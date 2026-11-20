@@ -24,7 +24,7 @@ Contratos, projetos, reuniões vinculadas, obrigações, ocorrências, pagamento
 
 ## Publicações e recuperação
 
-| Entrega | Merge confirmado | Migração |
+| Entrega | Merge ou registro da publicação | Migração |
 | --- | --- | --- |
 | #30 Contratos e rastreabilidade | `e5165a9aa1de253f9e372513c252e37a92c3a019` | `20261118000000` |
 | #31 Obrigações e assinaturas | `995943a21bd45816ab7b7c4f4576d9bae89c7a25` | `20261118001000` |
@@ -34,7 +34,7 @@ Contratos, projetos, reuniões vinculadas, obrigações, ocorrências, pagamento
 | #28 Importação CSV | `8644631bf9ac4f28b1e6fb8601f8a706e3bc9d56` | `20261118020000` |
 | #29 Atividades e atualização | `8ea6ba9d2d9c64175773bbf37189d53f92246ad7` | `20261118030000` |
 | #34 Ficha e proposta em etapas | Conferir estado/SHA final no PR | Somente frontend |
-| Busca global | Candidato em validação, estado efetivo no PR | `20261120000000` antes do frontend |
+| Busca global | SHA e deployment efetivos na descrição do PR | `20261120000000` antes do frontend |
 
 Para cada fase: atualizar a base, conferir diff, revisar alterações e checks do SHA candidato, consultar histórico remoto e executar dry-run que contenha somente a migração pendente. Aplicar e verificar antes de integrar o frontend. Conferir preservação dos registros/vínculos, RLS, grants, views, RPCs, auditoria, Vercel READY e SHA no domínio principal. Não reaplicar migrações já publicadas. Banco e Edge de produção não são usados para fixtures.
 
