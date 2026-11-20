@@ -33,7 +33,7 @@ Contratos, projetos, reuniões vinculadas, obrigações, ocorrências, pagamento
 | #27 Prospecção | `d39afa259a9ff3f84c5579bd8fc3eb587a2710af` | `20261118010000` |
 | #28 Importação CSV | `8644631bf9ac4f28b1e6fb8601f8a706e3bc9d56` | `20261118020000` |
 | #29 Atividades e atualização | `8ea6ba9d2d9c64175773bbf37189d53f92246ad7` | `20261118030000` |
-| #34 Ficha e proposta em etapas | Conferir estado/SHA final no PR | Somente frontend |
+| #34 Ficha e proposta em etapas | `95c57a22f17f66a5457a23982675eef122e12aba` | Somente frontend |
 | Busca global | SHA e deployment efetivos na descrição do PR | `20261120000000` antes do frontend |
 
 Para cada fase: atualizar a base, conferir diff, revisar alterações e checks do SHA candidato, consultar histórico remoto e executar dry-run que contenha somente a migração pendente. Aplicar e verificar antes de integrar o frontend. Conferir preservação dos registros/vínculos, RLS, grants, views, RPCs, auditoria, Vercel READY e SHA no domínio principal. Não reaplicar migrações já publicadas. Banco e Edge de produção não são usados para fixtures.
@@ -41,3 +41,5 @@ Para cada fase: atualizar a base, conferir diff, revisar alterações e checks d
 O #34 não requer banco/Edge; recuperação usa o frontend de #29. Busca global adiciona somente uma RPC de metadados: validar o frontend anterior durante a expansão e recuperação; depois publicar o frontend e conferir o domínio. Após a busca, recuperação usa o frontend do #34 mantendo a função adicionada. Em todas as fases, preservar documentos, eventos, revisões, vínculos, papéis, ocorrências e as revogações dos JSONs brutos. Nunca reabrir grants ou apagar registros como recuperação de interface.
 
 Checks, capturas, candidato final, merge e deployment efetivos são registrados na descrição de cada PR. O guia de [busca global](busca-global.md) mapeia os cenários automatizados da jornada; as regressões rodam com contas/documentos fictícios, incluindo sessão anterior à desativação, papéis restritos, isolamento, concorrência e falhas transacionais.
+
+Artefato de recuperação do frontend após a busca: #34, SHA `95c57a22f17f66a5457a23982675eef122e12aba`, deployment `dpl_3qHUyX1rhD1pn6PxXTbPoqNB5h4n`. Verificado READY no domínio principal após os [checks de interface/HTTPS](https://github.com/viniciusfs-seno/decifaz-hub/actions/runs/44789956682) e [Supabase/recuperação](https://github.com/viniciusfs-seno/decifaz-hub/actions/runs/44789956742) do candidato `0c4e8d8e8d9b49acbee26eea80046313a2f17c97`. O deployment ativo posterior deve ser conferido na descrição do PR da busca; esse identificador registra a versão anterior para recuperação.
