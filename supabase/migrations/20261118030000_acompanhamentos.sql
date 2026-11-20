@@ -69,6 +69,9 @@ begin
  end if;
  conclusion:=body->>'status'='Concluída' and (a is null or task.status<>'Concluída');
  previous_title:=task.title;previous_due:=task.due_on;
+ -- Contact planning/lead edits lock the lead before touching the shared clock.
+ -- Use the same order before activity/interactions triggers acquire that clock.
+ perform 1 from public.hub_leads where workspace_id=w and id=lead for update;
  if a is null then
   insert into public.hub_activities(workspace_id,lead_id,project_proposal_id,title,owner,due_on,status,result,assigned_user_id)
   values(w,lead,project,btrim(body->>'title'),body->>'owner',nullif(body->>'due','')::date,body->>'status',coalesce(body->>'result',''),assigned) returning * into task;
