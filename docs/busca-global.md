@@ -25,3 +25,19 @@ A rastreabilidade de contratos, projetos, reuniões, obrigações, ocorrências,
 ## Validação
 
 `npm run check`, `npm test`, builds demo/compartilhado, regressões SQL e Playwright local/externo. Cenários de busca em `e2e/global-search-real.spec.mjs`: projeção, limite, empate estável, acentos, termo literal, falha recuperável, teclado, origem correta, isolamento e JWT desativado. SHA, resultados efetivos e links finais ficam no PR; nenhuma publicação deve se basear em checks de uma base anterior.
+
+## Cobertura da rotina dos sócios
+
+| Rotina com dados fictícios | Evidência automatizada |
+| --- | --- |
+| CSV, possível duplicidade, retomada, triagem, abordagem, atividade e próximo acompanhamento | import-real, productivity-real, prospecting-real, activity-work-real |
+| Duas sessões editam ficha e concluem atividade sem impasse | activity-clock-real, lead-details-real |
+| Catálogo, reunião, diagnóstico, proposta versionada, aceite administrativo, Ganho, projeto e pós-venda | commercial-management-real, shared-real |
+| Contrato existente ou derivado, PDF privado, revisão concorrente, ator e negação a admin de outro espaço | contracts-real, homologacao/registry |
+| Domínio anual, assinatura mensal, competências, fim de mês, pagamento e auditoria | internal-finance-real, homologacao/registry |
+| Reunião do projeto/contrato, ata, decisões e acompanhamento atômico | project-meetings-real, homologacao/registry |
+| Lista desatualizada, rascunho, URL, retorno e foco, proposta em etapas | record-work-real |
+| Busca, recusa, projeção sem preços, respostas antigas, cancelamento e troca de espaço | global-search-real, homologacao/search |
+| JSONs financeiros, sessão desativada, outro espaço e perda de acesso | roles-real, member-state-real, homologacao/preview |
+
+São cenários complementares de navegador e API no ambiente isolado; não são ensaios sobre contas reais. Captura local e integração com chamada externa têm essa cobertura específica, sem alegação de transmissão nativa entre participantes. Os checks do candidato final e os artefatos de captura estão no PR.
