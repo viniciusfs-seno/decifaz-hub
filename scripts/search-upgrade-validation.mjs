@@ -14,7 +14,12 @@ const values=Object.fromEntries(cli(['status','-o','env']).split(/\r?\n/).flatMa
 if(values.API_URL!=='http://127.0.0.1:54321')throw Error('Recusa ambiente remoto')
 const env={VITE_SUPABASE_URL:values.API_URL,VITE_SUPABASE_PUBLISHABLE_KEY:values.PUBLISHABLE_KEY,HUB_TEST_ADMIN_KEY:values.SECRET_KEY||values.SERVICE_ROLE_KEY}
 Object.assign(process.env,{VITE_HUB_MODE:'shared',VITE_SUPABASE_URL:env.VITE_SUPABASE_URL,VITE_SUPABASE_PUBLISHABLE_KEY:env.VITE_SUPABASE_PUBLISHABLE_KEY})
-const candidate=run('git',['rev-parse','HEAD']).trim(),baseline=run('git',['merge-base','HEAD','origin/main']).trim(),version='20261120000000',root=resolve('.validation/search-upgrade-'+randomUUID())
+const candidate=run('git',['rev-parse','HEAD']).trim(),version='20261120000000'
+// Depois do merge, merge-base HEAD origin/main é o próprio candidato. O ensaio
+// anterior à expansão precisa continuar usando o frontend sem a RPC de busca.
+const introduction=run('git',['log','-1','--format=%H','--diff-filter=A','HEAD','--','supabase/migrations/20261120000000_busca_global.sql']).trim()
+if(!introduction)throw Error('Histórico da migração de busca indisponível; faça checkout com histórico completo')
+const baseline=run('git',['rev-parse',introduction+'^1']).trim(),root=resolve('.validation/search-upgrade-'+randomUUID())
 mkdirSync(root,{recursive:true});const browser=await chromium.launch();let f
 async function frontend(ref,label){
  const source=join(root,label);mkdirSync(source,{recursive:true});const archive=spawnSync('git',['archive',ref,'src','public','index.html','package.json','tsconfig.json'],{maxBuffer:30*1024*1024});if(archive.status!==0)throw Error('Snapshot indisponível')
