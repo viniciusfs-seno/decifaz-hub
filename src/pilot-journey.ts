@@ -52,9 +52,9 @@ export function saveMeeting(client:SupabaseClient, workspace:string, meeting:Mee
 type ProposalRow = {id:string; lead_id:string; series_id:string; version:number; meeting_id:string|null; status:string;
  record:Omit<Proposal,'id'|'leadId'|'seriesId'|'version'|'meetingId'|'status'>}
 
-export async function loadProposals(client:SupabaseClient, workspace:string) {
- const {data,error}=await allRows(client.from('hub_proposals_visible').select('id,lead_id,series_id,version,meeting_id,status,record')
-  .eq('workspace_id',workspace).order('version',{ascending:false}).order('id').returns<ProposalRow[]>())
+export async function loadProposals(client:SupabaseClient, workspace:string, series?:string) {
+ const query=client.from('hub_proposals_visible').select('id,lead_id,series_id,version,meeting_id,status,record').eq('workspace_id',workspace)
+ const {data,error}=await allRows((series?query.eq('series_id',series):query).order('version',{ascending:false}).order('id').returns<ProposalRow[]>())
  return {error,data:data?.map((row):Proposal=>({...row.record,id:row.id,leadId:row.lead_id,seriesId:row.series_id,
   version:row.version,meetingId:row.meeting_id??undefined,status:row.status}))}
 }

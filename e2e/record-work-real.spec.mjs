@@ -1,8 +1,26 @@
 import {test,expect} from '@playwright/test'
 import {operationalFixture,checked} from './helpers/operational-fixture.mjs'
 import {mkdir} from 'node:fs/promises'
+import {randomUUID} from 'node:crypto'
 import {sql} from './helpers/local-db.mjs'
 test.use({actionTimeout:15000})
+
+test('Proposta: abrir uma linha desatualizada consulta a versão atual e preserva o histórico',async({page})=>{
+ test.skip(process.env.HUB_REAL_E2E!=='1','Somente Supabase local.');test.setTimeout(60000)
+ const f=await operationalFixture(),series=randomUUID(),v2=randomUUID(),body={title:'Versão atual fictícia',scope:'Escopo anterior',services:[],validity:f.today,setup:100,monthly:10,terms:'Condição fictícia'}
+ try{
+  const save=(id,version,scope)=>f.second.client.rpc('hub_save_proposal',{w:f.workspace,l:f.prospect,p:id,s:series,v:version,m:null,body:{...body,scope},decision:null,occurred:null,evidence:null})
+  await checked(save(series,1,'Escopo anterior'))
+  const previous=await checked(f.owner.client.from('hub_proposals_visible').select('id,lead_id,series_id,version,meeting_id,status,record').eq('workspace_id',f.workspace))
+  await page.route('**/rest/v1/hub_proposals_visible?*',async route=>{if(!new URL(route.request().url()).searchParams.has('series_id'))await route.fulfill({status:200,json:previous});else await route.continue()})
+  await page.addInitScript(s=>localStorage.setItem('sb-127-auth-token',JSON.stringify(s)),f.owner.session);await page.goto('/');await page.getByRole('navigation').getByRole('button',{name:'Propostas comerciais',exact:true}).click()
+  const button=page.getByRole('button',{name:body.title,exact:true});await expect(page.getByRole('row').filter({has:button})).toContainText('v1 · Atual')
+  await checked(save(v2,2,'Escopo da versão mais recente'))
+  await button.click();const dialog=page.getByRole('dialog');await expect(dialog).toContainText('Versão 2 · Rascunho');await expect(dialog.getByLabel(/^Escopo e entregáveis/)).toHaveValue('Escopo da versão mais recente');await expect(dialog.getByLabel(/^Nova situação/)).toBeVisible()
+  await dialog.getByRole('button',{name:'v1 · Substituída',exact:true}).click();await expect(dialog).toContainText('Versão 1 · Substituída');await expect(dialog.getByRole('paragraph').filter({hasText:'Escopo anterior'})).toBeVisible();await expect(dialog.getByLabel(/^Nova situação/)).toHaveCount(0)
+  await dialog.getByRole('button',{name:'Fechar',exact:true}).click();await expect(button).toBeFocused()
+ }finally{sql(`delete from public.hub_activity_audit where workspace_id='${f.workspace}';delete from public.hub_lead_audit where workspace_id='${f.workspace}';delete from public.hub_activity_events where workspace_id='${f.workspace}';delete from public.hub_registry_events where workspace_id='${f.workspace}';`);await f.cleanup()}
+})
 test('Ficha dedicada: rascunho entre áreas, revisão original, URL e proposta em etapas',async({page})=>{
  test.skip(process.env.HUB_REAL_E2E!=='1','Somente Supabase local.');test.setTimeout(150000)
  const f=await operationalFixture()

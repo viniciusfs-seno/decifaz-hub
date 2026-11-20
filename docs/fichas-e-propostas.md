@@ -14,6 +14,8 @@ Rascunhos do cadastro e da abordagem vivem somente na memória da aba enquanto o
 
 O rascunho separa Serviços e escopo, Valores e condições, Revisão e encaminhamento. Todas as seções continuam montadas para preservar valores ao alternar etapas. Uma tentativa de salvar revela a primeira seção inválida, posiciona o foco e apresenta feedback; não se ignora validação por estar em uma etapa oculta.
 
+Abrir uma linha da lista consulta a série novamente na view autorizada antes de mostrar a versão atual. Isso evita abrir uma versão substituída quando outra sessão acabou de salvar uma revisão. O histórico continua permitindo consultar uma versão específica. Respostas antigas da carga geral não sobrescrevem essa consulta; a linha usa identidade estável por série para preservar o foco ao fechar.
+
 Somente Administração define preços; Comercial salva escopo preservando preços vigentes no servidor. Consulta financeira exige papel autorizado. Versões, snapshots, aceite explícito administrativo, Ganho e abertura do projeto mantêm os contratos e transações existentes. Nenhum envio a cliente ocorre pelo botão de salvar rascunho; registrar envio exige data/contexto. A visão do cliente continua selecionada separadamente, sem notas internas automáticas.
 
 ## Testes e publicação

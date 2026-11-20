@@ -124,7 +124,9 @@ function SharedCrm(){
   document.documentElement.dataset.theme=dark?'dark':'light'
   try{localStorage.setItem('decifaz-theme',dark?'dark':'light')}catch{/* tema em memória */}
  },[dark])
+ const proposalOpenRequest=useRef(0),proposalRead=useRef(0)
  function go(next:Section){
+  proposalOpenRequest.current++
   if(next!=='ficha'&&location.hash.startsWith('#estabelecimento/'))history.pushState(null,'',location.pathname+location.search)
   setNavQuery('')
   setPage(next)
@@ -187,6 +189,7 @@ function SharedCrm(){
  const [billId,setBillId]=useState(''),[contractRows,setContractRows]=useState<Contract[]>([])
  useEffect(()=>{let live=true;setContractRows([]);if(workspace)void allRows(client!.from('hub_contracts').select('*').eq('workspace_id',workspace).order('id')).then(r=>{if(live&&!r.error)setContractRows(r.data as Contract[]??[])});return()=>{live=false}},[workspace,revision])
  function clearWorkspaceData(){
+  proposalOpenRequest.current++;proposalRead.current++
   setNavQuery('')
   setActivityEditor(undefined)
   setLeads([]);setTriages([]);setFinance(undefined);setProjects([]);setProposals([]);setProposalMeetings([]);setMeetings([]);setAllActivities([]);setCatalog([]);loadedWorkspace.current=''
@@ -225,6 +228,7 @@ function SharedCrm(){
  useEffect(()=>{
   if(!workspace)return
   let current=true
+  const proposalLoad=++proposalRead.current
   const leadsQuery=client!.from('hub_leads').select(leadColumns).eq('workspace_id',workspace).order('name').returns<Lead[]>()
   const triagesQuery=client!.from('hub_triages').select('lead_id,record,scores,completed').eq('workspace_id',workspace).returns<TriageRow[]>()
   if(loadedWorkspace.current!==workspace)setReady(false)
@@ -242,7 +246,7 @@ function SharedCrm(){
    }
    setLeads(result<{data:Lead[]}>(0,'CRM')?.data??[])
    setTriages(result<{data:TriageRow[]}>(1,'Triagem')?.data??[])
-   setProposals(result<{data:Proposal[]}>(2,'Propostas')?.data??[])
+   if(proposalLoad===proposalRead.current)setProposals(result<{data:Proposal[]}>(2,'Propostas')?.data??[])
    setProposalMeetings(result<{data:Meeting[]}>(3,'Reuniões')?.data??[])
    setProjects(result<{data:SharedProject[]}>(4,'Projetos')?.data??[])
    setAllActivities(result<{data:SharedActivity[]}>(6,'Agenda')?.data??[])
@@ -336,6 +340,17 @@ function SharedCrm(){
   return()=>{live=false;window.removeEventListener('popstate',restoreRecord)}
  },[ready,workspace])
  useEffect(()=>{if(page!=='ficha')return;const frame=requestAnimationFrame(()=>document.querySelector<HTMLElement>('.dossier-context h1')?.focus());return()=>cancelAnimationFrame(frame)},[page,selected])
+ async function openCurrentProposal(id:string){
+  const selected=proposals.find(p=>p.id===id);if(!selected)return
+  proposalRead.current++
+  const request=++proposalOpenRequest.current,series=selected.seriesId??selected.id
+  setNotice('Consultando a versão atual da proposta…')
+  try{const result=await loadProposals(client!,workspace,series)
+   if(request!==proposalOpenRequest.current)return
+   if(result.error||!result.data?.length){setError('Não foi possível abrir a versão atual. Atualize a lista e tente novamente.');return}
+   setProposals(rows=>[...rows.filter(p=>(p.seriesId??p.id)!==series),...result.data!]);setProposalModal({id:result.data[0].id});setNotice('')
+  }catch{if(request===proposalOpenRequest.current)setError('Não foi possível abrir a proposta. Atualize a lista e tente novamente.')}
+ }
  const signOut=()=>void client!.auth.signOut().then(({error})=>{if(error)setError('Não foi possível sair. Tente novamente.')})
  return <div className="app shared-app">
   {menu&&<button className="mobile-scrim" aria-label="Fechar navegação" onClick={()=>setMenu(false)}/>}
@@ -377,7 +392,7 @@ function SharedCrm(){
    {page==='financeiro'&&can(role,'finance')&&finance&&<SharedFinance key={workspace} client={client!} workspace={workspace} projects={projects} forecasts={finance[0].data??[]} receipts={finance[1].data??[]} expenses={finance[2].data??[]} month={reportMonth} setMonth={setReportMonth} audit={finance[3].data??[]} busy={busy} write={write}/>}
    {(page==='agenda'||page==='reunioes')&&<OperationalAgenda key={workspace+page} request={agendaRequest} entries={entries} leads={commercialData.leads} initial={page==='reunioes'?{kind:'meeting',state:'all'}:agendaFilter} title={page==='reunioes'?'Reuniões e diagnósticos':'Agenda operacional'} activities={page==='agenda'?{user:currentUser,edit:id=>setActivityEditor({item:allActivities.find(a=>a.id===id)}),add:can(role,'commercial',true)?()=>setActivityEditor({}):undefined}:undefined} open={openEntry} busy={busy} canChange={entry=>can(role,entry.projectId?'projects':'commercial',true)} change={changeActivity}/>}
    {page==='projetos'&&<SharedProjects projects={projects} leads={commercialData.leads} open={id=>{setProjectSection('resumo');setProjectReturn('projetos');setProjectId(id)}}/>}
-   {page==='propostas'&&<Proposals data={commercialData} add={()=>setProposalModal({})} open={id=>setProposalModal({id})}/>}
+   {page==='propostas'&&<Proposals data={commercialData} add={()=>setProposalModal({})} open={id=>void openCurrentProposal(id)}/>}
    {(page==='crm'||page==='triagem')&&!showForm&&<SharedCrmList key={workspace+page} client={client!} workspace={workspace} revision={revision} data={commercialData} triage={page==='triagem'} open={item=>{setReturnPage(page);setLeads(rows=>[...rows.filter(l=>l.id!==item.id),item]);select(item)}} add={()=>{setReturnPage(page);select()}} start={item=>{setReturnPage(page);setLeads(rows=>[...rows.filter(l=>l.id!==item.id),item]);select(item);setEditor('triage')}}/>}
    {page==='ficha'&&showForm&&<>
     <div className="dossier-context"><h1 tabIndex={-1}>Ficha do estabelecimento</h1><button className="button" onClick={()=>{setShowForm(false);setSelected('');setEditor(null);go(returnPage)}}>← Voltar {returnPage==='agenda'?'à agenda':returnPage==='indicadores'?'aos indicadores':returnPage==='central'?'à Central comercial':returnPage==='reunioes'?'às reuniões':returnPage==='triagem'?'à triagem':returnPage==='dashboard'?'ao Dashboard':'à lista'}</button><span>{lead?.name??'Novo estabelecimento'} · {lead?.stage??'Cadastro'}</span></div>
