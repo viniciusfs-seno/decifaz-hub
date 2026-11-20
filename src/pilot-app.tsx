@@ -127,6 +127,7 @@ function SharedCrm(){
  const proposalOpenRequest=useRef(0),proposalRead=useRef(0)
  function go(next:Section){
   proposalOpenRequest.current++
+  setNotice(message=>message==='Consultando a versão atual da proposta…'?'':message)
   if(next!=='ficha'&&location.hash.startsWith('#estabelecimento/'))history.pushState(null,'',location.pathname+location.search)
   setNavQuery('')
   setPage(next)
@@ -344,12 +345,13 @@ function SharedCrm(){
   const selected=proposals.find(p=>p.id===id);if(!selected)return
   proposalRead.current++
   const request=++proposalOpenRequest.current,series=selected.seriesId??selected.id
-  setNotice('Consultando a versão atual da proposta…')
+  setError('');setNotice('Consultando a versão atual da proposta…')
   try{const result=await loadProposals(client!,workspace,series)
    if(request!==proposalOpenRequest.current)return
+   setNotice('')
    if(result.error||!result.data?.length){setError('Não foi possível abrir a versão atual. Atualize a lista e tente novamente.');return}
    setProposals(rows=>[...rows.filter(p=>(p.seriesId??p.id)!==series),...result.data!]);setProposalModal({id:result.data[0].id});setNotice('')
-  }catch{if(request===proposalOpenRequest.current)setError('Não foi possível abrir a proposta. Atualize a lista e tente novamente.')}
+  }catch{if(request===proposalOpenRequest.current){setNotice('');setError('Não foi possível abrir a proposta. Atualize a lista e tente novamente.')}}
  }
  const signOut=()=>void client!.auth.signOut().then(({error})=>{if(error)setError('Não foi possível sair. Tente novamente.')})
  return <div className="app shared-app">
@@ -401,7 +403,7 @@ function SharedCrm(){
     </details>
    {lead&&<section className="card panel">
     <div className="op-dossier-head"><div><h2>Jornada comercial de {lead.name}</h2><p>{lead.segment||'Segmento não informado'} · {lead.city||'Cidade não informada'}</p></div><div className="actions"><span className="tag">{lead.stage}</span><Priority triage={selectedTriage&&fullTriage(selectedTriage)}/></div></div>
-    <section className="next-action-card" aria-label="Próxima ação do estabelecimento"><h3>Próxima ação</h3><strong>{lead.next||'Defina a próxima ação'}</strong><p>{lead.owner||'Sem responsável'} · {lead.due?dateLabel(lead.due):'Sem prazo registrado'}</p><button className="button compact" onClick={()=>document.querySelector<HTMLElement>('.contact-planner textarea')?.focus()}>Registrar abordagem ou planejar contato</button></section>
+    <section className="next-action-card" aria-label="Próxima ação do estabelecimento"><h3>Próxima ação</h3><strong>{lead.next||'Defina a próxima ação'}</strong><p>{lead.owner||'Sem responsável'} · {lead.due?dateLabel(lead.due):'Sem prazo registrado'}</p><button className="button compact" disabled={busy||loadedLead!==selected} onClick={()=>document.querySelector<HTMLElement>('.contact-planner textarea')?.focus()}>{loadedLead!==selected?'Carregando abordagem…':'Registrar abordagem ou planejar contato'}</button></section>
     <div className="op-journey" aria-label="Etapas da jornada">{[['Cadastro',true],['Triagem',!!selectedTriage?.completed],['Reunião',meetings.some(m=>m.state==='Realizada')],['Proposta',proposals.some(p=>p.leadId===lead.id)],['Projeto',projects.some(p=>p.lead_id===lead.id)],['Pós-venda',allActivities.some(a=>a.lead_id===lead.id&&a.support)]].map(([label,done])=><span key={String(label)} data-done={done}>{done?'✓':'○'} {label}</span>)}</div>
     <dl className="lead-contact-summary"><div><dt>Contato no estabelecimento</dt><dd>{lead.contact||'Não informado'}{lead.contactInfo?' · '+lead.contactInfo:''}</dd></div><div><dt>Canais</dt><dd>{[lead.whatsapp,lead.instagram,lead.website,lead.other].filter(Boolean).join(' · ')||'Não informados'}</dd></div><div><dt>Localização</dt><dd>{[lead.address,lead.region,lead.city].filter(Boolean).join(' · ')||'Não informada'}</dd></div><div><dt>Origem e verificação</dt><dd>{[lead.origin,lead.verification].filter(Boolean).join(' · ')||'Não informadas'}</dd></div></dl>
     {lead.needs&&<p>{lead.needs}</p>}
