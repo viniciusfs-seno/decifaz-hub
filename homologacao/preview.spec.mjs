@@ -89,7 +89,7 @@ test('HTTPS externo: Auth, duas sessões, navegação, apresentação e autoriza
   await nav(second,'Dashboard');await openDisclosure(second,'Indicadores e funil');await expect(second.getByText('Valores financeiros são restritos',{exact:false})).toBeVisible()
   const activity=(await checked(admin.from('hub_activities').select('id,title').eq('workspace_id',f.workspace).eq('title','Confirmar prioridade da automação')))[0]
   await checked(admin.from('hub_activities').update({title:'Atualização externa em duas sessões'}).eq('id',activity.id))
-  await second.evaluate(()=>window.dispatchEvent(new Event('focus')));await expect(second.getByRole('button',{name:/Atualização externa em duas sessões/})).toBeVisible()
+  const refreshStarted=Date.now();await second.bringToFront();await second.evaluate(()=>window.dispatchEvent(new Event('focus')));await expect(second.getByRole('button',{name:/Atualização externa em duas sessões/})).toBeVisible({timeout:25000});console.log('Atualização compartilhada por HTTPS: '+(Date.now()-refreshStarted)+' ms.')
   await checked(admin.from('hub_activities').update({title:activity.title}).eq('id',activity.id))
   const member=(await checked(admin.rpc('hub_list_members',{w:f.workspace}))).find(m=>m.user_id===f.restricted)
   const disabled=await checked(admin.rpc('hub_update_member_active',{w:f.workspace,u:f.restricted,enabled:false,expected_revision:member.revision}));expect(disabled.status).toBe('saved')
