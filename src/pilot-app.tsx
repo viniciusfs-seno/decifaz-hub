@@ -1,3 +1,4 @@
+import {LeadImport} from './lead-import'
 import {ContactPlanner,ProspectingQueue} from './prospecting'
 import {ProjectMeetings} from './project-meetings'
 import {InternalFinance,InternalAlerts,useInternalFinance} from './internal-finance'
@@ -82,7 +83,7 @@ export default function PilotApp(){
 
 const navigation=[
  ['Visão Geral',[['dashboard','Dashboard',LayoutDashboard],['revisao','Revisão semanal',ClipboardList]]],
- ['Comercial',[['prospeccao','Central de prospecção',ListTodo],['central','Central comercial',ListTodo],['crm','Captação e CRM',Users],['triagem','Triagem comercial',ClipboardList],['reunioes','Reuniões e diagnósticos',CalendarDays],['propostas','Propostas comerciais',FileCheck2]]],
+ ['Comercial',[['prospeccao','Central de prospecção',ListTodo],['central','Central comercial',ListTodo],['crm','Captação e CRM',Users],['importacao','Importar estabelecimentos',Users],['triagem','Triagem comercial',ClipboardList],['reunioes','Reuniões e diagnósticos',CalendarDays],['propostas','Propostas comerciais',FileCheck2]]],
  ['Operação',[['agenda','Agenda operacional',CalendarDays],['projetos','Projetos e entregas',FolderKanban]]],
  ['Gestão',[['indicadores','Indicadores',LayoutDashboard],['financeiro','Financeiro',Wallet],['obrigacoes','Obrigações da Decifaz',Wallet],['rastreabilidade','Rastreabilidade',ClipboardList]]],
  ['Conhecimento',[['conhecimento','Base de conhecimento',BookOpen],['catalogo','Catálogo de soluções',BookOpen]]],
@@ -322,6 +323,7 @@ function SharedCrm(){
     leads={commercialData.leads} meetings={proposalMeetings}
     openLead={openLead} openProject={openProject}/>}
    {page==='prospeccao'&&<ProspectingQueue data={commercialData} tasks={allActivities} open={openLead}/>}
+   {page==='importacao'&&<LeadImport key={workspace} client={client!} workspace={workspace} allowed={can(role,'commercial',true)} saved={()=>reload(v=>v+1)}/>}
    {page==='catalogo'&&<SharedCatalog items={catalog} admin={administrator} save={async draft=>{const r=await client!.rpc('hub_save_solution',{w:workspace,i:draft.id??null,n:draft.name,c:draft.category,d:draft.description,items:draft.scope_items?.filter(s=>s.trim()),enabled:draft.active,expected_revision:draft.revision??null});if(r.error)return;reload(v=>v+1);return r.data}}/>}
    {page==='conhecimento'&&<Knowledge download={false} go={()=>go('reunioes')}/>}
    {page==='financeiro'&&!can(role,'finance')&&<p role="status">Seu papel não permite acesso ao Financeiro.</p>}
