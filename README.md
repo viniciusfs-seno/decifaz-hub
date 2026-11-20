@@ -1,20 +1,23 @@
 # Decifaz Hub
 
-Reorganização atual: [hierarquia, componentes, capturas comparativas e roteiro de publicação](docs/hierarquia-e-usabilidade.md). Projetos têm seções por tarefa; contratos e obrigações usam detalhes progressivos; navegação permite localizar uma área. A entrega é de frontend, sem migração ou alteração de Edge.
+Portal de trabalho compartilhado da Decifaz para a rotina comercial, contratos, projetos, reuniões e obrigações internas. React, TypeScript e Vite na Vercel; Supabase Auth, PostgreSQL, RLS e Edge fornecem persistência e autorização por espaço e papéis cumulativos.
 
-Também em revisão: [importação CSV](docs/importacao-csv.md) e [atividades com acompanhamento](docs/atividades-acompanhamentos.md). Dados fictícios, publicação futura em fases; critérios e limites estão documentados por entrega.
+## Começar a usar
 
-Também em revisão: [importação assistida por CSV](docs/importacao-csv.md) e [atividades e acompanhamentos](docs/atividades-acompanhamentos.md), com Agenda única, responsáveis vinculados à conta, revisão e conclusão/follow-up atômicos.
+1. No CRM, cadastre um estabelecimento ou importe um CSV, confira duplicidades e conclua a triagem com evidências. Registre a abordagem e planeje a próxima ação. A Agenda reúne as atividades; concluir pode criar o próximo acompanhamento na mesma transação.
+2. Prepare a proposta em etapas. O aceite administrativo explícito e a confirmação de Ganho permitem abrir o projeto com o escopo e condições aprovados preservados. Pela ficha do projeto, acompanhe entregas, suporte, reuniões, atas e atividades resultantes.
+3. Em Contratos, cadastre um contrato existente ou derivado de proposta, informe responsável, vigência e avisos e anexe o PDF assinado privado. Em Obrigações da Decifaz, cadastre domínio anual, hospedagem e assinaturas, confira vencimentos e registre pagamentos manuais.
+4. Use Dashboard e Agenda para priorizar o dia. A busca do cabeçalho consulta estabelecimentos, projetos e contratos autorizados; Indicadores e CSV usam o mesmo recorte. Consulte Rastreabilidade para os eventos cobertos e Equipe para gestão administrativa dos vínculos.
 
-Revisão de UI/UX do portal compartilhado: [paridade, fluxos, capturas antes/depois, validação e publicação](docs/experiencia-portal.md). A prévia usa somente dados fictícios; a entrega permanece em rascunho para revisão. Não requer migração ou alteração de Edge.
+## Guias dos fluxos
 
-Homologação das quatro entregas empilhadas (#19–#22): [acesso isolado, testes externos, integração e recuperação](docs/homologacao-integrada.md). A publicação autorizada está registrada em [publicação integrada](docs/publicacao-integrada.md).
+- [Ficha dedicada, rascunhos e propostas em etapas](docs/fichas-e-propostas.md), [ficha e auditoria](docs/ficha-compartilhada.md), [CRM paginado e exportação completa](docs/crm-paginado.md), [busca global autorizada e rotina dos sócios](docs/busca-global.md).
+- [Prospecção](docs/prospeccao.md), [importação CSV](docs/importacao-csv.md), [atividades e acompanhamentos](docs/atividades-acompanhamentos.md), [Hub Operacional](docs/operacional.md).
+- [Comercial e Gerencial](docs/comercial-gerencial.md), [fontes do histórico de indicadores](docs/historico-indicadores.md), [propostas e projetos](docs/propostas-e-projetos.md).
+- [Contratos e rastreabilidade](docs/contratos-rastreabilidade.md), [obrigações e assinaturas](docs/obrigacoes-decifaz.md), [reuniões de projeto](docs/reunioes-projetos.md).
+- [Hierarquia e componentes](docs/hierarquia-e-usabilidade.md), [experiência do portal](docs/experiencia-portal.md), [publicação integrada #19–#22](docs/publicacao-integrada.md).
 
-Em revisão: [Comercial e Gerencial](docs/comercial-gerencial.md), com catálogo compartilhado, proposta versionada, reunião/apresentação, indicadores filtráveis e fechamento semanal persistido. A documentação reúne os PRs encadeados, capturas desktop/celular, limites da prévia local e a ordem de publicação/recuperação. Produção permanece para aprovação posterior.
-
-Portal interno da Decifaz para gerenciar o funil comercial. O frontend usa React, TypeScript e Vite, com deploy na Vercel. O Supabase fornece login por link de e-mail, PostgreSQL, RLS e a função Edge que lista os espaços autorizados.
-
-O [Hub Operacional](docs/operacional.md) reúne dashboard com recortes navegáveis, agenda persistida, revisão semanal e ficha integrada no modo compartilhado. A documentação inclui a comparação com a demo, capturas de desktop/celular, prévia local com dados fictícios e o roteiro de publicação e recuperação. Esta entrega permanece em rascunho, sem publicação em produção.
+Os avisos são internos ao abrir o portal; não há cobrança automática nem notificação externa com o portal fechado. Videoconferência nativa permanece planejada: o link abre a chamada externa, e captura local não transmite a tela a outros participantes. Assinatura eletrônica é integração futura; anexar um PDF não verifica sua assinatura. Veja os limites e procedimentos de recuperação em cada guia. SHAs, checks e estado efetivo de publicação estão nos respectivos PRs.
 
 ## Desenvolvimento local
 
@@ -42,7 +45,7 @@ A execução local padrão usa registros fictícios salvos no navegador. Para te
 
 O CRM, a triagem, as reuniões, as atividades vinculadas e os indicadores consultam o Supabase. Propostas registram versões e andamento. O aceite explícito permite abrir um projeto com uma cópia do escopo, serviços, valores e condições aprovados. O projeto permite acompanhar responsável, prazo, situação e entregáveis.
 
-A demonstração local mantém os módulos legados e os dados fictícios. O financeiro compartilhado registra previsões de receita, recebimentos, estornos e despesas com baixa manual. Integração de pagamentos e emissão de contratos ainda ficam fora desse fluxo. Veja [financeiro compartilhado](docs/financeiro-compartilhado.md).
+A demonstração local mantém os módulos legados e os dados fictícios. O financeiro compartilhado registra previsões de receita, recebimentos, estornos e despesas com baixa manual. Integração automática de pagamentos e assinatura eletrônica ficam fora desse fluxo; a gestão de contratos usa documentos privados anexados. Veja [financeiro compartilhado](docs/financeiro-compartilhado.md).
 
 ## Organização
 
@@ -69,9 +72,9 @@ A regressão do Chromium com Supabase local percorre o cadastro do estabelecimen
 
 O cenário comercial também valida a prioridade após a triagem, a evolução do funil ao registrar o diagnóstico e a persistência da atividade de acompanhamento. A proposta do teste é aberta pela reunião realizada.
 
-Para continuar no editor, consulte o [guia de VS Code e prompt de continuidade](docs/vscode.md). A [matriz de papéis](docs/papeis-e-permissoes.md) foi implementada em uma migração em validação local. A produção continua fora desta entrega. Consulte os [resultados e pendências](docs/validacao-papeis.md) antes de revisar a publicação.
+Para continuar no editor, consulte o [guia de VS Code e prompt de continuidade](docs/vscode.md). A [matriz de papéis](docs/papeis-e-permissoes.md) é aplicada no servidor; consulte os [resultados e limites](docs/validacao-papeis.md) e o histórico dos PRs de publicação.
 
-Próxima entrega em revisão: [ficha compartilhada e auditoria](docs/ficha-compartilhada.md).
+[Ficha compartilhada e auditoria](docs/ficha-compartilhada.md).
 
 [Paginação do CRM, busca e exportação completa](docs/crm-paginado.md).
 
@@ -81,10 +84,14 @@ Próxima entrega em revisão: [ficha compartilhada e auditoria](docs/ficha-compa
 
 - [Contratos, documentos privados e rastreabilidade](docs/contratos-rastreabilidade.md): cadastro existente ou derivado de proposta, avisos, revisões e trilha por integrante.
 - [Obrigações, assinaturas e baixa manual](docs/obrigacoes-decifaz.md): competências sem duplicação, valores previstos/pagos/vencidos e comprovantes privados.
-- [Reuniões de projeto](docs/reunioes-projetos.md): atas, decisões e acompanhamento; transmissão entre participantes permanece bloqueada por ambiente de homologação, sem contratação automática.
+- [Reuniões de projeto](docs/reunioes-projetos.md): atas, decisões e acompanhamento; chamada externa e captura local disponíveis; videoconferência nativa planejada, sem contratação automática.
 
-As entregas partem da main após #26 e são independentes da pilha #27–#29, que continua disponível para revisão. A prévia usa somente contas/documentos fictícios. Verifique em cada PR o SHA, os checks e o estado efetivo de publicação.
+Contratos, obrigações, reuniões e hierarquia foram publicados pelos PRs #30–#33. A recuperação de produtividade #27–#29 preserva essas entregas. As validações usam somente contas e documentos fictícios; confira em cada PR o SHA, os checks e o estado efetivo de publicação.
 
 [Central de Prospecção e planejamento de abordagem](docs/prospeccao.md).
 
 [Ficha dedicada, rascunhos de sessão e proposta em etapas](docs/fichas-e-propostas.md).
+
+Busca por registros autorizados, publicação e rotina inicial dos sócios: [Busca global](docs/busca-global.md).
+
+Busca por registros autorizados, publicação e rotina inicial dos sócios: [Busca global](docs/busca-global.md).

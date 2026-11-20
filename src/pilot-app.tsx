@@ -1,3 +1,4 @@
+import {GlobalSearch,type SearchRecord} from './global-search'
 import {SessionDrafts} from './session-drafts'
 import {ActivityEditor} from './activity-editor'
 import {LeadImport} from './lead-import'
@@ -95,6 +96,7 @@ const sections=navigation.flatMap(([,items])=>[...items])
 type Section=typeof sections[number][0]|'equipe'|'convites'|'ficha'
 
 function SharedCrm(){
+ const [searchOpen,setSearchOpen]=useState(false),recordRequest=useRef(0)
  const [contractId,setContractId]=useState('')
  const [activityEditor,setActivityEditor]=useState<{item?:SharedActivity;leadId?:string;projectId?:string;initialStatus?:string}>()
  const [currentUser,setCurrentUser]=useState('')
@@ -128,6 +130,7 @@ function SharedCrm(){
  function go(next:Section){
   proposalOpenRequest.current++
   setNotice(message=>message==='Consultando a versão atual da proposta…'?'':message)
+  recordRequest.current++
   if(next!=='ficha'&&location.hash.startsWith('#estabelecimento/'))history.pushState(null,'',location.pathname+location.search)
   setNavQuery('')
   setPage(next)
@@ -192,6 +195,7 @@ function SharedCrm(){
  function clearWorkspaceData(){
   if(location.hash.startsWith('#estabelecimento/'))history.replaceState(null,'',location.pathname+location.search)
   proposalOpenRequest.current++;proposalRead.current++
+  recordRequest.current++;setSearchOpen(false)
   setNavQuery('')
   setActivityEditor(undefined)
   setLeads([]);setTriages([]);setFinance(undefined);setProjects([]);setProposals([]);setProposalMeetings([]);setMeetings([]);setAllActivities([]);setCatalog([]);loadedWorkspace.current=''
@@ -354,6 +358,23 @@ function SharedCrm(){
    setProposals(rows=>[...rows.filter(p=>(p.seriesId??p.id)!==series),...result.data!]);setProposalModal({id:result.data[0].id});setNotice('')
   }catch{if(request===proposalOpenRequest.current){setNotice('');setError('Não foi possível abrir a proposta. Atualize a lista e tente novamente.')}}
  }
+ function closeSearch(){recordRequest.current++;setSearchOpen(false)}
+ useEffect(()=>{recordRequest.current++;setSearchOpen(false)},[workspace,JSON.stringify(role)])
+ async function openSearchRecord(row:SearchRecord){
+  const request=++recordRequest.current
+  const query=row.kind==='lead'?client!.from('hub_leads').select(leadColumns).eq('workspace_id',workspace).eq('id',row.id).maybeSingle():row.kind==='project'?client!.from('hub_projects_visible').select('*').eq('workspace_id',workspace).eq('proposal_id',row.id).maybeSingle():client!.from('hub_contracts').select('id').eq('workspace_id',workspace).eq('id',row.id).maybeSingle()
+  const result=await query
+  if(request!==recordRequest.current||result.error||!result.data)return false
+  setSearchOpen(false)
+  if(row.kind==='lead'){const item=result.data as PilotLead;setLeads(rows=>[...rows.filter(l=>l.id!==item.id),item]);setReturnPage(page==='ficha'?'crm':page);go('crm');select(item)}
+  else if(row.kind==='project'){const item=result.data as SharedProject;setProjects(rows=>[...rows.filter(p=>p.proposal_id!==item.proposal_id),item]);openProject(row.id)}
+  else{setContractId(row.id);go('contratos')}
+  return true
+ }
+ useEffect(()=>{
+  const shortcut=(event:KeyboardEvent)=>{if(workspace&&ready&&(event.ctrlKey||event.metaKey)&&event.key.toLowerCase()==='k'&&!document.querySelector('[role="dialog"]')){event.preventDefault();setSearchOpen(true)}}
+  document.addEventListener('keydown',shortcut);return()=>document.removeEventListener('keydown',shortcut)
+ },[workspace,ready])
  const signOut=()=>void client!.auth.signOut().then(({error})=>{if(error)setError('Não foi possível sair. Tente novamente.')})
  return <div className="app shared-app">
   {menu&&<button className="mobile-scrim" aria-label="Fechar navegação" onClick={()=>setMenu(false)}/>}
@@ -364,7 +385,7 @@ function SharedCrm(){
   </aside>
   <div className="workspace" inert={menu}><header className="topbar">
    <div className="crumb"><button className="icon mobile-menu" aria-label="Abrir navegação" aria-controls="navegacao-portal" aria-expanded={menu} onClick={()=>setMenu(!menu)}><Menu size={21}/></button><button className="text-button home-link" onClick={()=>go(workspace?'dashboard':'convites')}>Decifaz Hub</button><span className="slash">/</span><b>{pageLabel}</b></div>
-   <div className="header-actions">{spaces.length>1&&<label className="space-switcher"><span>Espaço de trabalho</span><select disabled={busy} value={workspace} onChange={e=>{setReady(false);setError('');clearWorkspaceData();setWorkspace(e.target.value);setPage('dashboard')}}>{spaces.map(space=><option key={space.id} value={space.id}>{space.name}</option>)}</select></label>}<button className="icon theme" onClick={()=>setDark(!dark)} aria-label={dark?'Ativar tema claro':'Ativar tema escuro'}>{dark?<Sun size={19}/>:<Moon size={18}/>}</button><button className="button compact" disabled={busy} onClick={signOut}>Sair</button></div>
+   <div className="header-actions"><button className="button compact global-search-trigger" disabled={!workspace||!ready} onClick={()=>setSearchOpen(true)} aria-label="Buscar registros" title="Buscar registros · Ctrl+K">Buscar <kbd>Ctrl K</kbd></button>{spaces.length>1&&<label className="space-switcher"><span>Espaço de trabalho</span><select disabled={busy} value={workspace} onChange={e=>{setReady(false);setError('');clearWorkspaceData();setWorkspace(e.target.value);setPage('dashboard')}}>{spaces.map(space=><option key={space.id} value={space.id}>{space.name}</option>)}</select></label>}<button className="icon theme" onClick={()=>setDark(!dark)} aria-label={dark?'Ativar tema claro':'Ativar tema escuro'}>{dark?<Sun size={19}/>:<Moon size={18}/>}</button><button className="button compact" disabled={busy} onClick={signOut}>Sair</button></div>
   </header>
   <ViewStateProvider key={workspace}><SessionDrafts key={workspace+JSON.stringify(role)}><main className="pilot" id="conteudo" tabIndex={-1}>
    <div className="workspace-strip row-between"><p><span className="live-dot" aria-hidden="true"/> {spaces.find(space=>space.id===workspace)?.name??'Decifaz Hub'}</p><div className="actions">{loadingData&&ready&&<small role="status">Atualizando dados…</small>}<button className="button compact" disabled={busy||!workspace} onClick={()=>{setError('');void refreshMemberships().then(()=>reload(v=>v+1)).catch(()=>{})}}>Atualizar</button></div></div>
@@ -374,6 +395,7 @@ function SharedCrm(){
   {!ready&&!error&&<p role="status">Carregando o CRM…</p>}
   {page==='convites'&&<InviteInbox client={client!} onAccepted={refreshMemberships}/>}
   {ready&&workspace&&<>
+   {searchOpen&&<GlobalSearch key={workspace+JSON.stringify(role)} client={client!} workspace={workspace} close={closeSearch} open={openSearchRecord}/>}
    {page==='equipe'&&(administrator?<Team key={workspace} client={client!} workspace={workspace} onSaved={refreshMemberships} sendInviteLink={sendInviteLink}/>:<p role="alert">Seu papel não permite gerir a equipe deste espaço.</p>)}
 
    {page==='dashboard'&&<OperationalDashboard key={workspace} attention={<><RegistryAlerts client={client!} workspace={workspace} revision={revision} openContract={id=>{setContractId(id);go('contratos')}}/>{can(role,'finance')&&<InternalAlerts loading={internal.loading} plans={internal.data.plans} bills={internal.data.bills} open={id=>{setBillId(id);go('obrigacoes')}}/>}</>} data={commercialData} entries={entries} projects={projects} errors={moduleErrors} finance={finance} financial={can(role,'finance')} month={reportMonth} setMonth={setReportMonth} openLead={openLead} openProject={openProject} openEntry={openEntry} openAgenda={openAgenda} openFinance={()=>go('financeiro')} addLead={()=>{setReturnPage('dashboard');go('crm');select()}}/>}

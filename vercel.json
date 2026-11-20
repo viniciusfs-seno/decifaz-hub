@@ -22,7 +22,8 @@
       "feat/central-prospeccao": false,
       "feat/importacao-csv": false,
       "feat/atividades-acompanhamentos": false,
-      "feat/fichas-propostas": false
+      "feat/fichas-propostas": false,
+      "feat/busca-global": false
     }
   }
 }
