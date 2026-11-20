@@ -24,6 +24,8 @@ A rastreabilidade de contratos, projetos, reuniões, obrigações, ocorrências,
 
 ## Validação
 
+O ensaio de expansão obtém o frontend anterior pelo primeiro pai do commit que adicionou a migração de busca. Assim, a referência permanece anterior à RPC tanto no PR quanto na main após squash. Não usar `merge-base HEAD origin/main` para essa fase: na main ele é o próprio candidato e tentaria consultar a RPC antes da aplicação. Histórico Git completo é obrigatório; a ausência da introdução interrompe o ensaio.
+
 `npm run check`, `npm test`, builds demo/compartilhado, regressões SQL e Playwright local/externo. Cenários de busca em `e2e/global-search-real.spec.mjs`: projeção, limite, empate estável, acentos, termo literal, falha recuperável, teclado, origem correta, isolamento e JWT desativado. SHA, resultados efetivos e links finais ficam no PR; nenhuma publicação deve se basear em checks de uma base anterior.
 
 ## Cobertura da rotina dos sócios
