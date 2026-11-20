@@ -1,6 +1,6 @@
 # Atividades e acompanhamentos
 
-Entrega em revisão, dependente de Prospecção e Importação CSV. Migração `20261118030000_acompanhamentos.sql`, somente local/CI até aprovação posterior.
+Publicação autorizada nesta rodada, dependente de Prospecção e Importação CSV já integradas. Migração `20261118030000_acompanhamentos.sql`; aplicar em produção somente depois dos checks e da homologação do candidato final.
 
 ## Agenda única
 
@@ -23,3 +23,5 @@ Após aprovação e dependentes: dry-run exclusivo `20261118030000` → aplicar/
 ## Testes
 
 Contas/dados fictícios: Administração, Comercial, Operação, espaço alheio, sessão desativada; duas sessões com atualização automática; Minhas atividades; revisão desatualizada; repetição concorrente; conclusão+follow-up; falha injetada na auditoria reverte a transação; escrita direta de auditoria recusada. Jornada integrada e capturas pelo topo da pilha. SHA/checks/comandos finais ficam no PR.
+
+Revisão da pilha sobre o #33: a comparação da próxima ação usa título e prazo originais da atividade, mesmo quando ela é renomeada ou reagendada durante a conclusão. Regressão de falha na auditoria prova rollback; a repetição aprovada conserva exatamente um acompanhamento. O ensaio de atualização desconsidera somente as quatro colunas estruturais adicionadas às atividades ao comparar os registros antigos.
