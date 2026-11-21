@@ -80,6 +80,8 @@ jobs:
         run: node scripts/directory-upgrade-validation.mjs --reset-local-fixtures
       - name: Ensaiar nomes por espaço com frontend anterior e recuperação
         run: node scripts/member-label-upgrade-validation.mjs --reset-local-fixtures
+      - name: Ensaiar tela por link com frontend anterior e recuperação
+        run: node scripts/screen-upgrade-validation.mjs --reset-local-fixtures
       - name: Validar transição e recuperação com versões anteriores
         run: node scripts/transition-validation.mjs --reset-local-fixtures
       - if: always()

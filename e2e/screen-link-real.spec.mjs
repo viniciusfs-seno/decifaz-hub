@@ -20,6 +20,7 @@ test('Tela: autorização, aprovação, expiração, encerramento, auditoria at�
   expect((await f.second.client.rpc('hub_screen_host',{s})).error?.code).toBe('42501')
   expect((await rpc(anon,'hub_screen_watch',{s,credential:secret(),viewer,display_name:'Fictício'})).state).toBe('unavailable')
   expect((await rpc(anon,'hub_screen_watch',{s,credential,viewer,display_name:'Pessoa fictícia'})).state).toBe('pending')
+  expect((await f.owner.client.rpc('hub_screen_host',{s,action:'offer',payload:{}})).error).toBeTruthy()
   const offer={type:'offer',sdp:'Negociação fictícia, nunca mídia'}
   await rpc(f.owner.client,'hub_screen_host',{s,action:'offer',payload:offer})
   expect((await rpc(anon,'hub_screen_watch',{s,credential,viewer})).offer).toBeNull()
