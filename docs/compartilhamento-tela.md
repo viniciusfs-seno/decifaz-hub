@@ -80,3 +80,5 @@ A regressão de navegador retarda as notificações ICE do receptor por sete seg
 Áudio: tentativa isolada com tom sintético no Chromium headless não comprovou energia de áudio recebida. Não se anuncia áudio útil homologado; controles dependem do que a fonte/navegador fornecer. Chromium em desktop foi o navegador de transmissão avaliado; celulares foram avaliados por viewport para recepção/layout, sem alegar teste em aparelho físico ou Safari.
 
 Uma execução anterior do CI falhou na restauração de foco do CRM; as mesmas asserções passaram em três execuções locais consecutivas. Não se alterou essa asserção nem se atribui causa ainda não reproduzida. A regressão completa permanece obrigatória no candidato final.
+
+A revisão incremental encontrou também uma omissão no registro do callback ICE do visualizador. A regressão foi fortalecida: além de exigir vídeo, verifica candidatos persistidos nos dois sentidos e ausência de candidatos no SDP inicial. Assim a conexão local por rota reflexiva não mascara um canal de retorno ausente. O receptor de teste atrasa os candidatos por sete segundos; produção não usa esse atraso.

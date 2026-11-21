@@ -17,7 +17,8 @@ export default function ScreenViewer({invite}:{invite:{id:string;credential:stri
    if(r.data.state==='approved'&&peer.current?.connectionState==='connected')setStatus('Recebendo a tela compartilhada.');
    if(r.data.state==='pending')setStatus('Aguardando o apresentador permitir sua entrada…')
    if(r.data.state==='approved'&&r.data.offer&&r.data.epoch!==epoch){
-    negotiating=true;epoch=r.data.epoch;peer.current?.close();const p=new RTCPeerConnection(screenIce);peer.current=p
+    negotiating=true;epoch=r.data.epoch;peer.current?.close();const p=new RTCPeerConnection(screenIce);peer.current=p;ice=[];seen=new Set()
+    p.onicecandidate=e=>{if(live&&peer.current===p&&e.candidate?.candidate)ice.push(e.candidate.toJSON())}
     p.ontrack=e=>{if(video.current){video.current.srcObject=e.streams[0];void video.current.play().catch(()=>setStatus('Toque em Reproduzir para assistir.'))}}
     p.onconnectionstatechange=()=>{if(live&&peer.current===p)setStatus(p.connectionState==='connected'?'Recebendo a tela compartilhada.':p.connectionState==='disconnected'||p.connectionState==='failed'?'Conexão interrompida. Aguardando reconexão; a rede pode exigir uma chamada externa.':'Conectando à tela…')}
     await p.setRemoteDescription(r.data.offer);await p.setLocalDescription(await p.createAnswer());if(!live)return
