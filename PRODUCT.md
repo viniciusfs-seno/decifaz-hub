@@ -37,6 +37,7 @@ Ferramenta de trabalho da própria Decifaz, organizada em torno de seus estabele
 
 - Implementação existente em React, TypeScript e Vite, hospedada na Vercel. O modo compartilhado usa Supabase Auth, PostgreSQL, RLS, views, RPCs, Edge Functions e armazenamento privado. A demo local é referência e ambiente fictício, não fonte dos dados compartilhados.
 - Associação ativa, espaço e papéis cumulativos de Administração, Comercial, Operação e Financeiro determinam o acesso no servidor. Desativação deve valer mesmo com sessão já aberta. Nomes de responsáveis não concedem autorização.
+- Administração pode definir nomes de exibição por espaço, com revisão e auditoria, sem alterar conta Auth, papéis ou vínculos em outros espaços. Identificação atual no diretório não reconstrói nomes históricos nem associa texto antigo automaticamente a uma conta.
 - Preservar restrições de valores, condições comerciais e documentos privados. Não devolver dados protegidos por consultas, buscas, contagens ou CSV a quem não tem acesso.
 - Preservar versões e snapshots de propostas, aceite administrativo, confirmação de Ganho, revisões concorrentes e proteção do último administrador ativo.
 - Ficha dedicada, filtros, página, posição e foco ajudam a retomar a lista. Rascunhos de sessão não equivalem a gravação persistida nem devem atravessar espaços ou mudanças de autorização.
