@@ -6,6 +6,8 @@ import './workbench.css'
 
 export default function ScreenViewer({invite}:{invite:{id:string;credential:string}|null}){
  const [name,setName]=useState(''),[joined,setJoined]=useState(false),[status,setStatus]=useState(invite?'Informe seu nome e solicite entrada.':'Convite inválido. Peça um novo link ao apresentador.'),[audio,setAudio]=useState(false)
+ const [dark,setDark]=useState(()=>{try{return localStorage.getItem('decifaz-theme')==='dark'}catch{return false}})
+ useEffect(()=>{document.documentElement.dataset.theme=dark?'dark':'light';try{localStorage.setItem('decifaz-theme',dark?'dark':'light')}catch{/* tema funciona em memória */}},[dark])
  const [client]=useState(()=>import.meta.env.VITE_SUPABASE_URL&&import.meta.env.VITE_SUPABASE_PUBLISHABLE_KEY?createClient(import.meta.env.VITE_SUPABASE_URL,import.meta.env.VITE_SUPABASE_PUBLISHABLE_KEY,{auth:{persistSession:false,detectSessionInUrl:false,autoRefreshToken:false,storageKey:'decifaz-screen-viewer'}}):null)
  const [viewer]=useState(()=>crypto.randomUUID()),video=useRef<HTMLVideoElement>(null),peer=useRef<RTCPeerConnection|undefined>(undefined)
  useEffect(()=>{if(!joined||!client||!invite)return;let live=true,timer:ReturnType<typeof setTimeout>,epoch=-1,failedAt=0
@@ -26,7 +28,7 @@ export default function ScreenViewer({invite}:{invite:{id:string;credential:stri
   if(live)timer=setTimeout(()=>{void poll()},2000)
   }void poll();return()=>{live=false;clearTimeout(timer);peer.current?.close()}
  },[joined,client,invite,viewer,name])
- return <main className="screen-viewer"><img className="screen-brand" src="/identidade/assinatura-horizontal-escuro-selo.svg" alt="Decifaz"/><h1>Assistir à tela</h1><p>Você recebe apenas a fonte escolhida pelo apresentador. Este convite não concede acesso ao Hub.</p><p className="view-hint">Um espectador por sessão, até 30 minutos. Sem retransmissão TURN; a conexão pode não funcionar nesta rede. Áudio somente quando a fonte e o navegador permitirem.</p>
+ return <main className="screen-viewer"><img className="screen-brand" src="/identidade/assinatura-horizontal-escuro-selo.svg" alt="Decifaz"/><button type="button" className="button" aria-label={dark?'Ativar tema claro':'Ativar tema escuro'} onClick={()=>setDark(v=>!v)}>{dark?'Tema claro':'Tema escuro'}</button><h1>Assistir à tela</h1><p>Você recebe apenas a fonte escolhida pelo apresentador. Este convite não concede acesso ao Hub.</p><p className="view-hint">Um espectador por sessão, até 30 minutos. Sem retransmissão TURN; a conexão pode não funcionar nesta rede. Áudio somente quando a fonte e o navegador permitirem.</p>
  {!joined&&<form onSubmit={e=>{e.preventDefault();setJoined(true)}}><label className="field"><span>Seu nome para o apresentador</span><input value={name} maxLength={60} required onChange={e=>setName(e.target.value)}/></label><button className="button primary" disabled={!invite||!client||!name.trim()}>Solicitar entrada</button></form>}
  <p role="status">{status}</p>{joined&&<><video ref={video} autoPlay muted={!audio} playsInline controls aria-label="Tela recebida do apresentador"/><div className="actions"><button className="button" type="button" onClick={()=>setAudio(v=>!v)}>{audio?'Silenciar áudio':'Ativar áudio quando disponível'}</button><button type="button" className="button" onClick={()=>{setJoined(false);peer.current?.close();if(video.current)video.current.srcObject=null;setStatus('Você saiu. O convite pode continuar válido até o apresentador encerrar.')}}>Sair da transmissão</button></div></>}
  </main>

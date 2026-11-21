@@ -1,5 +1,8 @@
 {
   "$schema": "https://openapi.vercel.sh/vercel.json",
+  "rewrites": [
+    { "source": "/assistir", "destination": "/index.html" }
+  ],
   "git": {
     "deploymentEnabled": {
       "feat/papeis-recorte-mensal": false,

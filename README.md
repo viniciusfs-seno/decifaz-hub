@@ -8,6 +8,8 @@ Para começar no portal: **Conhecimento → Base de conhecimento → Início di�
 
 Preparação diária: [nomes por espaço, guia em três passos e recuperação](docs/preparacao-diaria.md).
 
+Reunião do projeto → [Tela por link](docs/compartilhamento-tela.md): fonte escolhida no navegador, um espectador aprovado, convite temporário e visualizador sem acesso ao Hub. Conexão direta por WebRTC; sem TURN, algumas redes podem exigir a chamada externa.
+
 Contexto de produto e UI: [PRODUCT.md](PRODUCT.md), [DESIGN.md](DESIGN.md) e [revisão Impeccable da mesa de trabalho](docs/impeccable/mesa-de-trabalho.md), com comparações e validações da branch de revisão.
 
 ## Começar a usar
@@ -25,7 +27,7 @@ Contexto de produto e UI: [PRODUCT.md](PRODUCT.md), [DESIGN.md](DESIGN.md) e [re
 - [Contratos e rastreabilidade](docs/contratos-rastreabilidade.md), [obrigações e assinaturas](docs/obrigacoes-decifaz.md), [reuniões de projeto](docs/reunioes-projetos.md).
 - [Hierarquia e componentes](docs/hierarquia-e-usabilidade.md), [experiência do portal](docs/experiencia-portal.md), [publicação integrada #19–#22](docs/publicacao-integrada.md).
 
-Os avisos são internos ao abrir o portal; não há cobrança automática nem notificação externa com o portal fechado. Videoconferência nativa permanece planejada: o link abre a chamada externa, e captura local não transmite a tela a outros participantes. Assinatura eletrônica é integração futura; anexar um PDF não verifica sua assinatura. Veja os limites e procedimentos de recuperação em cada guia. SHAs, checks e estado efetivo de publicação estão nos respectivos PRs.
+Os avisos são internos ao abrir o portal; não há cobrança automática nem notificação externa com o portal fechado. Videoconferência completa permanece planejada. O link de chamada externa continua disponível, e a prévia local é distinta de Tela por link, que transmite a um espectador aprovado. Assinatura eletrônica é integração futura; anexar um PDF não verifica sua assinatura. Veja os limites e procedimentos de recuperação em cada guia. SHAs, checks e estado efetivo de publicação estão nos respectivos PRs.
 
 ## Desenvolvimento local
 
