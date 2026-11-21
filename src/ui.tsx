@@ -2,9 +2,10 @@ import {useEffect,useId,useRef,type ReactNode,type FormEvent} from 'react'
 import {X,Inbox} from 'lucide-react'
 import {grade,type Triage} from './domain'
 import {useInvalidField} from './form-guidance'
-export type FieldProps={label:string; value:string|number; on:(v:string)=>void; required?:boolean; type?:string; options?:readonly string[]; placeholder?:string; min?:number; step?:string}
-export function Field({label,value,on,required,type='text',options,placeholder,min,step}:FieldProps){
- return <label className="field"><span>{label}{required && <b> *</b>}</span>{options?<select value={value} onChange={e=>on(e.target.value)} required={required}><option value="">Selecionar</option>{options.map(x=><option key={x}>{x}</option>)}</select>:type==='area'?<textarea value={value} onChange={e=>on(e.target.value)} required={required} placeholder={placeholder}/>:<input type={type} value={value} onChange={type==='date'?undefined:e=>on(e.target.value)} onInput={type==='date'?e=>on(e.currentTarget.value):undefined} required={required} placeholder={placeholder} min={min} step={step}/>}</label>
+export type FieldProps={label:string; value:string|number; on:(v:string)=>void; required?:boolean; type?:string; options?:readonly string[]; suggestions?:readonly string[]; placeholder?:string; min?:number; step?:string}
+export function Field({label,value,on,required,type='text',options,suggestions,placeholder,min,step}:FieldProps){
+ const list=useId()
+ return <label className="field"><span>{label}{required && <b> *</b>}</span>{options?<select value={value} onChange={e=>on(e.target.value)} required={required}><option value="">Selecionar</option>{options.map(x=><option key={x}>{x}</option>)}</select>:type==='area'?<textarea value={value} onChange={e=>on(e.target.value)} required={required} placeholder={placeholder}/>:<><input list={suggestions?list:undefined} type={type} value={value} onChange={type==='date'?undefined:e=>on(e.target.value)} onInput={type==='date'?e=>on(e.currentTarget.value):undefined} required={required} placeholder={placeholder} min={min} step={step}/>{suggestions&&<datalist id={list}>{suggestions.map(s=><option key={s} value={s}/>)}</datalist>}</>}</label>
 }
 export function Choices({items,value,on}:{items:string[];value:string[];on:(v:string[])=>void}){
  return <div className="choices">{items.map(item=><label key={item} className={value.includes(item)?'checked':''}><input type="checkbox" checked={value.includes(item)} onChange={e=>on(e.target.checked?[...value,item]:value.filter(x=>x!==item))}/>{item}</label>)}</div>

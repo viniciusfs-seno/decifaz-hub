@@ -1,5 +1,7 @@
 # Mesa de trabalho — revisão Impeccable
 
+**Publicado com autorização em 20/11/2026:** PR #37, merge `6b80cf78f832f500ac23df7e410e8759cdcc1770`, deployment Vercel `dpl_67ikat2qrLjJ4JGvvf6pGJUuwdrG` READY no domínio principal. Sem migração ou Edge. Smoke anônimo de acesso/bundle e recusas sem sessão aprovado; proteções financeiras e documentais conferidas por leitura. Recuperação: `fb34f0428ce8141f6e75642f3c0d830e45342b60`, deployment `dpl_3H9qwZqY9KMZJ8gmTt8VbGFMQG6k`. O texto abaixo registra a preparação da prévia aprovada; não descreve uma publicação ainda pendente. Checks e revalidação pós-merge estão na [descrição do #37](https://github.com/viniciusfs-seno/decifaz-hub/pull/37).
+
 Entrega de frontend em `feat/mesa-de-trabalho`, para revisão em prévia isolada. Produção permanece na main; não há migração, Edge, Auth ou nova dependência. O SHA final e os checks ficam no PR, evitando registrar o próprio hash dentro do commit.
 
 ## Direção confirmada
