@@ -70,3 +70,13 @@ A tentativa anterior não recebeu vídeo. A revisão encontrou uma falha reprodu
 Para produção, `vercel.json` reescreve somente /assistir para /index.html, conforme a [orientação SPA da Vercel](https://vercel.com/docs/frameworks/frontend/vite). O fragmento permanece no navegador e é removido antes do visualizador. Após esta revisão, os checks e o ensaio externo são repetidos no candidato final antes de aplicar a migração.
 
 A revisão anterior à publicação conferiu por leitura a configuração de logs do banco: log_statement=ddl, log_min_duration_statement=-1, log_parameter_max_length_on_error=0 e pgaudit.log_parameter=off. Não se habilitou logging de argumentos ou corpos; manter essa restrição ao instrumentar as RPCs. A interface bloqueia copiar/aprovar convite vencido e o visualizador preserva o tema claro/escuro, sem reutilizar sessão do Hub.
+
+## Candidatos tardios e limites da rede
+
+A repetição do candidato d7082d2 não recebeu vídeo; o diagnóstico sanitizado mostrou negociação com resposta HTTP 200, ICE sem conexão e ausência de candidatos remotos no receptor. Uma única fotografia do SDP após espera fixa pode perder rotas descobertas depois. A implementação passou a **trickle ICE**: descrição inicial sem candidatos, fila incremental por negociação, envio em lotes de até 40 e limite de 64 por participante. Revisões antigas são recusadas; duplicatas não são acumuladas. Só o espectador aprovado recebe a sinalização. Encerramento/recusa apaga envelopes; ICE/SDP não vão ao histórico. O mecanismo continua sem TURN e não torna todas as redes alcançáveis.
+
+A regressão de navegador retarda as notificações ICE do receptor por sete segundos, mantém a primeira falha transitória de descrição remota e exige vídeo decodificado; assim não depende da descoberta rápida de rotas. As RPCs também testam revisão, deduplicação e limites. O novo candidato precisa dos próprios checks e recepção externa antes de publicar.
+
+Áudio: tentativa isolada com tom sintético no Chromium headless não comprovou energia de áudio recebida. Não se anuncia áudio útil homologado; controles dependem do que a fonte/navegador fornecer. Chromium em desktop foi o navegador de transmissão avaliado; celulares foram avaliados por viewport para recepção/layout, sem alegar teste em aparelho físico ou Safari.
+
+Uma execução anterior do CI falhou na restauração de foco do CRM; as mesmas asserções passaram em três execuções locais consecutivas. Não se alterou essa asserção nem se atribui causa ainda não reproduzida. A regressão completa permanece obrigatória no candidato final.

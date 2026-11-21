@@ -6,14 +6,14 @@ create table hub_private.screen_sessions(
  invite_until timestamptz not null default clock_timestamp()+interval '10 minutes',
  ends_at timestamptz not null default clock_timestamp()+interval '30 minutes',
  heartbeat timestamptz not null default clock_timestamp(),ended_at timestamptz,
- offer jsonb,epoch integer not null default 0,
+ offer jsonb,host_ice jsonb not null default '[]',epoch integer not null default 0,
  foreign key(workspace_id,lead_id,meeting_id) references public.hub_meetings(workspace_id,lead_id,id) on delete cascade
 );
 create table hub_private.screen_requests(
  session_id uuid not null references hub_private.screen_sessions(id) on delete cascade,
  id uuid not null,name text not null check(length(name) between 1 and 60),
  state text not null default 'pending' check(state in ('pending','approved','denied')),
- answer jsonb,epoch integer,seen_at timestamptz not null default clock_timestamp(),
+ answer jsonb,viewer_ice jsonb not null default '[]',epoch integer,seen_at timestamptz not null default clock_timestamp(),
  primary key(session_id,id)
 );
 revoke all on hub_private.screen_sessions,hub_private.screen_requests from public,anon,authenticated;
@@ -21,9 +21,9 @@ revoke all on hub_private.screen_sessions,hub_private.screen_requests from publi
 create function hub_private.close_screen(s uuid,automatic boolean default false) returns void language plpgsql security definer set search_path='' as $$
 declare r hub_private.screen_sessions;
 begin
- update hub_private.screen_sessions set ended_at=clock_timestamp(),token_hash=null,offer=null where id=s and ended_at is null returning * into r;
+ update hub_private.screen_sessions set ended_at=clock_timestamp(),token_hash=null,offer=null,host_ice='[]' where id=s and ended_at is null returning * into r;
  if not found then return;end if;
- update hub_private.screen_requests set answer=null,state='denied' where session_id=s;
+ update hub_private.screen_requests set answer=null,viewer_ice='[]',state='denied' where session_id=s;
  insert into public.hub_registry_events(workspace_id,kind,record_id,lead_id,project_id,actor_id,action)
  select r.workspace_id,'meeting',r.meeting_id,m.lead_id,m.project_id,case when automatic then null else auth.uid() end,case when automatic then 'Compartilhamento de tela encerrado automaticamente' else 'Compartilhamento de tela encerrado' end from public.hub_meetings m where m.workspace_id=r.workspace_id and m.id=r.meeting_id and m.lead_id=r.lead_id;
 end $$;
@@ -36,6 +36,21 @@ begin
  delete from hub_private.screen_sessions where ended_at<clock_timestamp()-interval '1 day';
 end $$;
 revoke all on function hub_private.sweep_screens() from public,anon,authenticated;
+
+
+create function hub_private.screen_ice(previous jsonb,incoming jsonb) returns jsonb
+language plpgsql immutable security definer set search_path='' as $$
+declare item jsonb;result jsonb:=coalesce(previous,'[]'::jsonb);clean jsonb;
+begin
+ if incoming is null or jsonb_typeof(incoming)<>'array' or jsonb_array_length(incoming)>40 or pg_column_size(incoming)>32768 then raise exception 'Candidatos inválidos';end if;
+ for item in select * from jsonb_array_elements(incoming) loop
+  if jsonb_typeof(item)<>'object' or coalesce(length(item->>'candidate'),0) not between 1 and 2048 or coalesce(length(item->>'sdpMid'),0)>32 or (item->>'sdpMLineIndex')::integer not between 0 and 8 or coalesce(length(item->>'usernameFragment'),0)>256 then raise exception 'Candidato inválido';end if;
+  clean:=jsonb_build_object('candidate',item->>'candidate','sdpMid',item->'sdpMid','sdpMLineIndex',item->'sdpMLineIndex','usernameFragment',item->'usernameFragment');
+  if not result @> jsonb_build_array(clean) then result:=result||jsonb_build_array(clean);end if;
+ end loop;
+ if jsonb_array_length(result)>64 then raise exception 'Limite de candidatos';end if;return result;
+end $$;
+revoke all on function hub_private.screen_ice(jsonb,jsonb) from public,anon,authenticated;
 
 create function public.hub_screen_start(w uuid,m uuid,s uuid,credential text) returns jsonb
 language plpgsql security definer set search_path='' as $$
@@ -74,18 +89,21 @@ begin
  elsif action='approve' then
   if r.invite_until<clock_timestamp() or not exists(select 1 from hub_private.screen_requests where session_id=s and id=viewer and state='pending') or exists(select 1 from hub_private.screen_requests where session_id=s and state='approved') then raise exception 'Entrada indisponível';end if;
   update hub_private.screen_requests set state=case when id=viewer then 'approved' else 'denied' end where session_id=s;
- elsif action='deny' then update hub_private.screen_requests set state='denied',answer=null where session_id=s and id=viewer;
+ elsif action='deny' then update hub_private.screen_requests set state='denied',answer=null,viewer_ice='[]' where session_id=s and id=viewer;
+ elsif action='ice' then
+  if payload->>'epoch' is null or (payload->>'epoch')::integer is distinct from r.epoch or r.offer is null then raise exception 'Revisão de negociação inválida';end if;
+  update hub_private.screen_sessions set host_ice=hub_private.screen_ice(host_ice,payload->'candidates') where id=s;
  elsif action='offer' then
   if payload is null or pg_catalog.pg_column_size(payload)>65536 or payload->>'type' is distinct from 'offer' or coalesce(length(payload->>'sdp'),0) not between 1 and 60000 then raise exception 'Negociação inválida';end if;
-  update hub_private.screen_sessions set offer=payload,epoch=epoch+1 where id=s;
-  update hub_private.screen_requests set answer=null,epoch=null where session_id=s;
+  update hub_private.screen_sessions set offer=payload,host_ice='[]',epoch=epoch+1 where id=s;
+  update hub_private.screen_requests set answer=null,viewer_ice='[]',epoch=null where session_id=s;
  elsif action<>'poll' then raise exception 'Operação inválida';end if;
  update hub_private.screen_sessions set heartbeat=clock_timestamp() where id=s returning * into r;
- return jsonb_build_object('state','open','epoch',r.epoch,'invite_until',r.invite_until,'ends_at',r.ends_at,'viewers',coalesce((select jsonb_agg(jsonb_build_object('id',id,'name',name,'state',state,'answer',answer,'epoch',epoch,'seen_at',seen_at) order by seen_at) from hub_private.screen_requests where session_id=s),'[]'::jsonb));
+ return jsonb_build_object('state','open','epoch',r.epoch,'invite_until',r.invite_until,'ends_at',r.ends_at,'viewers',coalesce((select jsonb_agg(jsonb_build_object('id',id,'name',name,'state',state,'answer',answer,'candidates',viewer_ice,'epoch',epoch,'seen_at',seen_at) order by seen_at) from hub_private.screen_requests where session_id=s),'[]'::jsonb));
 end $$;
 
 -- A narrowly scoped capability API. It never reads portal content or creates membership.
-create function public.hub_screen_watch(s uuid,credential text,viewer uuid,display_name text default null,answer jsonb default null,offer_epoch integer default null) returns jsonb
+create function public.hub_screen_watch(s uuid,credential text,viewer uuid,display_name text default null,answer jsonb default null,offer_epoch integer default null,candidates jsonb default null) returns jsonb
 language plpgsql security definer set search_path='' as $$
 declare r hub_private.screen_sessions; v hub_private.screen_requests;n text;
 begin
@@ -102,14 +120,18 @@ begin
   insert into hub_private.screen_requests(session_id,id,name) values(s,viewer,n) returning * into v;
  end if;
  if v.state='pending' and r.invite_until<clock_timestamp() then return jsonb_build_object('state','unavailable');end if;
+ if candidates is not null then
+  if v.state<>'approved' or offer_epoch is distinct from r.epoch or r.offer is null then raise exception 'Revisão de negociação inválida';end if;
+  update hub_private.screen_requests set viewer_ice=hub_private.screen_ice(viewer_ice,hub_screen_watch.candidates) where session_id=s and id=viewer;
+ end if;
  if answer is not null then
   if v.state<>'approved' or offer_epoch is distinct from r.epoch or r.offer is null or pg_catalog.pg_column_size(answer)>65536 or answer->>'type' is distinct from 'answer' or coalesce(length(answer->>'sdp'),0) not between 1 and 60000 then raise exception 'Negociação inválida';end if;
   update hub_private.screen_requests set answer=hub_screen_watch.answer,epoch=offer_epoch where session_id=s and id=viewer;
  end if;
  update hub_private.screen_requests set seen_at=clock_timestamp() where session_id=s and id=viewer;
- return jsonb_build_object('state',v.state,'epoch',r.epoch,'offer',case when v.state='approved' then r.offer else null end,'ends_at',r.ends_at);
+ return jsonb_build_object('state',v.state,'epoch',r.epoch,'offer',case when v.state='approved' then r.offer else null end,'candidates',case when v.state='approved' then r.host_ice else '[]'::jsonb end,'ends_at',r.ends_at);
 end $$;
-revoke all on function public.hub_screen_start(uuid,uuid,uuid,text),public.hub_screen_host(uuid,text,uuid,jsonb),public.hub_screen_watch(uuid,text,uuid,text,jsonb,integer) from public,anon,authenticated;
+revoke all on function public.hub_screen_start(uuid,uuid,uuid,text),public.hub_screen_host(uuid,text,uuid,jsonb),public.hub_screen_watch(uuid,text,uuid,text,jsonb,integer,jsonb) from public,anon,authenticated;
 grant execute on function public.hub_screen_start(uuid,uuid,uuid,text),public.hub_screen_host(uuid,text,uuid,jsonb) to authenticated;
-grant execute on function public.hub_screen_watch(uuid,text,uuid,text,jsonb,integer) to anon,authenticated;
+grant execute on function public.hub_screen_watch(uuid,text,uuid,text,jsonb,integer,jsonb) to anon,authenticated;
 commit;
