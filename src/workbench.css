@@ -1,0 +1,132 @@
+/* Operate: priorities first, restrained surfaces, readable controls. */
+.shared-app {
+ --space-tight:8px;
+ --space-group:16px;
+ --space-section:24px;
+ --type-body:.9375rem;
+ --type-meta:.8125rem;
+ --control-radius:8px;
+ --alert-border:#bd5238;
+ caret-color:var(--ink);
+ scrollbar-color:var(--line) var(--paper);
+}
+.shared-app ::selection {background:var(--accent);color:var(--paper)}
+.shared-app :is(h1,h2,h3) {text-wrap:balance;letter-spacing:-.025em;overflow-wrap:anywhere}
+.shared-app p {text-wrap:pretty}
+.shared-app .pilot {grid-template-columns:minmax(0,1fr)}
+.shared-app .card {box-shadow:none}
+.shared-app .page-heading {margin-bottom:12px;padding-bottom:12px}
+.shared-app .page-heading h1 {font-size:clamp(1.5rem,2.2vw,1.9rem)}
+.shared-app .page-heading p {font-size:var(--type-body);max-width:70ch}
+.shared-app .workspace-strip {margin-bottom:8px;padding-bottom:8px}
+.shared-app .button {min-height:44px;padding:10px 14px;font-size:.875rem;line-height:1.35;white-space:normal;overflow-wrap:anywhere;min-width:0}
+.shared-app .button.primary {box-shadow:none}
+.shared-app .text-button {min-height:32px;padding-block:6px;font-size:.875rem;line-height:1.4}
+.shared-app .icon {min-width:40px;min-height:40px}
+.shared-app .field {font-size:.875rem;gap:6px}
+.shared-app label:has(>select),
+.shared-app label:has(>input:not([type=checkbox])),
+.shared-app label:has(>textarea) {display:grid;gap:6px;min-width:0;font-size:.875rem;align-content:start}
+.shared-app :is(input:not([type=checkbox]),select,textarea) {min-height:44px;font-size:var(--type-body);border-radius:var(--control-radius)}
+.shared-app :is(input,select,textarea,button,a,summary):focus-visible {outline:2px solid var(--accent);outline-offset:3px}
+.shared-app :is(.fields,.pilot-fields) {gap:16px}
+.shared-app label:has(>input[type=checkbox]) {display:flex;align-items:center;gap:8px;min-height:36px;font-size:.875rem;line-height:1.5}
+.shared-app input[type=checkbox] {width:18px;height:18px;accent-color:var(--accent)}
+.shared-app :is(.actions,.toolbar) {gap:10px}
+.shared-app .op-filters {display:grid;grid-template-columns:repeat(auto-fit,minmax(min(100%,190px),1fr));align-items:end}
+.shared-app .op-filters label {min-width:0}
+.shared-app .view-hint {font-size:.875rem;line-height:1.55;max-width:70ch;padding-bottom:8px}
+.shared-app .nav-group h2 {font-size:.75rem;letter-spacing:.04em}
+.shared-app details.nav-group>summary {list-style:none;display:flex;align-items:center;justify-content:space-between;gap:8px;min-height:40px;padding-inline:6px;color:#bdc8df;cursor:pointer;border-radius:8px}
+.shared-app details.nav-group>summary::-webkit-details-marker {display:none}
+.shared-app details.nav-group>summary h2 {padding:0;font-size:.75rem;margin:0}
+.shared-app details.nav-group>summary svg {transform:rotate(-90deg)}
+.shared-app details.nav-group[open]>summary svg {transform:none}
+.shared-app .nav-group button {min-height:40px;font-size:.875rem;line-height:1.4}
+.shared-app .nav-group button span {min-width:0;overflow-wrap:anywhere}
+.shared-app .nav-group button[aria-current] {box-shadow:none;border-color:#8f9ab3}
+.shared-app .nav-search {font-size:.8125rem}
+.shared-app .nav-search input {font-size:.875rem}
+.shared-app .record-tabs button {min-height:44px;font-size:.875rem}
+.shared-app .record-summary dt {font-size:.8125rem}
+.shared-app .record-summary dd {font-size:.9375rem}
+.shared-app .record-panel>.panel {margin:16px}
+.shared-app .portal-disclosure {border-radius:12px}
+.shared-app .portal-disclosure>summary strong {font-size:.9375rem}
+.shared-app .portal-disclosure>summary small {font-size:.8125rem}
+.shared-app .lead-section>summary,.shared-app .team-help>summary,.shared-app .meeting-help>summary {min-height:44px;align-content:center;line-height:1.5}
+.workbench-day {margin:0 0 20px}
+.day-reference {display:flex;align-items:center;justify-content:space-between;gap:12px;margin-bottom:8px}
+.day-reference>p {font-size:.875rem;color:var(--muted)}
+.day-slices {display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:8px;max-width:640px}
+.shared-app .day-slices .button {justify-content:flex-start;gap:10px;min-height:52px;background:var(--paper);text-align:left}
+.day-slices strong {font-size:1.25rem;font-variant-numeric:tabular-nums;line-height:1.2}
+.shared-app .op-main-grid {margin-bottom:20px;grid-template-columns:minmax(0,1.35fr) minmax(300px,1fr)}
+.shared-app .op-queue button {min-height:88px;padding:14px 0}
+.shared-app .op-queue button b {font-size:.9375rem;line-height:1.5}
+.shared-app .op-queue small {font-size:var(--type-meta);line-height:1.5}
+.queue-scope {border-top:1px solid var(--line);padding-top:12px;margin-top:8px;font-size:.8125rem;color:var(--muted)}
+.shared-app .dashboard-stats {grid-template-columns:repeat(3,minmax(0,1fr));gap:0;border-bottom:1px solid var(--line)}
+.shared-app .dashboard-stats .metric {background:transparent;border:0;border-radius:0;box-shadow:none;min-height:100px;gap:8px}
+.shared-app .dashboard-stats .metric:hover {background:var(--soft)}
+.shared-app .dashboard-stats .metric h2 {font-size:.8125rem;min-height:0}
+.shared-app .dashboard-stats .metric strong {font-size:1.4rem}
+.shared-app .dashboard-attention p {font-size:.875rem;line-height:1.55}
+.shared-app .op-work-item[data-overdue=true],.shared-app .member-state[data-active=false] {border:1px solid var(--alert-border);background:var(--soft)}
+.shared-app .op-work-item .lead-name {font-size:1rem}
+.shared-app .op-work-item p,.shared-app .op-work-item small {font-size:.875rem;line-height:1.5}
+.shared-app .op-work-item :is(p,small,.lead-name) {overflow-wrap:anywhere}
+.shared-app .op-item-actions label {font-size:.8125rem}
+.shared-app .op-periods {margin-top:16px}
+.shared-app .op-periods .button {font-size:.875rem}
+.shared-app .view-summary {font-size:.875rem}
+.shared-app .view-summary .tag {white-space:normal;overflow-wrap:anywhere}
+.project-meetings>.actions {margin:8px 0 20px}
+.meeting-record {padding:16px 0;border-top:1px solid var(--line);display:grid;gap:10px}
+.meeting-record p {font-size:.9375rem;line-height:1.6}
+.meeting-editor {border-top:1px solid var(--line);padding-top:24px;margin-top:24px}
+.meeting-editor>h3 {margin-bottom:16px}
+.meeting-editor .registry-fields {display:grid;gap:16px}
+.meeting-editor h4 {margin:16px 0 0;font-size:1rem;font-weight:600}
+.meeting-editor form>.actions {border-top:1px solid var(--line);padding-top:16px;margin-top:20px}
+.meeting-help {margin-top:20px;font-size:.875rem}
+.meeting-help p {max-width:70ch;padding-block:12px}
+.shared-app .client-presentation {padding:0;display:grid;gap:16px}
+.shared-app .client-presentation p {max-width:70ch;font-size:.9375rem}
+.shared-app .client-presentation .team-roles {display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:8px}
+.shared-app .meeting-presentation {padding:0}
+.shared-app .meeting-presentation details>summary {cursor:pointer;min-height:44px;font-weight:600}
+.shared-app .member-state {line-height:1.5}
+@media(max-width:1000px) {.shared-app .op-main-grid {grid-template-columns:minmax(0,1fr)}}
+@media(max-width:700px) {
+ .shared-app .topbar {padding-inline:10px;gap:6px}
+ .shared-app .topbar {height:auto;min-height:64px;flex-wrap:wrap;padding-block:8px}
+ .shared-app .topbar .crumb {flex:1;min-width:0}
+ .shared-app .topbar:has(.space-switcher) .crumb {flex-basis:100%}
+ .shared-app .topbar:has(.space-switcher) .header-actions {width:100%}
+ .shared-app .topbar:has(.space-switcher) .space-switcher {flex:1;max-width:none}
+ .shared-app .crumb b {max-width:120px}
+ .shared-app .topbar .button {font-size:.8125rem;padding:8px;min-height:44px}
+ .shared-app .space-switcher {max-width:95px}
+ .shared-app .space-switcher select {font-size:.875rem;padding-inline:4px}
+ .shared-app .button,.shared-app .text-button {min-height:44px}
+ .shared-app :is(input:not([type=checkbox]),select,textarea) {font-size:1rem}
+ .shared-app .nav-group button {min-height:44px}
+ .shared-app .op-periods {grid-template-columns:repeat(3,minmax(0,1fr))}
+ .shared-app .op-filters {grid-template-columns:repeat(2,minmax(0,1fr))}
+ .shared-app .op-filters :is(.agenda-query,button,.checkline) {grid-column:1/-1}
+ .shared-app .op-item-actions label {flex-basis:100%}
+ .shared-app .record-summary>div {padding:10px}
+ .shared-app .record-summary dd {font-size:.875rem}
+ .shared-app .record-panel>.panel {margin:12px}
+ .shared-app .dashboard-stats {grid-template-columns:repeat(2,minmax(0,1fr))}
+ .shared-app .day-slices .button {display:grid;gap:4px;padding:10px;min-height:64px}
+ .day-slices span {font-size:.8125rem;line-height:1.3}
+ .day-reference {flex-wrap:wrap;gap:4px}
+ .shared-app .op-queue button {min-height:92px}
+ .shared-app .op-queue button>.tag {max-width:110px;font-size:.75rem}
+ .shared-app .client-presentation .team-roles {grid-template-columns:minmax(0,1fr)}
+ .meeting-editor form>.actions>.button {flex:1}
+ .meeting-record .actions>.button {flex:1}
+}
+@media(max-width:360px) {.shared-app .crumb b {max-width:65px}.shared-app .header-actions {gap:4px}}

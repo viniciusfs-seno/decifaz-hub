@@ -1,3 +1,4 @@
+import {openDisclosure} from './helpers/portal-ui.mjs'
 import {test,expect} from '@playwright/test'
 import {operationalFixture} from './helpers/operational-fixture.mjs'
 test.use({actionTimeout:15000})
@@ -13,7 +14,7 @@ test('Experiência: contexto de retorno, atalhos, vazios, teclado e temas em des
    await page.goto('/')
    const nav=async name=>{const toggle=page.getByRole('button',{name:'Abrir navegação',exact:true});if(await toggle.isVisible())await toggle.click();await page.getByRole('navigation').getByRole('button',{name,exact:true}).click()}
    await expect(page.getByRole('heading',{name:'Fila de ações'})).toBeVisible()
-   await page.getByRole('button',{name:/Atividades vencidas/}).click()
+   await openDisclosure(page,'Indicadores e funil');await page.getByRole('button',{name:/Atividades vencidas/}).click()
    await expect(page.getByRole('button',{name:'Vencidas',exact:true})).toHaveAttribute('aria-pressed','true')
    await page.getByLabel('Buscar na agenda').fill('Enviar diagnóstico')
    await page.getByRole('button',{name:'Enviar diagnóstico revisado',exact:true}).click()
@@ -21,7 +22,7 @@ test('Experiência: contexto de retorno, atalhos, vazios, teclado e temas em des
    await page.getByRole('button',{name:'← Voltar à agenda',exact:true}).click()
    await expect(page.getByLabel('Buscar na agenda')).toHaveValue('Enviar diagnóstico')
    await expect(page.getByRole('button',{name:'Vencidas',exact:true})).toHaveAttribute('aria-pressed','true')
-   await nav('Dashboard');await page.getByRole('button',{name:/Atividades de hoje/}).click()
+   await nav('Dashboard');await openDisclosure(page,'Indicadores e funil');await page.getByRole('button',{name:/Atividades de hoje/}).click()
    await expect(page.getByRole('button',{name:'Hoje',exact:true})).toHaveAttribute('aria-pressed','true')
    await expect(page.getByLabel('Buscar na agenda')).toHaveValue('')
    if(width===390){

@@ -12,6 +12,7 @@ import {allRows} from './load-all'
 import {LeadDetails} from './lead-details'
 import {Priority} from './ui'
 import './shared-workspace.css'
+import './workbench.css'
 import {ViewStateProvider} from './view-state'
 import {can,hasRole,type Role} from './access'
 import {SharedCatalog,loadCatalog,type Solution} from './shared-catalog'
@@ -28,7 +29,7 @@ import {OperationalReview} from './operational-review'
 import {businessDay,workEntries,type SharedActivity,type WorkEntry,type WorkFilter} from './shared-operational'
 import {useEffect,useRef,useState,type FormEvent} from 'react'
 import {createClient,type Session} from '@supabase/supabase-js'
-import {BookOpen, CalendarDays, ClipboardList, FileCheck2, FolderKanban, LayoutDashboard, ListTodo, Menu, Moon, Sun, Users, Wallet} from 'lucide-react'
+import {BookOpen, CalendarDays, ChevronDown, ClipboardList, FileCheck2, FolderKanban, LayoutDashboard, ListTodo, Menu, Moon, Sun, Users, Wallet} from 'lucide-react'
 import {dateLabel,day,money,norm,stages,type Data,type Meeting,type Proposal} from './domain'
 import {MeetingEditor,TriageEditor} from './commercial'
 import {ProposalEditor,Proposals} from './proposals'
@@ -381,7 +382,7 @@ function SharedCrm(){
   <a className="skip-link" href="#conteudo">Ir para o conteúdo</a>
   <aside id="navegacao-portal" className={'sidebar '+(menu?'open':'')}>
    <button className="brand" onClick={()=>go(workspace?'dashboard':'convites')}><img className="brand-logo" src={import.meta.env.BASE_URL+'identidade/assinatura-horizontal-escuro-selo.svg'} alt="Decifaz"/><small>Portal de trabalho</small></button>
-   <label className="nav-search"><span>Ir para uma área</span><input type="search" aria-label="Buscar área do portal" placeholder="CRM, contratos, agenda…" value={navQuery} onChange={e=>setNavQuery(e.target.value)} onKeyDown={e=>{if(e.key==='Escape')setNavQuery('')}}/></label><nav aria-label="Navegação principal">{workspace&&navigation.map(([label,links])=>{const visible=links.filter(([id,title])=>(!navQuery||norm(label+' '+title).includes(norm(navQuery)))&&(!['financeiro','obrigacoes'].includes(id)||can(role,'finance'))&&(id!=='equipe'||administrator));return visible.length?<div className="nav-group" key={label}><h2>{label}</h2>{visible.map(([id,title,Icon])=><button key={id} aria-current={page===id||page==='ficha'&&id==='crm'?'page':undefined} onClick={()=>go(id)}><Icon size={17}/><span>{title}</span></button>)}</div>:null})}<div className="nav-group"><h2>Acesso</h2><button aria-current={page==='convites'?'page':undefined} onClick={()=>go('convites')}><Users size={17}/><span>Meus convites</span></button></div></nav>
+   <label className="nav-search"><span>Ir para uma área</span><input type="search" aria-label="Buscar área do portal" placeholder="CRM, contratos, agenda…" value={navQuery} onChange={e=>setNavQuery(e.target.value)} onKeyDown={e=>{if(e.key==='Escape')setNavQuery('')}}/></label><nav aria-label="Navegação principal">{workspace&&navigation.map(([label,links])=>{const visible=links.filter(([id,title])=>(!navQuery||norm(label+' '+title).includes(norm(navQuery)))&&(!['financeiro','obrigacoes'].includes(id)||can(role,'finance'))&&(id!=='equipe'||administrator));return visible.length?<details className="nav-group" key={label+String(!!navQuery)} open><summary><h2>{label}</h2><ChevronDown size={15} aria-hidden="true"/></summary>{visible.map(([id,title,Icon])=><button key={id} aria-current={page===id||page==='ficha'&&id==='crm'?'page':undefined} onClick={()=>go(id)}><Icon size={17}/><span>{title}</span></button>)}</details>:null})}<div className="nav-group"><h2>Acesso</h2><button aria-current={page==='convites'?'page':undefined} onClick={()=>go('convites')}><Users size={17}/><span>Meus convites</span></button></div></nav>
   </aside>
   <div className="workspace" inert={menu}><header className="topbar">
    <div className="crumb"><button className="icon mobile-menu" aria-label="Abrir navegação" aria-controls="navegacao-portal" aria-expanded={menu} onClick={()=>setMenu(!menu)}><Menu size={21}/></button><button className="text-button home-link" onClick={()=>go(workspace?'dashboard':'convites')}>Decifaz Hub</button><span className="slash">/</span><b>{pageLabel}</b></div>

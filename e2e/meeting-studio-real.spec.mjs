@@ -26,7 +26,7 @@ test('Reunião: pauta persistida, roteiro, apresentação limpa, captura e cance
   await dialog.getByRole('region',{name:'Apresentação e tela'}).getByLabel('Reunião cadastrada').selectOption(f.meeting)
   await expect(dialog.getByLabel('Link da chamada',{exact:true})).toHaveValue('https://meet.example.invalid/sala-ficticia')
   const client=dialog.locator('.client-presentation');await client.getByLabel('Cardápio digital',{exact:true}).check()
-  const popupPromise=context.waitForEvent('page');await client.getByRole('button',{name:'Abrir visão do cliente'}).click();const popup=await popupPromise
+  const popupPromise=context.waitForEvent('page');await client.getByRole('button',{name:'Abrir apresentação selecionada'}).click();const popup=await popupPromise
   await expect(popup.getByRole('heading',{name:'Cardápio digital',exact:true})).toBeVisible()
   await expect(popup.locator('body')).not.toContainText('NOTA INTERNA');await expect(popup.locator('body')).not.toContainText('R$');await popup.close()
   await dialog.getByRole('button',{name:'Selecionar tela para prévia'}).click();await expect(dialog.getByRole('button',{name:'Encerrar prévia'})).toBeVisible()

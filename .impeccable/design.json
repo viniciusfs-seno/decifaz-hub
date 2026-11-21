@@ -1,0 +1,572 @@
+{
+  "schemaVersion": 2,
+  "generatedAt": "2026-11-20T23:16:41.006Z",
+  "title": "Design System: Decifaz Hub",
+  "extensions": {
+    "colorMeta": {
+      "decifaz-blue": {
+        "role": "primary",
+        "displayName": "decifaz-blue",
+        "canonical": "#3a4a6f",
+        "tonalRamp": [
+          "oklch(15.0% 0.0197 265.76)",
+          "oklch(26.0% 0.0341 265.76)",
+          "oklch(38.0% 0.0499 265.76)",
+          "oklch(50.0% 0.0656 265.76)",
+          "oklch(62.0% 0.0656 265.76)",
+          "oklch(74.0% 0.0656 265.76)",
+          "oklch(86.0% 0.0459 265.76)",
+          "oklch(95.0% 0.0164 265.76)"
+        ]
+      },
+      "decifaz-orange": {
+        "role": "primary",
+        "displayName": "decifaz-orange",
+        "canonical": "#ff6a13",
+        "tonalRamp": [
+          "oklch(15.0% 0.0599 43.67)",
+          "oklch(26.0% 0.1038 43.67)",
+          "oklch(38.0% 0.1517 43.67)",
+          "oklch(50.0% 0.1996 43.67)",
+          "oklch(62.0% 0.1996 43.67)",
+          "oklch(74.0% 0.1996 43.67)",
+          "oklch(86.0% 0.1397 43.67)",
+          "oklch(95.0% 0.0499 43.67)"
+        ]
+      },
+      "decifaz-ink": {
+        "role": "neutral",
+        "displayName": "decifaz-ink",
+        "canonical": "#1f2433",
+        "tonalRamp": [
+          "oklch(15.0% 0.0087 270.06)",
+          "oklch(26.0% 0.0152 270.06)",
+          "oklch(38.0% 0.0222 270.06)",
+          "oklch(50.0% 0.0292 270.06)",
+          "oklch(62.0% 0.0292 270.06)",
+          "oklch(74.0% 0.0292 270.06)",
+          "oklch(86.0% 0.0204 270.06)",
+          "oklch(95.0% 0.0073 270.06)"
+        ]
+      },
+      "decifaz-slate": {
+        "role": "neutral",
+        "displayName": "decifaz-slate",
+        "canonical": "#8f9ab3",
+        "tonalRamp": [
+          "oklch(15.0% 0.0117 266.55)",
+          "oklch(26.0% 0.0203 266.55)",
+          "oklch(38.0% 0.0296 266.55)",
+          "oklch(50.0% 0.0390 266.55)",
+          "oklch(62.0% 0.0390 266.55)",
+          "oklch(74.0% 0.0390 266.55)",
+          "oklch(86.0% 0.0273 266.55)",
+          "oklch(95.0% 0.0097 266.55)"
+        ]
+      },
+      "decifaz-gray": {
+        "role": "neutral",
+        "displayName": "decifaz-gray",
+        "canonical": "#d9d9d9",
+        "tonalRamp": [
+          "oklch(15.0% 0.0000 89.88)",
+          "oklch(26.0% 0.0000 89.88)",
+          "oklch(38.0% 0.0000 89.88)",
+          "oklch(50.0% 0.0000 89.88)",
+          "oklch(62.0% 0.0000 89.88)",
+          "oklch(74.0% 0.0000 89.88)",
+          "oklch(86.0% 0.0000 89.88)",
+          "oklch(95.0% 0.0000 89.88)"
+        ]
+      },
+      "canvas": {
+        "role": "neutral",
+        "displayName": "canvas",
+        "canonical": "#f5f6fa",
+        "tonalRamp": [
+          "oklch(15.0% 0.0016 274.97)",
+          "oklch(26.0% 0.0028 274.97)",
+          "oklch(38.0% 0.0041 274.97)",
+          "oklch(50.0% 0.0054 274.97)",
+          "oklch(62.0% 0.0054 274.97)",
+          "oklch(74.0% 0.0054 274.97)",
+          "oklch(86.0% 0.0038 274.97)",
+          "oklch(95.0% 0.0014 274.97)"
+        ]
+      },
+      "paper": {
+        "role": "neutral",
+        "displayName": "paper",
+        "canonical": "#ffffff",
+        "tonalRamp": [
+          "oklch(15.0% 0.0000 89.88)",
+          "oklch(26.0% 0.0000 89.88)",
+          "oklch(38.0% 0.0000 89.88)",
+          "oklch(50.0% 0.0000 89.88)",
+          "oklch(62.0% 0.0000 89.88)",
+          "oklch(74.0% 0.0000 89.88)",
+          "oklch(86.0% 0.0000 89.88)",
+          "oklch(95.0% 0.0000 89.88)"
+        ]
+      },
+      "soft": {
+        "role": "neutral",
+        "displayName": "soft",
+        "canonical": "#f1f3f8",
+        "tonalRamp": [
+          "oklch(15.0% 0.0021 268.55)",
+          "oklch(26.0% 0.0036 268.55)",
+          "oklch(38.0% 0.0053 268.55)",
+          "oklch(50.0% 0.0070 268.55)",
+          "oklch(62.0% 0.0070 268.55)",
+          "oklch(74.0% 0.0070 268.55)",
+          "oklch(86.0% 0.0049 268.55)",
+          "oklch(95.0% 0.0018 268.55)"
+        ]
+      },
+      "muted": {
+        "role": "neutral",
+        "displayName": "muted",
+        "canonical": "#505e79",
+        "tonalRamp": [
+          "oklch(15.0% 0.0141 263.32)",
+          "oklch(26.0% 0.0245 263.32)",
+          "oklch(38.0% 0.0358 263.32)",
+          "oklch(50.0% 0.0471 263.32)",
+          "oklch(62.0% 0.0471 263.32)",
+          "oklch(74.0% 0.0471 263.32)",
+          "oklch(86.0% 0.0330 263.32)",
+          "oklch(95.0% 0.0118 263.32)"
+        ]
+      },
+      "dark-canvas": {
+        "role": "neutral",
+        "displayName": "dark-canvas",
+        "canonical": "#171b27",
+        "tonalRamp": [
+          "oklch(15.0% 0.0073 270.10)",
+          "oklch(26.0% 0.0126 270.10)",
+          "oklch(38.0% 0.0184 270.10)",
+          "oklch(50.0% 0.0243 270.10)",
+          "oklch(62.0% 0.0243 270.10)",
+          "oklch(74.0% 0.0243 270.10)",
+          "oklch(86.0% 0.0170 270.10)",
+          "oklch(95.0% 0.0061 270.10)"
+        ]
+      },
+      "dark-paper": {
+        "role": "neutral",
+        "displayName": "dark-paper",
+        "canonical": "#242b3d",
+        "tonalRamp": [
+          "oklch(15.0% 0.0104 267.83)",
+          "oklch(26.0% 0.0180 267.83)",
+          "oklch(38.0% 0.0262 267.83)",
+          "oklch(50.0% 0.0345 267.83)",
+          "oklch(62.0% 0.0345 267.83)",
+          "oklch(74.0% 0.0345 267.83)",
+          "oklch(86.0% 0.0242 267.83)",
+          "oklch(95.0% 0.0086 267.83)"
+        ]
+      },
+      "dark-soft": {
+        "role": "neutral",
+        "displayName": "dark-soft",
+        "canonical": "#30394f",
+        "tonalRamp": [
+          "oklch(15.0% 0.0122 267.10)",
+          "oklch(26.0% 0.0211 267.10)",
+          "oklch(38.0% 0.0308 267.10)",
+          "oklch(50.0% 0.0406 267.10)",
+          "oklch(62.0% 0.0406 267.10)",
+          "oklch(74.0% 0.0406 267.10)",
+          "oklch(86.0% 0.0284 267.10)",
+          "oklch(95.0% 0.0101 267.10)"
+        ]
+      },
+      "dark-ink": {
+        "role": "neutral",
+        "displayName": "dark-ink",
+        "canonical": "#f2f4fa",
+        "tonalRamp": [
+          "oklch(15.0% 0.0025 271.33)",
+          "oklch(26.0% 0.0043 271.33)",
+          "oklch(38.0% 0.0063 271.33)",
+          "oklch(50.0% 0.0083 271.33)",
+          "oklch(62.0% 0.0083 271.33)",
+          "oklch(74.0% 0.0083 271.33)",
+          "oklch(86.0% 0.0058 271.33)",
+          "oklch(95.0% 0.0021 271.33)"
+        ]
+      },
+      "dark-muted": {
+        "role": "neutral",
+        "displayName": "dark-muted",
+        "canonical": "#b2bcd1",
+        "tonalRamp": [
+          "oklch(15.0% 0.0095 265.29)",
+          "oklch(26.0% 0.0165 265.29)",
+          "oklch(38.0% 0.0241 265.29)",
+          "oklch(50.0% 0.0318 265.29)",
+          "oklch(62.0% 0.0318 265.29)",
+          "oklch(74.0% 0.0318 265.29)",
+          "oklch(86.0% 0.0222 265.29)",
+          "oklch(95.0% 0.0079 265.29)"
+        ]
+      },
+      "dark-line": {
+        "role": "neutral",
+        "displayName": "dark-line",
+        "canonical": "#46506a",
+        "tonalRamp": [
+          "oklch(15.0% 0.0135 268.18)",
+          "oklch(26.0% 0.0234 268.18)",
+          "oklch(38.0% 0.0343 268.18)",
+          "oklch(50.0% 0.0451 268.18)",
+          "oklch(62.0% 0.0451 268.18)",
+          "oklch(74.0% 0.0451 268.18)",
+          "oklch(86.0% 0.0316 268.18)",
+          "oklch(95.0% 0.0113 268.18)"
+        ]
+      },
+      "dark-accent": {
+        "role": "neutral",
+        "displayName": "dark-accent",
+        "canonical": "#bcc9e6",
+        "tonalRamp": [
+          "oklch(15.0% 0.0129 266.28)",
+          "oklch(26.0% 0.0224 266.28)",
+          "oklch(38.0% 0.0327 266.28)",
+          "oklch(50.0% 0.0431 266.28)",
+          "oklch(62.0% 0.0431 266.28)",
+          "oklch(74.0% 0.0431 266.28)",
+          "oklch(86.0% 0.0302 266.28)",
+          "oklch(95.0% 0.0108 266.28)"
+        ]
+      },
+      "navigation-label": {
+        "role": "neutral",
+        "displayName": "navigation-label",
+        "canonical": "#bdc8df",
+        "tonalRamp": [
+          "oklch(15.0% 0.0103 265.20)",
+          "oklch(26.0% 0.0179 265.20)",
+          "oklch(38.0% 0.0262 265.20)",
+          "oklch(50.0% 0.0344 265.20)",
+          "oklch(62.0% 0.0344 265.20)",
+          "oklch(74.0% 0.0344 265.20)",
+          "oklch(86.0% 0.0241 265.20)",
+          "oklch(95.0% 0.0086 265.20)"
+        ]
+      },
+      "alert-border": {
+        "role": "neutral",
+        "displayName": "alert-border",
+        "canonical": "#bd5238",
+        "tonalRamp": [
+          "oklch(15.0% 0.0432 34.91)",
+          "oklch(26.0% 0.0750 34.91)",
+          "oklch(38.0% 0.1095 34.91)",
+          "oklch(50.0% 0.1441 34.91)",
+          "oklch(62.0% 0.1441 34.91)",
+          "oklch(74.0% 0.1441 34.91)",
+          "oklch(86.0% 0.1009 34.91)",
+          "oklch(95.0% 0.0360 34.91)"
+        ]
+      },
+      "warning-paper": {
+        "role": "neutral",
+        "displayName": "warning-paper",
+        "canonical": "#f8efd9",
+        "tonalRamp": [
+          "oklch(15.0% 0.0092 88.37)",
+          "oklch(26.0% 0.0159 88.37)",
+          "oklch(38.0% 0.0232 88.37)",
+          "oklch(50.0% 0.0306 88.37)",
+          "oklch(62.0% 0.0306 88.37)",
+          "oklch(74.0% 0.0306 88.37)",
+          "oklch(86.0% 0.0214 88.37)",
+          "oklch(95.0% 0.0076 88.37)"
+        ]
+      },
+      "warning-ink": {
+        "role": "neutral",
+        "displayName": "warning-ink",
+        "canonical": "#80561f",
+        "tonalRamp": [
+          "oklch(15.0% 0.0267 69.84)",
+          "oklch(26.0% 0.0463 69.84)",
+          "oklch(38.0% 0.0677 69.84)",
+          "oklch(50.0% 0.0891 69.84)",
+          "oklch(62.0% 0.0891 69.84)",
+          "oklch(74.0% 0.0891 69.84)",
+          "oklch(86.0% 0.0624 69.84)",
+          "oklch(95.0% 0.0223 69.84)"
+        ]
+      },
+      "error-paper": {
+        "role": "neutral",
+        "displayName": "error-paper",
+        "canonical": "#f8eae5",
+        "tonalRamp": [
+          "oklch(15.0% 0.0050 40.80)",
+          "oklch(26.0% 0.0087 40.80)",
+          "oklch(38.0% 0.0127 40.80)",
+          "oklch(50.0% 0.0167 40.80)",
+          "oklch(62.0% 0.0167 40.80)",
+          "oklch(74.0% 0.0167 40.80)",
+          "oklch(86.0% 0.0117 40.80)",
+          "oklch(95.0% 0.0042 40.80)"
+        ]
+      },
+      "error-ink": {
+        "role": "neutral",
+        "displayName": "error-ink",
+        "canonical": "#974f3d",
+        "tonalRamp": [
+          "oklch(15.0% 0.0302 35.06)",
+          "oklch(26.0% 0.0524 35.06)",
+          "oklch(38.0% 0.0766 35.06)",
+          "oklch(50.0% 0.1008 35.06)",
+          "oklch(62.0% 0.1008 35.06)",
+          "oklch(74.0% 0.1008 35.06)",
+          "oklch(86.0% 0.0706 35.06)",
+          "oklch(95.0% 0.0252 35.06)"
+        ]
+      },
+      "info-paper": {
+        "role": "neutral",
+        "displayName": "info-paper",
+        "canonical": "#e7eef9",
+        "tonalRamp": [
+          "oklch(15.0% 0.0050 259.42)",
+          "oklch(26.0% 0.0086 259.42)",
+          "oklch(38.0% 0.0126 259.42)",
+          "oklch(50.0% 0.0166 259.42)",
+          "oklch(62.0% 0.0166 259.42)",
+          "oklch(74.0% 0.0166 259.42)",
+          "oklch(86.0% 0.0116 259.42)",
+          "oklch(95.0% 0.0042 259.42)"
+        ]
+      },
+      "dark-error-paper": {
+        "role": "neutral",
+        "displayName": "dark-error-paper",
+        "canonical": "#56382f",
+        "tonalRamp": [
+          "oklch(15.0% 0.0138 37.41)",
+          "oklch(26.0% 0.0239 37.41)",
+          "oklch(38.0% 0.0349 37.41)",
+          "oklch(50.0% 0.0459 37.41)",
+          "oklch(62.0% 0.0459 37.41)",
+          "oklch(74.0% 0.0459 37.41)",
+          "oklch(86.0% 0.0321 37.41)",
+          "oklch(95.0% 0.0115 37.41)"
+        ]
+      },
+      "dark-error-ink": {
+        "role": "neutral",
+        "displayName": "dark-error-ink",
+        "canonical": "#ffd0c2",
+        "tonalRamp": [
+          "oklch(15.0% 0.0170 37.21)",
+          "oklch(26.0% 0.0295 37.21)",
+          "oklch(38.0% 0.0431 37.21)",
+          "oklch(50.0% 0.0567 37.21)",
+          "oklch(62.0% 0.0567 37.21)",
+          "oklch(74.0% 0.0567 37.21)",
+          "oklch(86.0% 0.0397 37.21)",
+          "oklch(95.0% 0.0142 37.21)"
+        ]
+      },
+      "dark-warning-paper": {
+        "role": "neutral",
+        "displayName": "dark-warning-paper",
+        "canonical": "#51452d",
+        "tonalRamp": [
+          "oklch(15.0% 0.0122 84.12)",
+          "oklch(26.0% 0.0211 84.12)",
+          "oklch(38.0% 0.0309 84.12)",
+          "oklch(50.0% 0.0406 84.12)",
+          "oklch(62.0% 0.0406 84.12)",
+          "oklch(74.0% 0.0406 84.12)",
+          "oklch(86.0% 0.0284 84.12)",
+          "oklch(95.0% 0.0102 84.12)"
+        ]
+      },
+      "dark-warning-ink": {
+        "role": "neutral",
+        "displayName": "dark-warning-ink",
+        "canonical": "#ffe1a3",
+        "tonalRamp": [
+          "oklch(15.0% 0.0256 84.96)",
+          "oklch(26.0% 0.0444 84.96)",
+          "oklch(38.0% 0.0649 84.96)",
+          "oklch(50.0% 0.0853 84.96)",
+          "oklch(62.0% 0.0853 84.96)",
+          "oklch(74.0% 0.0853 84.96)",
+          "oklch(86.0% 0.0597 84.96)",
+          "oklch(95.0% 0.0213 84.96)"
+        ]
+      },
+      "dark-info-paper": {
+        "role": "neutral",
+        "displayName": "dark-info-paper",
+        "canonical": "#364564",
+        "tonalRamp": [
+          "oklch(15.0% 0.0169 264.14)",
+          "oklch(26.0% 0.0293 264.14)",
+          "oklch(38.0% 0.0429 264.14)",
+          "oklch(50.0% 0.0564 264.14)",
+          "oklch(62.0% 0.0564 264.14)",
+          "oklch(74.0% 0.0564 264.14)",
+          "oklch(86.0% 0.0395 264.14)",
+          "oklch(95.0% 0.0141 264.14)"
+        ]
+      },
+      "dark-info-ink": {
+        "role": "neutral",
+        "displayName": "dark-info-ink",
+        "canonical": "#e3ecff",
+        "tonalRamp": [
+          "oklch(15.0% 0.0082 265.45)",
+          "oklch(26.0% 0.0143 265.45)",
+          "oklch(38.0% 0.0209 265.45)",
+          "oklch(50.0% 0.0275 265.45)",
+          "oklch(62.0% 0.0275 265.45)",
+          "oklch(74.0% 0.0275 265.45)",
+          "oklch(86.0% 0.0192 265.45)",
+          "oklch(95.0% 0.0069 265.45)"
+        ]
+      }
+    },
+    "shadows": [
+      {
+        "name": "dialog",
+        "value": "0 18px 70px #07150c42",
+        "purpose": "Sobreposição de edição com foco protegido; não aplicar a cards."
+      }
+    ],
+    "motion": [
+      {
+        "name": "disclosure-chevron",
+        "value": "transform .15s",
+        "purpose": "Estado de abertura; desabilitado com prefers-reduced-motion."
+      }
+    ],
+    "breakpoints": [
+      {
+        "name": "work-grid",
+        "value": "1000px"
+      },
+      {
+        "name": "navigation-drawer",
+        "value": "890px"
+      },
+      {
+        "name": "work-controls",
+        "value": "700px"
+      },
+      {
+        "name": "narrow-header",
+        "value": "360px"
+      }
+    ]
+  },
+  "components": [
+    {
+      "name": "Ação principal",
+      "kind": "button",
+      "refersTo": "button-primary",
+      "description": "Uma ação principal por tarefa.",
+      "html": "<button class=\"ds-button ds-primary\">Salvar alterações</button>",
+      "css": ".ds-button{display:inline-flex;align-items:center;justify-content:center;gap:8px;min-height:44px;padding:10px 14px;border:1px solid var(--line,#d9d9d9);border-radius:8px;font:600 14px/1.4 Inter,system-ui;cursor:pointer}.ds-button:focus-visible{outline:2px solid var(--accent,#3a4a6f);outline-offset:3px}.ds-button:disabled{opacity:.5;cursor:default}.ds-primary{background:var(--decifaz-orange,#ff6a13);border-color:var(--decifaz-orange,#ff6a13);color:var(--decifaz-ink,#1f2433)}.ds-primary:hover{filter:brightness(1.08)}"
+    },
+    {
+      "name": "Ação secundária",
+      "kind": "button",
+      "refersTo": "button-secondary",
+      "description": "Alternativa e saída de uma tarefa.",
+      "html": "<button class=\"ds-button ds-secondary\">Cancelar</button>",
+      "css": ".ds-button{display:inline-flex;align-items:center;justify-content:center;gap:8px;min-height:44px;padding:10px 14px;border:1px solid var(--line,#d9d9d9);border-radius:8px;font:600 14px/1.4 Inter,system-ui;cursor:pointer}.ds-button:focus-visible{outline:2px solid var(--accent,#3a4a6f);outline-offset:3px}.ds-button:disabled{opacity:.5;cursor:default}.ds-secondary{background:var(--paper,#fff);color:var(--ink,#1f2433)}.ds-secondary:hover{background:var(--soft,#f1f3f8)}"
+    },
+    {
+      "name": "Campo com rótulo",
+      "kind": "input",
+      "refersTo": "input",
+      "description": "Label persistente e foco contrastante.",
+      "html": "<label class=\"ds-field\"><span>Responsável</span><input value=\"Sócio fictício\" /></label>",
+      "css": ".ds-field{display:grid;gap:6px;font:14px/1.4 Inter,system-ui;color:var(--ink,#1f2433)}.ds-field input{min-height:44px;padding:8px 10px;border:1px solid var(--line,#d9d9d9);border-radius:8px;background:var(--paper,#fff);color:var(--ink,#1f2433);font:15px Inter,system-ui}.ds-field input:focus-visible{outline:2px solid var(--accent,#3a4a6f);outline-offset:3px}"
+    },
+    {
+      "name": "Navegação ativa",
+      "kind": "nav",
+      "description": "Destino atual com texto e ícone; exemplo estático.",
+      "html": "<nav class=\"ds-nav\" aria-label=\"Exemplo de navegação\"><button aria-current=\"page\"><svg aria-hidden=\"true\" width=\"18\" height=\"18\" viewBox=\"0 0 24 24\" fill=\"none\" stroke=\"currentColor\" stroke-width=\"2\"><rect x=\"3\" y=\"3\" width=\"7\" height=\"7\" rx=\"1\"/><rect x=\"14\" y=\"3\" width=\"7\" height=\"7\" rx=\"1\"/><rect x=\"3\" y=\"14\" width=\"7\" height=\"7\" rx=\"1\"/><rect x=\"14\" y=\"14\" width=\"7\" height=\"7\" rx=\"1\"/></svg>Dashboard</button></nav>",
+      "css": ".ds-nav{background:#1f2433;padding:12px}.ds-nav button{display:flex;align-items:center;gap:10px;min-height:44px;width:100%;padding:7px 9px;border-radius:8px;border:1px solid #8f9ab3;background:#3a4a6f;color:#fff;font:600 14px Inter,system-ui;text-align:left}.ds-nav svg{color:#ff6a13}.ds-nav button:hover{background:#46567d}.ds-nav button:focus-visible{outline:2px solid #bcc9e6;outline-offset:3px}"
+    },
+    {
+      "name": "Situação textual",
+      "kind": "chip",
+      "description": "Sinal de prazo com rótulo, além da cor.",
+      "html": "<span class=\"ds-tag\">Vencido</span>",
+      "css": ".ds-tag{display:inline-flex;padding:4px 8px;border-radius:6px;font:600 12px/1.4 Inter,system-ui;background:var(--soft,#f1f3f8);color:var(--ink,#1f2433);border:1px solid var(--line,#d9d9d9)}"
+    },
+    {
+      "name": "Unidade de trabalho",
+      "kind": "card",
+      "refersTo": "card",
+      "description": "Superfície discreta, sem sombra decorativa.",
+      "html": "<section class=\"ds-card\"><h2>Próximos vencimentos</h2><p>Consulte as obrigações atribuídas.</p></section>",
+      "css": ".ds-card{background:var(--paper,#fff);color:var(--ink,#1f2433);border:1px solid var(--line,#d9d9d9);border-radius:12px;padding:18px}.ds-card h2{font:700 16px/1.4 Poppins,Inter,system-ui;margin:0 0 8px}.ds-card p{font:15px/1.55 Inter,system-ui;color:var(--muted,#505e79);margin:0}"
+    },
+    {
+      "name": "Detalhe progressivo",
+      "kind": "custom",
+      "description": "Disclosure nativo, acessível por teclado.",
+      "html": "<details class=\"ds-disclosure\"><summary>Vigência e avisos</summary><p>Datas e antecedência para acompanhar o contrato.</p></details>",
+      "css": ".ds-disclosure{background:var(--paper,#fff);color:var(--ink,#1f2433);border:1px solid var(--line,#d9d9d9);border-radius:12px;font:15px/1.5 Inter,system-ui}.ds-disclosure summary{cursor:pointer;min-height:52px;padding:15px 18px;font-weight:600}.ds-disclosure summary:focus-visible{outline:2px solid var(--accent,#3a4a6f);outline-offset:3px}.ds-disclosure p{margin:0;padding:18px;color:var(--muted,#505e79)}"
+    }
+  ],
+  "narrative": {
+    "northStar": "Mesa de trabalho clara e prática",
+    "overview": "O Hub é uma ferramenta interna para concluir trabalho. A direção confirmada pelos sócios é direta, sóbria e acolhedora: prioridades, vencimentos e próximas ações aparecem primeiro; o restante permanece acessível sem competir com a tarefa atual. A identidade oficial é preservada, com azul na estrutura e navegação, laranja nas ações principais e superfícies neutras para leitura.\n\nEste documento registra o sistema do modo compartilhado e suas correções nesta branch. Não transforma todo estilo legado da demonstração em recomendação. Fontes, cores, formatos e componentes são extraídos da implementação; as decisões qualitativas foram confirmadas com o usuário.",
+    "keyCharacteristics": [
+      "Ordem de leitura acompanha a rotina e o prazo, antes das métricas secundárias.",
+      "Ação principal evidente; detalhes organizados em abas e accordions quando ajudam.",
+      "Boa legibilidade no computador e celular, em ambos os temas.",
+      "Orientação curta para tarefas pouco frequentes, sem tutoriais obrigatórios."
+    ],
+    "rules": [
+      {
+        "name": "The Readable State Rule",
+        "body": "Foco, seleção, erro e atraso têm sinais além da cor. O foco usa o token `--accent`, que varia com o tema. Estados financeiros e de acesso mantêm rótulos textuais. Verificar contraste nos estilos computados; não interpretar a ausência de avisos do scanner como certificação.",
+        "section": "colors"
+      },
+      {
+        "name": "The Useful Hierarchy Rule",
+        "body": "A ação e o prazo são reconhecíveis antes da leitura completa. Não adicionar eyebrows, slogans ou títulos que apenas repetem a frase seguinte.",
+        "section": "typography"
+      },
+      {
+        "name": "The Quiet Surface Rule",
+        "body": "Relevo comunica sobreposição. Seções normais se diferenciam por posição, título, espaço e borda, conforme a direção confirmada pelos sócios.",
+        "section": "elevation"
+      }
+    ],
+    "dos": [
+      "**Do** preservar tons, fontes e assets oficiais da Decifaz.",
+      "**Do** destacar a tarefa principal, o responsável, o prazo e a origem.",
+      "**Do** organizar detalhes secundários sem esconder informação necessária para decidir.",
+      "**Do** verificar os dois temas, foco, teclado, celular e conteúdo longo no resultado renderizado.",
+      "**Do** usar exemplos e documentos fictícios na homologação."
+    ],
+    "donts": [
+      "**Don't** trocar a identidade por uma tendência sugerida pelo detector.",
+      "**Don't** usar cards aninhados, eyebrows ou barras laterais decorativas para construir hierarquia.",
+      "**Don't** tratar reunião interna como portal ou acesso de clientes.",
+      "**Don't** misturar captura local com transmissão a participantes.",
+      "**Don't** remover restrições financeiras, confirmações ou trilhas para simplificar uma tela."
+    ]
+  }
+}
