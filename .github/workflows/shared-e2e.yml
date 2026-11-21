@@ -26,12 +26,16 @@ jobs:
       - run: npm ci
       - run: bash scripts/prepare-browser-deps.sh
       - run: npx playwright install --with-deps chromium
+      - name: Conferir guia diário na prévia externa isolada
+        run: node scripts/daily-external-review.mjs
       - run: node scripts/screen-external-viewer.mjs
       - uses: actions/upload-artifact@v4
-        if: success()
+        if: always()
         with:
           name: tela-recebida-entre-redes
-          path: .validation/screen-external
+          path: |
+            .validation/screen-external
+            .validation/daily-external
           retention-days: 7
   shared-browser:
     runs-on: ubuntu-24.04
