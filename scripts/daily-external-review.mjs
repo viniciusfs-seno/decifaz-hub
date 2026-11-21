@@ -4,6 +4,7 @@ const origin=process.env.HUB_HML_PREVIEW_URL,password=process.env.HUB_HML_REVIEW
 if(!/^https:\/\/[a-z0-9-]+\.trycloudflare\.com$/.test(origin??'')||!password)throw Error('Prévia isolada protegida obrigatória')
 const browser=await chromium.launch(),context=await browser.newContext()
 try{
+ const health=await context.request.get(origin+'/__health');expect(health.status()).toBe(200);expect((await health.json()).candidate).toBe(process.env.HUB_HML_EXPECTED_SHA)
  const page=await context.newPage();await page.goto(origin);await page.getByLabel('Senha de revisão').fill(password);await page.getByRole('button',{name:'Entrar na homologação',exact:true}).click();await page.goto(origin+'/__review/persona/admin');await expect(page.getByRole('navigation')).toBeVisible()
  await page.getByRole('navigation').getByRole('button',{name:'Base de conhecimento',exact:true}).click();await page.getByRole('button',{name:'Início diário dos sócios',exact:true}).click();await expect(page.getByRole('heading',{name:'Início diário dos sócios',exact:true})).toBeVisible();await expect(page.getByText('Comece em três passos',{exact:true})).toBeVisible()
  fs.mkdirSync('.validation/daily-external',{recursive:true});await page.screenshot({path:'.validation/daily-external/guia-desktop.png',fullPage:true})

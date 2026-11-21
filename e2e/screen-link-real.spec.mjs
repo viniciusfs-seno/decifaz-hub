@@ -18,6 +18,26 @@ const rpc=async(client,name,args)=>{const r=await client.rpc(name,args);if(r.err
 async function meeting(f){const m=randomUUID();await checked(f.owner.client.rpc('hub_save_project_meeting',{w:f.workspace,p:f.proposal,m,expected_revision:null,operation_id:randomUUID(),follow:false,body:{date:f.today,state:'Agendada',participants:'Sócios fictícios',agenda:'PAUTA INTERNA RESERVADA',summary:'ATA INTERNA RESERVADA',decisions:'',owner:'Marina fictícia',next:'',due:'',callUrl:''}}));return m}
 const secret=()=>randomBytes(32).toString('base64url')
 
+test('Tela: fonte encerrada durante a gravação e HTTP pendente não deixam captura ativa',async({browser})=>{
+ test.skip(process.env.HUB_REAL_E2E!=='1');test.setTimeout(90000);const f=await operationalFixture();await meeting(f)
+ try{for(const ended of [true,false]){
+  const context=await browser.newContext();try{
+   await context.addInitScript(({session,ended})=>{localStorage.setItem('sb-127-auth-token',JSON.stringify(session));navigator.mediaDevices.getDisplayMedia=async()=>{const canvas=document.createElement('canvas');canvas.width=100;canvas.height=100;const stream=canvas.captureStream(1);window.__fakeScreenTrack=stream.getVideoTracks()[0];if(ended)setTimeout(()=>window.__fakeScreenTrack.stop(),50);return stream}},{session:f.owner.session,ended})
+   const page=await context.newPage();if(ended)await page.route('**/rpc/hub_screen_start',async route=>{const response=await route.fetch();await new Promise(r=>setTimeout(r,500));await route.fulfill({response})})
+   await page.goto('/');await page.getByRole('navigation').getByRole('button',{name:'Projetos e entregas',exact:true}).click();await page.getByRole('button',{name:'Pedidos digitais · Horizonte',exact:true}).click();await recordTab(page,'Reuniões');await page.getByRole('button',{name:'Preparar / registrar ata',exact:true}).click();await page.getByRole('button',{name:'Compartilhar tela por link',exact:true}).click()
+   if(ended)await expect(page.getByRole('status').filter({hasText:'A fonte foi encerrada antes de iniciar'})).toBeVisible()
+   else{
+    await expect(page.getByRole('button',{name:'Copiar convite para assistir',exact:true})).toBeVisible()
+    await page.route('**/rpc/hub_screen_host',async route=>{const body=route.request().postDataJSON();if(!body.action||body.action==='poll'){await new Promise(r=>setTimeout(r,20000));await route.abort().catch(()=>{})}else await route.continue()})
+    await expect(page.getByRole('status').filter({hasText:'Sem confirmação de autorização por 15 segundos'})).toBeVisible({timeout:22000})
+   }
+   await expect(page.getByRole('button',{name:'Compartilhar tela por link',exact:true})).toBeVisible();expect(await page.evaluate(()=>window.__fakeScreenTrack.readyState)).toBe('ended')
+  }finally{await context.close()}
+ }
+ expect(sql(`select count(*) from hub_private.screen_sessions where workspace_id='${f.workspace}' and ended_at is null`)).toBe('0')
+ }finally{await f.cleanup()}
+})
+
 test('Tela: autorização, aprovação, expiração, encerramento, auditoria atômica e membro desativado',async()=>{
  test.skip(process.env.HUB_REAL_E2E!=='1');test.setTimeout(90000)
  const f=await operationalFixture(),anon=createClient(process.env.VITE_SUPABASE_URL,process.env.VITE_SUPABASE_PUBLISHABLE_KEY,{auth:{persistSession:false}}),m=await meeting(f)

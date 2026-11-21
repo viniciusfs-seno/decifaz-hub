@@ -9,6 +9,30 @@ permissions:
   contents: read
 
 jobs:
+  daily-external:
+    if: github.event_name == 'pull_request' && github.event.pull_request.head.repo.full_name == github.repository && github.head_ref == 'feat/compartilhamento-tela' && vars.HUB_HML_PREVIEW_URL != ''
+    runs-on: ubuntu-24.04
+    timeout-minutes: 8
+    env:
+      HUB_HML_PREVIEW_URL: ${{ vars.HUB_HML_PREVIEW_URL }}
+      HUB_HML_REVIEW_PASSWORD: ${{ secrets.HUB_HML_REVIEW_PASSWORD }}
+      HUB_HML_EXPECTED_SHA: ${{ github.event.pull_request.head.sha }}
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '24'
+          cache: npm
+      - run: npm ci
+      - run: bash scripts/prepare-browser-deps.sh
+      - run: npx playwright install --with-deps chromium
+      - run: node scripts/daily-external-review.mjs
+      - uses: actions/upload-artifact@v4
+        if: success()
+        with:
+          name: guia-diario-previa-protegida
+          path: .validation/daily-external
+          retention-days: 7
   screen-external:
     if: github.event_name == 'pull_request' && github.event.pull_request.head.repo.full_name == github.repository && github.head_ref == 'feat/compartilhamento-tela' && vars.HUB_SCREEN_PROBE_ENABLED == 'true'
     runs-on: ubuntu-24.04
