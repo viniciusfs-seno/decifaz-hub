@@ -14,6 +14,9 @@ const home=page('<h2>Escolha um perfil fictício</h2><p>Não use seu e-mail ou d
 export function createGateway({origin,password,root,fixture,publicKey,sha='test',expires=Date.now()+86400000,upstream='http://127.0.0.1:54321'}){
  if(!/^https:\/\/[a-z0-9-]+\.trycloudflare\.com$/.test(origin)||password.length<20||upstream!=='http://127.0.0.1:54321')throw Error('Configuração de homologação inválida')
  const sessions=new Map(),attempts=new Map(),personas={admin:fixture.owner,comercial:fixture.restricted,segunda:fixture.second}
+ // Synthetic cross-network probe only, protected by the review cookie. Bearer
+ // material stays in process memory and is neither logged nor written to disk.
+ let screenProbe
  const storageKey='sb-'+new URL(origin).hostname.split('.')[0]+'-auth-token'
  const allowed=/^\/(auth\/v1\/(?:token|otp|verify|user|logout|signup|settings|recover)(?:\?|$)|rest\/v1\/|functions\/v1\/hub-workspaces(?:\?|$)|storage\/v1\/object\/(?:authenticated\/)?hub-private-documents\/[0-9a-f-]{36}\/(?:contract|bill)\/[0-9a-f-]{36}\/[0-9a-f-]{36}\.pdf(?:\?|$))/
  const server=createServer(async(req,res)=>{
@@ -41,6 +44,16 @@ export function createGateway({origin,password,root,fixture,publicKey,sha='test'
    if(!token||(sessions.get(token)??0)<Date.now())return path.startsWith('/__supabase')?send(401,'{"error":"review_access_required"}','application/json'):send(401,login)
    if(path==='/__review/logout'&&req.method==='POST'){sessions.delete(token);res.setHeader('Set-Cookie',cookieName+'=; Path=/; Secure; HttpOnly; SameSite=Lax; Max-Age=0');res.writeHead(303,{Location:'/'});return res.end()}
    if(path==='/__review')return send(200,home)
+   if(path==='/__review/screen-probe'){
+    if(req.method==='DELETE'){screenProbe=undefined;return send(200,'{}','application/json')}
+    if(req.method==='POST'){
+     const value=JSON.parse(body.toString())
+     if(!/^[0-9a-f-]{36}$/.test(value.id)||!/^[A-Za-z0-9_-]{43}$/.test(value.credential))return send(400,'{}','application/json')
+     screenProbe={id:value.id,credential:value.credential,until:Date.now()+600000};return send(200,'{}','application/json')
+    }
+    if(req.method==='GET')return send(screenProbe&&screenProbe.until>Date.now()?200:404,screenProbe&&screenProbe.until>Date.now()?JSON.stringify(screenProbe):'{}','application/json')
+    return send(405,'{}','application/json')
+   }
    if(path==='/__review/fixtures')return send(200,JSON.stringify({workspace:fixture.workspace,other:fixture.other,lead:fixture.lead,prospect:fixture.prospect,meetingLead:fixture.meetingLead,meeting:fixture.meeting,admin:fixture.owner.id,second:fixture.second.id,restricted:fixture.restricted.id,publicKey,api:origin+'/__supabase'}),'application/json')
    if(path.startsWith('/__review/persona/')){
     const person=personas[path.split('/').at(-1)];if(!person)return send(404,'Perfil inexistente','text/plain')
@@ -76,7 +89,7 @@ export function createGateway({origin,password,root,fixture,publicKey,sha='test'
     res.statusCode=response.status;return res.end(Buffer.from(await response.arrayBuffer()))
    }
    if(req.method!=='GET')return send(405,'Método recusado','text/plain')
-   const file=resolve(root,'.'+decodeURIComponent(path==='/'?'/index.html':path));if(!file.startsWith(resolve(root)+'/')&&!file.startsWith(resolve(root)+'\\'))return send(404,'Não encontrado','text/plain')
+   const file=resolve(root,'.'+decodeURIComponent(path==='/'||path==='/assistir'?'/index.html':path));if(!file.startsWith(resolve(root)+'/')&&!file.startsWith(resolve(root)+'\\'))return send(404,'Não encontrado','text/plain')
    const info=await stat(file).catch(()=>null);if(!info?.isFile())return send(404,'Não encontrado','text/plain')
    let content=await readFile(file);const types={'.html':'text/html; charset=utf-8','.js':'text/javascript','.css':'text/css','.svg':'image/svg+xml','.png':'image/png','.woff2':'font/woff2'}
    if(extname(file)==='.html')content=Buffer.from(content.toString().replace('<body>','<body><div style="padding:8px 16px;background:#ffeddf;color:#1f2433;font:13px system-ui">HOMOLOGAÇÃO · DADOS FICTÍCIOS · <a href="/__review">Trocar perfil</a> · candidato '+sha.slice(0,7)+'</div>'))

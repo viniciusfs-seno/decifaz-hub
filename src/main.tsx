@@ -197,7 +197,13 @@ function App(){
 
 const root=createRoot(document.getElementById('root')!)
 const vercelHost=location.hostname.endsWith('.vercel.app')
-if(vercelHost||import.meta.env.VITE_HUB_MODE==='shared'){
+if(location.pathname==='/assistir'){
+ const raw=location.hash.slice(1),match=raw.match(/^([0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12})\.([A-Za-z0-9_-]{43})$/i)
+ const invite=match?{id:match[1],credential:match[2]}:null
+ // Remove the bearer fragment before loading any viewer dependencies.
+ history.replaceState(null,'','/assistir')
+ void import('./screen-viewer').then(({default:ScreenViewer})=>root.render(<ScreenViewer invite={invite}/>)).catch(()=>root.render(<main><p role="alert">Não foi possível abrir a transmissão. Peça um novo convite e tente novamente.</p></main>))
+}else if(vercelHost||import.meta.env.VITE_HUB_MODE==='shared'){
  void import('./pilot-app').then(({default:PilotApp})=>root.render(<PilotApp/>)).catch(()=>root.render(<main><p role="alert">Não foi possível abrir o piloto compartilhado. Recarregue a página para tentar novamente.</p></main>))
 }else{
  root.render(<App/>)
