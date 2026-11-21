@@ -1,3 +1,4 @@
+import {useWorkspacePeople,memberOwner} from './workspace-people'
 import {GlobalSearch,type SearchRecord} from './global-search'
 import {SessionDrafts} from './session-drafts'
 import {ActivityEditor} from './activity-editor'
@@ -190,6 +191,7 @@ function SharedCrm(){
  const [ready,setReady]=useState(false)
  const [loadedLead,setLoadedLead]=useState('')
  const [revision,reload]=useState(0)
+ const people=useWorkspacePeople(client!,workspace,revision)
  const internal=useInternalFinance(client!,workspace,can(role,'finance'),revision)
  const [billId,setBillId]=useState(''),[contractRows,setContractRows]=useState<Contract[]>([])
  useEffect(()=>{let live=true;setContractRows([]);if(workspace)void allRows(client!.from('hub_contracts').select('*').eq('workspace_id',workspace).order('id')).then(r=>{if(live&&!r.error)setContractRows(r.data as Contract[]??[])});return()=>{live=false}},[workspace,revision])
@@ -318,7 +320,7 @@ function SharedCrm(){
  const commercialData:Data={version:1,leads:leads.map(fullLead),triages:triages.map(fullTriage),meetings:proposalMeetings,activities:[],proposals,projects:[],finance:[],team:[...new Set(leads.map(item=>item.profile.owner).filter((owner):owner is string=>Boolean(owner)))]}
  const meetingContext={...commercialData,leads:lead?[lead]:[],team:[]}
  const activeProject=projects.find(item=>item.proposal_id===projectId)
- const entries:WorkEntry[]=[...workEntries(commercialData.leads,allActivities,proposalMeetings,projects),...internal.data.bills.map(b=>({key:'bill-'+b.id,id:b.id,kind:'bill' as const,title:internal.data.plans.find(p=>p.id===b.obligation_id)?.title??'Obrigação',leadId:internal.data.plans.find(p=>p.id===b.obligation_id)?.lead_id??'',owner:internal.data.plans.find(p=>p.id===b.obligation_id)?.owner??'',date:b.due_on,status:b.status,detail:'Obrigação da Decifaz'})),...contractRows.filter(c=>c.status==='Vigente').flatMap(c=>[{date:c.renews_on,days:c.notice_days,label:'Aviso de renovação'},{date:c.ends_on,days:c.cancel_notice_days,label:'Aviso de término/cancelamento'}].filter(a=>a.date).map(a=>({key:'contract-'+c.id+a.label,id:c.id,kind:'contract' as const,title:c.title,leadId:c.lead_id,owner:c.owner,date:new Date(Date.parse(a.date+'T12:00:00Z')-a.days*86400000).toISOString().slice(0,10),status:'Pendente',detail:a.label}))) ].sort((a,b)=>(a.date||'9999').localeCompare(b.date||'9999')||a.key.localeCompare(b.key))
+ const entries:WorkEntry[]=[...workEntries(commercialData.leads,allActivities,proposalMeetings,projects),...internal.data.bills.map(b=>({key:'bill-'+b.id,id:b.id,kind:'bill' as const,title:internal.data.plans.find(p=>p.id===b.obligation_id)?.title??'Obrigação',leadId:internal.data.plans.find(p=>p.id===b.obligation_id)?.lead_id??'',owner:internal.data.plans.find(p=>p.id===b.obligation_id)?.owner??'',date:b.due_on,status:b.status,detail:'Obrigação da Decifaz'})),...contractRows.filter(c=>c.status==='Vigente').flatMap(c=>[{date:c.renews_on,days:c.notice_days,label:'Aviso de renovação'},{date:c.ends_on,days:c.cancel_notice_days,label:'Aviso de término/cancelamento'}].filter(a=>a.date).map(a=>({key:'contract-'+c.id+a.label,id:c.id,kind:'contract' as const,title:c.title,leadId:c.lead_id,owner:c.owner,date:new Date(Date.parse(a.date+'T12:00:00Z')-a.days*86400000).toISOString().slice(0,10),status:'Pendente',detail:a.label}))) ].map(e=>({...e,owner:memberOwner(e.owner,people,'assignedUser' in e?e.assignedUser:undefined)})).sort((a,b)=>(a.date||'9999').localeCompare(b.date||'9999')||a.key.localeCompare(b.key))
  function openLead(id:string){const item=leads.find(l=>l.id===id);if(item){setReturnPage(page==='ficha'?'crm':page);go('crm');select(item)}}
  function openProject(id:string,section='resumo'){setProjectSection(section);setProjectReturn(page);go('projetos');setProjectId(id)}
  function openEntry(entry:WorkEntry){if(entry.kind==='bill'){setBillId(entry.id);go('obrigacoes')}else if(entry.kind==='contract'){setContractId(entry.id);go('contratos')}else if(entry.projectId)openProject(entry.projectId,entry.kind==='meeting'?'reunioes':entry.kind==='support'||entry.kind==='activity'?'suporte':'resumo');else openLead(entry.leadId)}
@@ -447,14 +449,14 @@ function SharedCrm(){
     </section>
     <section className="card panel"><h2>Atividades</h2><fieldset disabled={!can(role,'commercial',true)}>
      <button className="button" disabled={busy} onClick={()=>setActivityEditor({leadId:selected})}>Criar atividade</button>
-     {tasks.length?<ul>{tasks.map(item=><li key={item.id}><p>{item.title}{item.owner?' · '+item.owner:''}{item.due_on?' · '+dateLabel(item.due_on):''} · {item.status}</p>{allActivities.find(a=>a.id===item.id)?.result&&<p>Resultado: {allActivities.find(a=>a.id===item.id)?.result}</p>}<button className="button compact activity-edit" disabled={busy} onClick={()=>setActivityEditor({item:allActivities.find(a=>a.id===item.id)})}>Editar acompanhamento de {item.title}</button></li>)}</ul>:<p>Sem atividades registradas.</p>}</fieldset>
+     {tasks.length?<ul>{tasks.map(item=><li key={item.id}><p>{item.title}{item.owner?' · '+memberOwner(item.owner,people,allActivities.find(a=>a.id===item.id)?.assigned_user_id):''}{item.due_on?' · '+dateLabel(item.due_on):''} · {item.status}</p>{allActivities.find(a=>a.id===item.id)?.result&&<p>Resultado: {allActivities.find(a=>a.id===item.id)?.result}</p>}<button className="button compact activity-edit" disabled={busy} onClick={()=>setActivityEditor({item:allActivities.find(a=>a.id===item.id)})}>Editar acompanhamento de {item.title}</button></li>)}</ul>:<p>Sem atividades registradas.</p>}</fieldset>
     </section>
    </div>}
    </>}
    {activityEditor&&<ActivityEditor key={workspace+':'+(activityEditor.item?.id??activityEditor.leadId??'new')} client={client!} workspace={workspace} {...activityEditor} leads={commercialData.leads} close={()=>setActivityEditor(undefined)} saved={()=>{setNotice('Atividade salva.');changed()}}/>}
    {can(role,'commercial',true)&&lead&&editor==='triage'&&<TriageEditor solutionOptions={catalog.filter(s=>s.active).map(s=>s.name)} lead={lead} triage={selectedTriage&&fullTriage(selectedTriage)} team={[]} close={()=>setEditor(null)}
     save={(triage,updatedLead)=>write(()=>saveTriage(client!,workspace,triage,updatedLead),()=>setDraft({...draft,name:updatedLead.name,segment:updatedLead.segment,city:updatedLead.city}))}/>}
-   {can(role,'commercial',true)&&lead&&editor==='meeting'&&<MeetingEditor solutionOptions={catalog.filter(s=>s.active).map(s=>s.name)} presentation={<ClientPresentation lead={lead} meeting={meeting} solutions={catalog} proposals={proposals} financial={can(role,'finance')}/>} data={meetingContext} item={meeting} leadId={lead.id} lockLead close={()=>setEditor(null)}
+   {can(role,'commercial',true)&&lead&&editor==='meeting'&&<MeetingEditor ownerSuggestions={people.filter(p=>p.active).map(p=>p.name)} solutionOptions={catalog.filter(s=>s.active).map(s=>s.name)} presentation={<ClientPresentation lead={lead} meeting={meeting} solutions={catalog} proposals={proposals} financial={can(role,'finance')}/>} data={meetingContext} item={meeting} leadId={lead.id} lockLead close={()=>setEditor(null)}
     save={(item,follow,advance)=>write(()=>saveMeeting(client!,workspace,item,follow,advance))}/>}
    {proposalModal&&<ProposalEditor catalog={catalog} readOnly={!can(role,'commercial',true)} financial={can(role,'finance')} canSetPrices={administrator} canAccept={administrator} key={proposalModal.id??proposalModal.meetingId??'new'} data={commercialData}
     item={proposals.find(item=>item.id===proposalModal.id)} leadId={proposalModal.leadId} meetingId={proposalModal.meetingId}

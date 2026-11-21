@@ -4,6 +4,8 @@ Portal de trabalho compartilhado da Decifaz para a rotina comercial, contratos, 
 
 Guia de operação, cobertura de auditoria, migrações e recuperação: [rotina dos sócios](docs/rotina-socios.md).
 
+Para começar no portal: **Conhecimento → Base de conhecimento → Início diário dos sócios**. [Diretório autorizado, validação e publicação do guia](docs/inicio-diario.md).
+
 Contexto de produto e UI: [PRODUCT.md](PRODUCT.md), [DESIGN.md](DESIGN.md) e [revisão Impeccable da mesa de trabalho](docs/impeccable/mesa-de-trabalho.md), com comparações e validações da branch de revisão.
 
 ## Começar a usar

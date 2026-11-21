@@ -2,6 +2,8 @@
 
 Use o espaço autorizado no portal oficial. Administração, Comercial, Operação e Financeiro continuam cumulativos; nenhum nome de responsável concede acesso. Os testes e documentos de homologação são fictícios e ficam separados dos registros reais.
 
+Guia curto no próprio portal: **Conhecimento → Base de conhecimento → Início diário dos sócios**. [Identificação dos integrantes, validação e publicação](inicio-diario.md).
+
 ## Começar pelos compromissos reais
 
 1. **Administração → Contratos**: cadastre o contrato existente ou selecione a proposta de origem e seus projetos. Informe responsável, situação, vigência, renovação e aviso prévio conhecidos. Confirme a gravação e anexe o PDF assinado privado. A situação do contrato não aceita proposta nem abre projeto automaticamente. Valores/condições e PDF exigem acesso financeiro; só Administração altera contrato.

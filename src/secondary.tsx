@@ -2,6 +2,7 @@ import {useViewState} from './view-state'
 import {useState} from 'react'
 import {ArrowRight,BookOpen,Download,Search} from 'lucide-react'
 import manual from './manual.json'
+import {dailyGuide} from './daily-guide'
 import {dateLabel,day,money,norm,solutions,uid,type Data,type Finance} from './domain'
 import {Dialog,Empty,Field,Form,Page,Tag} from './ui'
 
@@ -17,7 +18,7 @@ const suggested=[
  ['Passagem do comercial para desenvolvimento','Procedimentos','Reúna proposta aceita, aceite documentado, escopo versionado, responsável técnico, material inicial, condição de pagamento e regras de acesso antes de iniciar desenvolvimento.'],
 ]
 type Block={kind:string;text?:string;rows?:string[][]}
-const articles=[...manual.map((m,i)=>({id:'m'+i,title:m.title,category:'Manual',status:'Proposta interna · fonte',date:'13/11/2026',blocks:m.blocks as Block[]})),...suggested.map(([title,category,body],i)=>({id:'s'+i,title,category,status:'Sugestão · a validar',date:'—',blocks:[{kind:'paragraph',text:body}] as Block[]}))]
+const articles=[dailyGuide,...manual.map((m,i)=>({id:'m'+i,title:m.title,category:'Manual',status:'Proposta interna · fonte',date:'13/11/2026',blocks:m.blocks as Block[]})),...suggested.map(([title,category,body],i)=>({id:'s'+i,title,category,status:'Sugestão · a validar',date:'—',blocks:[{kind:'paragraph',text:body}] as Block[]}))]
 export function Knowledge({category='',go,download=true}:{category?:string;go:(page:string)=>void;download?:boolean}){
  const [query,set]=useViewState('knowledge-query','')
  const [filter,setFilter]=useViewState('knowledge-category',category)
@@ -26,7 +27,7 @@ export function Knowledge({category='',go,download=true}:{category?:string;go:(p
  const item=list.find(a=>a.id===current)
  return <Page title="Base de conhecimento" description="Consulte o manual interno, roteiros comerciais e materiais de apoio." actions={download?<a className="button" download href="./referencias/decifaz_manual.docx"><Download size={16}/> Manual original</a>:undefined}><div className="toolbar"><label className="search"><Search size={17}/><input aria-label="Buscar na base" placeholder="Pesquisar manuais e scripts..." value={query} onChange={e=>set(e.target.value)}/></label><select aria-label="Categoria" value={filter} onChange={e=>setFilter(e.target.value)}><option value="">Todas as categorias</option>{['Manual','Scripts','Procedimentos','Modelos'].map(x=><option key={x}>{x}</option>)}</select></div>
  <div className="knowledge-grid"><div className="card panel knowledge-index"><h2>Índice</h2>{list.map(a=><button className={item?.id===a.id?'selected':''} key={a.id} onClick={()=>open(a.id)}><BookOpen size={16}/><span>{a.title}</span><ArrowRight size={14}/></button>)}{!list.length&&<Empty/>}</div>
- <div className="card panel article">{item?<><div className="actions"><Tag tone="green">{item.category}</Tag><Tag>{item.status}</Tag></div><h2>{item.title}</h2><p className="muted">Versão inicial · Última atualização da fonte: {item.date} · Revisor a definir</p>{item.blocks.map((b,i)=>b.kind==='table'?<div className="table-wrap" key={i}><table><tbody>{b.rows?.map((r,j)=><tr key={j}>{r.map((c,k)=>j===0?<th key={k}>{c}</th>:<td key={k}>{c}</td>)}</tr>)}</tbody></table></div>:b.kind==='heading'?<h3 key={i}>{b.text}</h3>:b.kind==='bullet'?<p className="article-bullet" key={i}>{b.text}</p>:<p key={i}>{b.text}</p>)}</>:<Empty title="Selecione um material" detail="Use o índice ou pesquise por palavras do conteúdo."/>}{filter==='Scripts'&&<button className="button" onClick={()=>go('reunioes')}>Abrir reuniões <ArrowRight size={16}/></button>}</div></div></Page>
+ <div className="card panel article">{item?<><div className="actions"><Tag tone="green">{item.category}</Tag><Tag>{item.status}</Tag></div><h2>{item.title}</h2><p className="muted">{item.id===dailyGuide.id?'Guia operacional · Atualizado em '+item.date:'Versão inicial · Última atualização da fonte: '+item.date+' · Revisor a definir'}</p>{item.blocks.map((b,i)=>b.kind==='table'?<div className="table-wrap" key={i}><table><tbody>{b.rows?.map((r,j)=><tr key={j}>{r.map((c,k)=>j===0?<th key={k}>{c}</th>:<td key={k}>{c}</td>)}</tr>)}</tbody></table></div>:b.kind==='heading'?<h3 key={i}>{b.text}</h3>:b.kind==='bullet'?<p className="article-bullet" key={i}>{b.text}</p>:<p key={i}>{b.text}</p>)}</>:<Empty title="Selecione um material" detail="Use o índice ou pesquise por palavras do conteúdo."/>}{filter==='Scripts'&&<button className="button" onClick={()=>go('reunioes')}>Abrir reuniões <ArrowRight size={16}/></button>}</div></div></Page>
 }
 export type SecondaryKind='propostas'|'projetos'|'financeiro'
 const config={

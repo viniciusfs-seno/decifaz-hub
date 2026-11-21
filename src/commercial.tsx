@@ -111,7 +111,7 @@ export function MeetingList({data,edit,add,propose}:{data:Data;edit:(id:string)=
  </div>
  {presentation?<MeetingPresentation meetings={data.meetings} leads={data.leads}/>:<div className="card table-wrap">{data.meetings.length?<table><thead><tr><th>Estabelecimento</th><th>Data</th><th>Participantes</th><th>Situação</th><th>Próxima ação</th><th>Ações</th></tr></thead><tbody>{[...data.meetings].sort((a,b)=>b.date.localeCompare(a.date)).map(m=><tr key={m.id}><td><button className="text-button lead-name" onClick={()=>edit(m.id)}>{data.leads.find(l=>l.id===m.leadId)?.name}</button></td><td>{dateLabel(m.date)}</td><td>{m.participants}</td><td><Tag tone={m.state==='Realizada'?'green':'blue'}>{m.state}</Tag></td><td>{m.next||'—'}</td><td>{m.state!=='Cancelada'&&meetingLink(m.callUrl)&&<a className="button compact" href={meetingLink(m.callUrl)!} target="_blank" rel="noopener noreferrer">Abrir chamada</a>}{m.state==='Realizada'&&<button className="button compact" onClick={()=>propose(m.id,m.leadId)}>Criar proposta</button>}</td></tr>)}</tbody></table>:<Empty title="Sem reuniões registradas"/>}</div>}</Page>
 }
-export function MeetingEditor({data,item,leadId,save,close,lockLead,presentation,solutionOptions=solutions}:{presentation?:ReactNode;solutionOptions?:string[];data:Data;item?:Meeting;leadId?:string;save:(m:Meeting,follow:boolean,update:boolean)=>boolean|Promise<boolean>;close:()=>void;lockLead?:boolean}){
+export function MeetingEditor({data,item,leadId,save,close,lockLead,presentation,solutionOptions=solutions,ownerSuggestions}:{ownerSuggestions?:string[];presentation?:ReactNode;solutionOptions?:string[];data:Data;item?:Meeting;leadId?:string;save:(m:Meeting,follow:boolean,update:boolean)=>boolean|Promise<boolean>;close:()=>void;lockLead?:boolean}){
  const [m,set]=useState<Meeting>(item??{id:'',leadId:leadId??'',date:day(),participants:'',state:'Agendada',answers:{},checked:[],summary:'',tools:'',objections:'',budget:'',next:'',owner:data.leads.find(l=>l.id===leadId)?.owner??data.team[0]??'',due:''})
  const [newMeetingId]=useState(uid)
  const [simple,setSimple]=useState(false)
@@ -120,7 +120,7 @@ export function MeetingEditor({data,item,leadId,save,close,lockLead,presentation
  const [saving,setSaving]=useState(false)
  const [error,setError]=useState('')
  const l=data.leads.find(l=>l.id===m.leadId)
- const f=(k:'date'|'participants'|'summary'|'tools'|'objections'|'budget'|'next'|'owner'|'due',label:string,type='text',required=false)=><Field label={label} type={type} required={required} options={k==='owner'&&data.team.length?data.team:undefined} value={m[k]} on={v=>set({...m,[k]:v})}/>
+ const f=(k:'date'|'participants'|'summary'|'tools'|'objections'|'budget'|'next'|'owner'|'due',label:string,type='text',required=false)=><Field label={label} type={type} required={required} suggestions={k==='owner'?ownerSuggestions:undefined} options={k==='owner'&&!ownerSuggestions&&data.team.length?data.team:undefined} value={m[k]} on={v=>set({...m,[k]:v})}/>
  async function commit(){
   if(saving)return
   if(!l||!m.date||!m.participants.trim()||!m.state)return setError('Informe estabelecimento, data, participantes e situação.')

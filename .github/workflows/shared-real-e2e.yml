@@ -50,7 +50,8 @@ jobs:
           docker exec -i supabase_db_decifaz-hub-e2e psql -U postgres -v ON_ERROR_STOP=1 < supabase/tests/integrantes_ativos.sql
           docker exec -i supabase_db_decifaz-hub-e2e psql -U postgres -v ON_ERROR_STOP=1 < supabase/tests/revisao_operacional.sql
           docker exec -i supabase_db_decifaz-hub-e2e psql -U postgres -v ON_ERROR_STOP=1 < supabase/tests/fechamentos.sql
-          npm run test:e2e -- shared-real.spec.mjs roles-real.spec.mjs concurrency-real.spec.mjs team-real.spec.mjs team-concurrency-real.spec.mjs role-history-real.spec.mjs invites-real.spec.mjs invite-auth-real.spec.mjs member-state-real.spec.mjs operational-real.spec.mjs catalog-real.spec.mjs meeting-studio-real.spec.mjs management-real.spec.mjs commercial-management-real.spec.mjs experience-real.spec.mjs lead-details-real.spec.mjs crm-pagination-real.spec.mjs metric-history-real.spec.mjs contracts-real.spec.mjs internal-finance-real.spec.mjs project-meetings-real.spec.mjs hierarchy-real.spec.mjs record-work-real.spec.mjs global-search-real.spec.mjs prospecting-real.spec.mjs productivity-real.spec.mjs activity-work-real.spec.mjs activity-clock-real.spec.mjs workspace-refresh-real.spec.mjs import-real.spec.mjs
+          docker exec -i supabase_db_decifaz-hub-e2e psql -U postgres -v ON_ERROR_STOP=1 < supabase/tests/identificacao_integrantes.sql
+          npm run test:e2e -- shared-real.spec.mjs roles-real.spec.mjs concurrency-real.spec.mjs team-real.spec.mjs team-concurrency-real.spec.mjs role-history-real.spec.mjs invites-real.spec.mjs invite-auth-real.spec.mjs member-state-real.spec.mjs operational-real.spec.mjs catalog-real.spec.mjs meeting-studio-real.spec.mjs management-real.spec.mjs commercial-management-real.spec.mjs experience-real.spec.mjs lead-details-real.spec.mjs crm-pagination-real.spec.mjs metric-history-real.spec.mjs contracts-real.spec.mjs internal-finance-real.spec.mjs project-meetings-real.spec.mjs hierarchy-real.spec.mjs record-work-real.spec.mjs global-search-real.spec.mjs prospecting-real.spec.mjs productivity-real.spec.mjs activity-work-real.spec.mjs activity-clock-real.spec.mjs workspace-refresh-real.spec.mjs import-real.spec.mjs workbench-real.spec.mjs daily-use-real.spec.mjs
       - uses: actions/upload-artifact@v4
         if: success()
         with:
@@ -58,6 +59,7 @@ jobs:
           path: |
             .validation/record-captures
             .validation/search-captures
+            .validation/daily-captures
           retention-days: 7
       - name: Validar migração de vínculos existentes do PR 17
         run: node scripts/member-state-migration-validation.mjs --reset-local-fixtures
@@ -71,6 +73,8 @@ jobs:
         run: node scripts/productivity-upgrade-validation.mjs --reset-local-fixtures
       - name: Ensaiar busca e recuperação a partir do esquema de produtividade
         run: node scripts/search-upgrade-validation.mjs --reset-local-fixtures
+      - name: Ensaiar diretório e recuperação com o frontend da mesa de trabalho
+        run: node scripts/directory-upgrade-validation.mjs --reset-local-fixtures
       - name: Validar transição e recuperação com versões anteriores
         run: node scripts/transition-validation.mjs --reset-local-fixtures
       - if: always()
