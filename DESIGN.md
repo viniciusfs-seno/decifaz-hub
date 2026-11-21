@@ -92,7 +92,7 @@ components:
   card:
     backgroundColor: "{colors.paper}"
     rounded: "{rounded.surface}"
-    padding: "18px"
+    padding: "17px 18px"
 ---
 
 # Design System: Decifaz Hub
@@ -103,7 +103,7 @@ components:
 
 O Hub é uma ferramenta interna para concluir trabalho. A direção confirmada pelos sócios é direta, sóbria e acolhedora: prioridades, vencimentos e próximas ações aparecem primeiro; o restante permanece acessível sem competir com a tarefa atual. A identidade oficial é preservada, com azul na estrutura e navegação, laranja nas ações principais e superfícies neutras para leitura.
 
-Este documento registra o sistema do modo compartilhado e suas correções nesta branch. Não transforma todo estilo legado da demonstração em recomendação. Fontes, cores, formatos e componentes são extraídos da implementação; as decisões qualitativas foram confirmadas com o usuário.
+Este documento registra o sistema do modo compartilhado publicado. As fontes de implementação são `src/style.css`, `src/shared-workspace.css` e `src/workbench.css`; os ajustes do compartilhado prevalecem sobre as regras herdadas da demonstração. Não transforma todo estilo legado da demo em recomendação. A direção qualitativa e os nomes das cores preservam as decisões confirmadas com o usuário.
 
 **Key Characteristics:**
 - Ordem de leitura acompanha a rotina e o prazo, antes das métricas secundárias.
@@ -127,7 +127,7 @@ Canvas, Papel e Superfície Suave separam fundo, conteúdo e apoio; Texto Secund
 
 Poppins Bold marca os títulos. Inter sustenta controles, leitura, tabelas e números. Os arquivos e licenças estão em `public/identidade/`, com carregamento local e `font-display: swap`. Os pesos disponíveis são Inter 400/600/700 e Poppins 700; não adicionar famílias para resolver uma questão de hierarquia.
 
-Headline, title, body, label e metadata representam os papéis recorrentes. Dados tabulares usam numerais de largura estável. Textos de orientação mantêm medida de até 70 caracteres; títulos equilibram as linhas sem quebras manuais frágeis. No celular, campos de entrada usam 1rem para legibilidade e para evitar zoom de foco em navegadores móveis.
+Headline, title, body, label e metadata representam os papéis recorrentes. O frontmatter registra seus tamanhos-base; componentes específicos e adaptações móveis podem usar variantes menores ou maiores. Dados tabulares usam numerais de largura estável. Textos de orientação mantêm medida de até 70 caracteres; títulos equilibram as linhas sem quebras manuais frágeis. No celular, campos de entrada usam 1rem para legibilidade e para evitar zoom de foco em navegadores móveis.
 
 **The Useful Hierarchy Rule.** A ação e o prazo são reconhecíveis antes da leitura completa. Não adicionar eyebrows, slogans ou títulos que apenas repetem a frase seguinte.
 
@@ -157,7 +157,7 @@ O botão primário usa Laranja Decifaz e Tinta Decifaz. O secundário acompanha 
 
 ### Inputs / Fields
 
-Rótulo persistente acima do campo, orientação curta no contexto e asterisco em campos obrigatórios. `Field` é o padrão existente para entrada simples. Selects com identificadores conservam valores reais e usam rótulos autorizados. Não colocar um placeholder no lugar do label. Validação abre a seção necessária e move o foco para a primeira pendência, preservando o rascunho.
+Rótulo persistente acima do campo, orientação curta no contexto e asterisco em campos obrigatórios. `Field`, em `src/ui.tsx`, é o padrão existente para entrada simples. Selects com identificadores conservam valores reais e usam rótulos autorizados. Sugestões nativas de integrantes preservam responsáveis antigos em texto; selecionar ou digitar um nome não implica vincular uma conta. Quando o diretório falha, o campo de reunião mantém o texto editável e oferece nova tentativa. Não colocar um placeholder no lugar do label. Nos formulários com validação guiada, a seção necessária abre e o foco vai à primeira pendência, preservando o rascunho; o feedback é limpo depois do evento do campo para não restaurar o valor anterior.
 
 ### Navigation
 
@@ -173,7 +173,7 @@ Card é uma unidade de conteúdo, não uma maneira de dar margem a todo bloco. F
 
 ### Disclosure
 
-`Disclosure` usa `details/summary`, título e descrição opcional, com contagem quando relevante. Mantém o conteúdo disponível e abre em caso de campo inválido. Não recolher situação, responsável, prazo ou a tarefa que a pessoa acabou de iniciar. Ferramentas opcionais de apresentação ficam separadas da ata da reunião interna.
+`Disclosure`, em `src/portal-patterns.tsx`, usa os elementos HTML `details` e `summary`, com título, descrição opcional e contagem quando relevante. O cabeçalho tem alvo mínimo de 52px; o indicador acompanha a abertura e respeita redução de movimento. Mantém o conteúdo disponível e abre em caso de campo inválido. Não recolher situação, responsável, prazo ou a tarefa que a pessoa acabou de iniciar. Ferramentas opcionais de apresentação ficam separadas da ata da reunião interna.
 
 ### Record Tabs / Summary
 

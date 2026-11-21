@@ -1,6 +1,6 @@
 {
   "schemaVersion": 2,
-  "generatedAt": "2026-11-20T23:16:41.006Z",
+  "generatedAt": "2026-11-21T09:30:28.538Z",
   "title": "Design System: Decifaz Hub",
   "extensions": {
     "colorMeta": {
@@ -471,7 +471,37 @@
         "name": "narrow-header",
         "value": "360px"
       }
-    ]
+    ],
+    "typographyMeta": {
+      "headline": {
+        "displayName": "Título de página",
+        "purpose": "Título principal do compartilhado; Poppins Bold."
+      },
+      "title": {
+        "displayName": "Título de seção",
+        "purpose": "Organiza tarefas e painéis, sem competir com a página."
+      },
+      "body": {
+        "displayName": "Leitura operacional",
+        "purpose": "Texto recorrente e orientação curta; componentes podem usar variantes."
+      },
+      "label": {
+        "displayName": "Rótulo de controle",
+        "purpose": "Identifica campos e ações sem depender de placeholders."
+      },
+      "metadata": {
+        "displayName": "Informação de apoio",
+        "purpose": "Prazo, origem e contexto secundário."
+      },
+      "count": {
+        "displayName": "Contagem por prazo",
+        "purpose": "Contagens acionáveis de vencidos, hoje e próximos dias."
+      },
+      "metric": {
+        "displayName": "Indicador secundário",
+        "purpose": "Indicadores no bloco recolhível do Dashboard."
+      }
+    }
   },
   "components": [
     {
@@ -480,7 +510,7 @@
       "refersTo": "button-primary",
       "description": "Uma ação principal por tarefa.",
       "html": "<button class=\"ds-button ds-primary\">Salvar alterações</button>",
-      "css": ".ds-button{display:inline-flex;align-items:center;justify-content:center;gap:8px;min-height:44px;padding:10px 14px;border:1px solid var(--line,#d9d9d9);border-radius:8px;font:600 14px/1.4 Inter,system-ui;cursor:pointer}.ds-button:focus-visible{outline:2px solid var(--accent,#3a4a6f);outline-offset:3px}.ds-button:disabled{opacity:.5;cursor:default}.ds-primary{background:var(--decifaz-orange,#ff6a13);border-color:var(--decifaz-orange,#ff6a13);color:var(--decifaz-ink,#1f2433)}.ds-primary:hover{filter:brightness(1.08)}"
+      "css": ".ds-button{display:inline-flex;align-items:center;justify-content:center;gap:7px;min-height:44px;padding:10px 14px;border:1px solid var(--line,#d9d9d9);border-radius:8px;font:620 .875rem/1.35 Inter,\"Segoe UI\",system-ui,sans-serif;cursor:pointer}.ds-button:focus-visible{outline:2px solid var(--accent,#3a4a6f);outline-offset:3px}.ds-button:disabled{opacity:.5;cursor:default}.ds-primary{background:var(--decifaz-orange,#ff6a13);border-color:var(--decifaz-orange,#ff6a13);color:var(--decifaz-ink,#1f2433)}.ds-primary:hover{filter:brightness(1.08)}"
     },
     {
       "name": "Ação secundária",
@@ -488,7 +518,7 @@
       "refersTo": "button-secondary",
       "description": "Alternativa e saída de uma tarefa.",
       "html": "<button class=\"ds-button ds-secondary\">Cancelar</button>",
-      "css": ".ds-button{display:inline-flex;align-items:center;justify-content:center;gap:8px;min-height:44px;padding:10px 14px;border:1px solid var(--line,#d9d9d9);border-radius:8px;font:600 14px/1.4 Inter,system-ui;cursor:pointer}.ds-button:focus-visible{outline:2px solid var(--accent,#3a4a6f);outline-offset:3px}.ds-button:disabled{opacity:.5;cursor:default}.ds-secondary{background:var(--paper,#fff);color:var(--ink,#1f2433)}.ds-secondary:hover{background:var(--soft,#f1f3f8)}"
+      "css": ".ds-button{display:inline-flex;align-items:center;justify-content:center;gap:7px;min-height:44px;padding:10px 14px;border:1px solid var(--line,#d9d9d9);border-radius:8px;font:620 .875rem/1.35 Inter,\"Segoe UI\",system-ui,sans-serif;cursor:pointer}.ds-button:focus-visible{outline:2px solid var(--accent,#3a4a6f);outline-offset:3px}.ds-button:disabled{opacity:.5;cursor:default}.ds-secondary{background:var(--paper,#fff);color:var(--ink,#1f2433)}.ds-secondary:hover{background:var(--soft,#f1f3f8)}"
     },
     {
       "name": "Campo com rótulo",
@@ -496,21 +526,21 @@
       "refersTo": "input",
       "description": "Label persistente e foco contrastante.",
       "html": "<label class=\"ds-field\"><span>Responsável</span><input value=\"Sócio fictício\" /></label>",
-      "css": ".ds-field{display:grid;gap:6px;font:14px/1.4 Inter,system-ui;color:var(--ink,#1f2433)}.ds-field input{min-height:44px;padding:8px 10px;border:1px solid var(--line,#d9d9d9);border-radius:8px;background:var(--paper,#fff);color:var(--ink,#1f2433);font:15px Inter,system-ui}.ds-field input:focus-visible{outline:2px solid var(--accent,#3a4a6f);outline-offset:3px}"
+      "css": ".ds-field{display:grid;gap:6px;font:14px/1.4 Inter,system-ui;color:var(--ink,#1f2433)}.ds-field input{box-sizing:border-box;min-height:44px;padding:8px 10px;border:1px solid var(--line,#d9d9d9);border-radius:8px;background:var(--paper,#fff);color:var(--ink,#1f2433);font:400 .9375rem/normal Inter,\"Segoe UI\",system-ui,sans-serif}.ds-field input:focus-visible{outline:2px solid var(--accent,#3a4a6f);outline-offset:3px}@media(max-width:700px){.ds-field input{font-size:1rem}}"
     },
     {
       "name": "Navegação ativa",
       "kind": "nav",
       "description": "Destino atual com texto e ícone; exemplo estático.",
       "html": "<nav class=\"ds-nav\" aria-label=\"Exemplo de navegação\"><button aria-current=\"page\"><svg aria-hidden=\"true\" width=\"18\" height=\"18\" viewBox=\"0 0 24 24\" fill=\"none\" stroke=\"currentColor\" stroke-width=\"2\"><rect x=\"3\" y=\"3\" width=\"7\" height=\"7\" rx=\"1\"/><rect x=\"14\" y=\"3\" width=\"7\" height=\"7\" rx=\"1\"/><rect x=\"3\" y=\"14\" width=\"7\" height=\"7\" rx=\"1\"/><rect x=\"14\" y=\"14\" width=\"7\" height=\"7\" rx=\"1\"/></svg>Dashboard</button></nav>",
-      "css": ".ds-nav{background:#1f2433;padding:12px}.ds-nav button{display:flex;align-items:center;gap:10px;min-height:44px;width:100%;padding:7px 9px;border-radius:8px;border:1px solid #8f9ab3;background:#3a4a6f;color:#fff;font:600 14px Inter,system-ui;text-align:left}.ds-nav svg{color:#ff6a13}.ds-nav button:hover{background:#46567d}.ds-nav button:focus-visible{outline:2px solid #bcc9e6;outline-offset:3px}"
+      "css": ".ds-nav{background:#1f2433;padding:12px}.ds-nav button{display:flex;align-items:center;gap:10px;min-height:40px;width:100%;padding:7px 9px;border-radius:8px;border:1px solid #8f9ab3;background:#3a4a6f;color:#fff;font:650 .875rem/1.4 Inter,\"Segoe UI\",system-ui,sans-serif;text-align:left}.ds-nav svg{color:#ff6a13}.ds-nav button:hover{background:#46567d}.ds-nav button:focus-visible{outline:2px solid #bcc9e6;outline-offset:3px}@media(max-width:700px){.ds-nav button{min-height:44px}}"
     },
     {
       "name": "Situação textual",
       "kind": "chip",
-      "description": "Sinal de prazo com rótulo, além da cor.",
+      "description": "Tag de atraso: rótulo e cores observados nos dois temas; não é uma ação.",
       "html": "<span class=\"ds-tag\">Vencido</span>",
-      "css": ".ds-tag{display:inline-flex;padding:4px 8px;border-radius:6px;font:600 12px/1.4 Inter,system-ui;background:var(--soft,#f1f3f8);color:var(--ink,#1f2433);border:1px solid var(--line,#d9d9d9)}"
+      "css": ".ds-tag{display:inline-flex;max-width:100%;padding:4px 8px;border-radius:6px;white-space:nowrap;font:660 .71rem/1.28 Inter,\"Segoe UI\",system-ui,sans-serif;background:#f8eae5;color:#974f3d}:host-context([data-theme=dark]) .ds-tag{background:#56382f;color:#ffd0c2}"
     },
     {
       "name": "Unidade de trabalho",
@@ -518,19 +548,19 @@
       "refersTo": "card",
       "description": "Superfície discreta, sem sombra decorativa.",
       "html": "<section class=\"ds-card\"><h2>Próximos vencimentos</h2><p>Consulte as obrigações atribuídas.</p></section>",
-      "css": ".ds-card{background:var(--paper,#fff);color:var(--ink,#1f2433);border:1px solid var(--line,#d9d9d9);border-radius:12px;padding:18px}.ds-card h2{font:700 16px/1.4 Poppins,Inter,system-ui;margin:0 0 8px}.ds-card p{font:15px/1.55 Inter,system-ui;color:var(--muted,#505e79);margin:0}"
+      "css": ".ds-card{background:var(--paper,#fff);color:var(--ink,#1f2433);border:1px solid var(--line,#d9d9d9);border-radius:12px;padding:17px 18px}.ds-card h2{font:700 16px/1.4 Poppins,Inter,system-ui;margin:0 0 8px}.ds-card p{font:15px/1.55 Inter,system-ui;color:var(--muted,#505e79);margin:0}"
     },
     {
       "name": "Detalhe progressivo",
       "kind": "custom",
       "description": "Disclosure nativo, acessível por teclado.",
-      "html": "<details class=\"ds-disclosure\"><summary>Vigência e avisos</summary><p>Datas e antecedência para acompanhar o contrato.</p></details>",
-      "css": ".ds-disclosure{background:var(--paper,#fff);color:var(--ink,#1f2433);border:1px solid var(--line,#d9d9d9);border-radius:12px;font:15px/1.5 Inter,system-ui}.ds-disclosure summary{cursor:pointer;min-height:52px;padding:15px 18px;font-weight:600}.ds-disclosure summary:focus-visible{outline:2px solid var(--accent,#3a4a6f);outline-offset:3px}.ds-disclosure p{margin:0;padding:18px;color:var(--muted,#505e79)}"
+      "html": "<details class=\"ds-disclosure\"><summary><span><strong>Vigência e avisos</strong><small>Datas e antecedência do contrato</small></span><svg aria-hidden=\"true\" width=\"18\" height=\"18\" viewBox=\"0 0 24 24\" fill=\"none\" stroke=\"currentColor\" stroke-width=\"2\"><path d=\"m6 9 6 6 6-6\"/></svg></summary><div>Consulte o próximo prazo antes de confirmar.</div></details>",
+      "css": ".ds-disclosure{background:var(--paper,#fff);color:var(--ink,#1f2433);border:1px solid var(--line,#d9d9d9);border-radius:12px;margin:12px 0;min-width:0;font:400 .9375rem/1.5 Inter,\"Segoe UI\",system-ui,sans-serif}.ds-disclosure summary{display:flex;align-items:center;gap:12px;list-style:none;cursor:pointer;min-height:52px;padding:15px 18px}.ds-disclosure summary::-webkit-details-marker{display:none}.ds-disclosure summary>span{display:grid;gap:4px;flex:1;min-width:0}.ds-disclosure strong{font-size:.9375rem;line-height:1.4}.ds-disclosure small{font-size:.8125rem;line-height:1.4;color:var(--muted,#505e79)}.ds-disclosure summary svg{flex:none;transition:transform .15s}.ds-disclosure[open]>summary{border-bottom:1px solid var(--line,#d9d9d9)}.ds-disclosure[open]>summary svg{transform:rotate(180deg)}.ds-disclosure summary:focus-visible{outline:2px solid var(--accent,#3a4a6f);outline-offset:3px;border-radius:8px}.ds-disclosure>div{padding:18px;color:var(--muted,#505e79)}@media(max-width:700px){.ds-disclosure summary,.ds-disclosure>div{padding:14px}}@media(prefers-reduced-motion:reduce){.ds-disclosure summary svg{transition:none}}"
     }
   ],
   "narrative": {
     "northStar": "Mesa de trabalho clara e prática",
-    "overview": "O Hub é uma ferramenta interna para concluir trabalho. A direção confirmada pelos sócios é direta, sóbria e acolhedora: prioridades, vencimentos e próximas ações aparecem primeiro; o restante permanece acessível sem competir com a tarefa atual. A identidade oficial é preservada, com azul na estrutura e navegação, laranja nas ações principais e superfícies neutras para leitura.\n\nEste documento registra o sistema do modo compartilhado e suas correções nesta branch. Não transforma todo estilo legado da demonstração em recomendação. Fontes, cores, formatos e componentes são extraídos da implementação; as decisões qualitativas foram confirmadas com o usuário.",
+    "overview": "O Hub é uma ferramenta interna para concluir trabalho. A direção confirmada pelos sócios é direta, sóbria e acolhedora: prioridades, vencimentos e próximas ações aparecem primeiro; o restante permanece acessível sem competir com a tarefa atual. A identidade oficial é preservada, com azul na estrutura e navegação, laranja nas ações principais e superfícies neutras para leitura.\n\nEste documento registra o sistema do modo compartilhado publicado. As fontes de implementação são `src/style.css`, `src/shared-workspace.css` e `src/workbench.css`; os ajustes do compartilhado prevalecem sobre as regras herdadas da demonstração. Não transforma todo estilo legado da demo em recomendação. A direção qualitativa e os nomes das cores preservam as decisões confirmadas com o usuário.",
     "keyCharacteristics": [
       "Ordem de leitura acompanha a rotina e o prazo, antes das métricas secundárias.",
       "Ação principal evidente; detalhes organizados em abas e accordions quando ajudam.",
