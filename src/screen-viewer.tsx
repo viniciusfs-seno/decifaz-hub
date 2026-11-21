@@ -9,19 +9,20 @@ export default function ScreenViewer({invite}:{invite:{id:string;credential:stri
  const [client]=useState(()=>import.meta.env.VITE_SUPABASE_URL&&import.meta.env.VITE_SUPABASE_PUBLISHABLE_KEY?createClient(import.meta.env.VITE_SUPABASE_URL,import.meta.env.VITE_SUPABASE_PUBLISHABLE_KEY,{auth:{persistSession:false,detectSessionInUrl:false,autoRefreshToken:false,storageKey:'decifaz-screen-viewer'}}):null)
  const [viewer]=useState(()=>crypto.randomUUID()),video=useRef<HTMLVideoElement>(null),peer=useRef<RTCPeerConnection|undefined>(undefined)
  useEffect(()=>{if(!joined||!client||!invite)return;let live=true,timer:ReturnType<typeof setTimeout>,epoch=-1,failedAt=0
-  async function poll(){if(!live||!client||!invite)return;try{
-   const r=await client.rpc('hub_screen_watch',{s:invite.id,credential:invite.credential,viewer,display_name:name});if(r.error)throw Error('network');if(!live)return;failedAt=0
+  async function poll(){if(!live||!client||!invite)return;let negotiating=false;try{
+   const r=await client.rpc('hub_screen_watch',{s:invite.id,credential:invite.credential,viewer,display_name:name});if(r.error)throw Error('network');if(!live)return
    if(['unavailable','denied'].includes(r.data.state)){peer.current?.close();setStatus('Sessão encerrada, convite expirado ou entrada recusada. Peça um novo convite ao apresentador.');return}
    if(r.data.state==='approved'&&peer.current?.connectionState==='connected')setStatus('Recebendo a tela compartilhada.');
    if(r.data.state==='pending')setStatus('Aguardando o apresentador permitir sua entrada…')
    if(r.data.state==='approved'&&r.data.offer&&r.data.epoch!==epoch){
-    epoch=r.data.epoch;peer.current?.close();const p=new RTCPeerConnection(screenIce);peer.current=p
+    negotiating=true;epoch=r.data.epoch;peer.current?.close();const p=new RTCPeerConnection(screenIce);peer.current=p
     p.ontrack=e=>{if(video.current){video.current.srcObject=e.streams[0];void video.current.play().catch(()=>setStatus('Toque em Reproduzir para assistir.'))}}
     p.onconnectionstatechange=()=>{if(live&&peer.current===p)setStatus(p.connectionState==='connected'?'Recebendo a tela compartilhada.':p.connectionState==='disconnected'||p.connectionState==='failed'?'Conexão interrompida. Aguardando reconexão; a rede pode exigir uma chamada externa.':'Conectando à tela…')}
     await p.setRemoteDescription(r.data.offer);await p.setLocalDescription(await p.createAnswer());await gathered(p);if(!live)return
     const saved=await client.rpc('hub_screen_watch',{s:invite.id,credential:invite.credential,viewer,answer:p.localDescription?.toJSON(),offer_epoch:epoch});if(saved.error){epoch=-1;throw Error('answer')}
    }
-  }catch{if(!failedAt)failedAt=Date.now();setStatus('Sem confirmação da rede. Tentando reconectar…');if(Date.now()-failedAt>12000){peer.current?.close();setStatus('Conexão perdida. Peça um novo convite se o apresentador já encerrou.');return}}
+   failedAt=0
+  }catch{if(negotiating){epoch=-1;peer.current?.close()}if(!failedAt)failedAt=Date.now();setStatus('Sem confirmação da rede. Tentando reconectar…');if(Date.now()-failedAt>12000){peer.current?.close();setStatus('Conexão perdida. Peça um novo convite se o apresentador já encerrou.');return}}
   if(live)timer=setTimeout(()=>{void poll()},2000)
   }void poll();return()=>{live=false;clearTimeout(timer);peer.current?.close()}
  },[joined,client,invite,viewer,name])

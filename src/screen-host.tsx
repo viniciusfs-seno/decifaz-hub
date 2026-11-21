@@ -18,27 +18,28 @@ export function ScreenHost({client,workspace,meeting}:{client:SupabaseClient;wor
   finally{setBusy(false)}
  }
  useEffect(()=>{if(!active)return;let alive=true,timer:ReturnType<typeof setTimeout>
-  async function poll(){const c=current.current;if(!alive||!c||c.closed)return
+  async function poll(){const c=current.current;if(!alive||!c||c.closed)return;let negotiating=false
    try{
     const r=await client.rpc('hub_screen_host',{s:c.id});if(r.error)throw Error('network');if(!alive||current.current!==c)return
-    if(r.data.state==='ended'){await stop();return}const data=r.data as HostScreen;c.failAt=0;setSession(data)
+    if(r.data.state==='ended'){await stop();return}const data=r.data as HostScreen;setSession(data)
     if(c.peer?.connectionState==='connected')setStatus('Transmitindo para o espectador aprovado.');
     const viewer=data.viewers.find(v=>v.state==='approved')
     if(!viewer){c.peer?.close();c.peer=undefined;c.viewer=undefined;setStatus('Captura local ativa. Aguardando aprovação de um espectador.')}
-    else if(!c.peer||c.viewer!==viewer.id||(['failed','disconnected'].includes(c.peer.connectionState)&&Date.now()>c.retryAt)){
-     c.peer?.close();const peer=new RTCPeerConnection(screenIce);c.peer=peer;c.viewer=viewer.id;c.answered=false;c.retryAt=Date.now()+12000
+    else if(!c.peer||c.viewer!==viewer.id||((['failed','disconnected'].includes(c.peer.connectionState)||!c.answered)&&Date.now()>c.retryAt)){
+     negotiating=true;c.peer?.close();const peer=new RTCPeerConnection(screenIce);c.peer=peer;c.viewer=viewer.id;c.answered=false;c.retryAt=Date.now()+30000
      c.stream.getTracks().forEach(track=>peer.addTrack(track,c.stream));setStatus('Conectando ao espectador…')
      peer.onconnectionstatechange=()=>{if(!alive||c.peer!==peer)return;setStatus(peer.connectionState==='connected'?'Transmitindo para o espectador aprovado.':peer.connectionState==='failed'||peer.connectionState==='disconnected'?'Conexão interrompida. Tentando reconectar; use a chamada externa se a rede impedir a transmissão.':'Conectando ao espectador…')}
      await peer.setLocalDescription(await peer.createOffer());await gathered(peer);if(!alive||c.closed||c.peer!==peer)return
      const offered=await client.rpc('hub_screen_host',{s:c.id,action:'offer',payload:peer.localDescription?.toJSON()});if(offered.error)throw Error('offer');c.epoch=offered.data.epoch
     }else if(viewer.answer&&viewer.epoch===c.epoch&&!c.answered){await c.peer.setRemoteDescription(viewer.answer);c.answered=true}
-   }catch{if(c.failAt===0)c.failAt=Date.now();setStatus('Sem confirmação do servidor. Tentando recuperar a conexão…');if(Date.now()-c.failAt>12000){await stop();return}}
+    c.failAt=0
+   }catch{if(negotiating){c.peer?.close();c.peer=undefined}if(c.failAt===0)c.failAt=Date.now();setStatus('Sem confirmação do servidor. Tentando recuperar a conexão…');if(Date.now()-c.failAt>12000){await stop();return}}
    if(alive)timer=setTimeout(()=>{void poll()},2000)
   }void poll();return()=>{alive=false;clearTimeout(timer)}
  },[active,client])
  async function decide(viewer:string,action:'approve'|'deny'){const c=current.current;if(!c||busy)return;setBusy(true);setNotice('');try{const r=await client.rpc('hub_screen_host',{s:c.id,action,viewer});if(r.error){setNotice('Não foi possível alterar a entrada. Atualize a sessão ou gere um novo convite.');return}setSession(r.data)}finally{setBusy(false)}}
  async function copy(){const c=current.current;if(!c)return;try{await navigator.clipboard.writeText(location.origin+'/assistir#'+c.id+'.'+c.secret);setNotice('Convite copiado. Envie apenas à pessoa que vai assistir; o link é uma credencial.')}catch{setNotice('O navegador não permitiu copiar. Autorize a área de transferência e tente novamente.')}}
- return <section className="screen-share panel" aria-label="Compartilhar tela por link"><h4>Tela por link <span className="tag">Em homologação</span></h4><p>Uma pessoa assiste à fonte que você escolher, sem acesso ao portal. Aprove a entrada somente depois de confirmar com ela. O nome informado não comprova identidade.</p><p className="view-hint">Sem TURN: algumas redes corporativas e móveis podem bloquear a conexão direta. Use a chamada externa como alternativa. Áudio depende do navegador e da fonte escolhida.</p>
+ return <section className="screen-share panel" aria-label="Compartilhar tela por link"><h4>Tela por link <span className="tag">Em homologação</span></h4><p>Uma pessoa assiste à fonte que você escolher, sem acesso ao portal. Confira a fonte antes de transmitir: uma tela inteira pode mostrar notas internas e notificações. Prefira uma aba preparada. Aprove a entrada somente depois de confirmar com ela. O nome informado não comprova identidade.</p><p className="view-hint">Sem TURN: algumas redes corporativas e móveis podem bloquear a conexão direta. Use a chamada externa como alternativa. Áudio depende do navegador e da fonte escolhida.</p>
  {!supported&&<p role="status">Este navegador não permite iniciar captura aqui. Use Chrome ou Edge no computador com HTTPS, ou a chamada externa.</p>}
  <div className="actions">{active?<><button type="button" className="button" onClick={()=>void copy()}>Copiar convite para assistir</button><button type="button" className="button danger" onClick={()=>void stop()}>Encerrar compartilhamento</button></>:<button type="button" className="button primary" disabled={!supported||busy} onClick={()=>void start()}>{busy?'Iniciando…':'Compartilhar tela por link'}</button>}</div>
  {status&&<p role="status">{status}</p>}{notice&&<p role="status">{notice}</p>}

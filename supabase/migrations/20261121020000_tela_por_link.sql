@@ -18,16 +18,16 @@ create table hub_private.screen_requests(
 );
 revoke all on hub_private.screen_sessions,hub_private.screen_requests from public,anon,authenticated;
 
-create function hub_private.close_screen(s uuid) returns void language plpgsql security definer set search_path='' as $$
+create function hub_private.close_screen(s uuid,automatic boolean default false) returns void language plpgsql security definer set search_path='' as $$
 declare r hub_private.screen_sessions;
 begin
  update hub_private.screen_sessions set ended_at=clock_timestamp(),token_hash=null,offer=null where id=s and ended_at is null returning * into r;
  if not found then return;end if;
  update hub_private.screen_requests set answer=null,state='denied' where session_id=s;
  insert into public.hub_registry_events(workspace_id,kind,record_id,lead_id,project_id,actor_id,action)
- select r.workspace_id,'meeting',r.meeting_id,m.lead_id,m.project_id,r.host_id,'Compartilhamento de tela encerrado' from public.hub_meetings m where m.workspace_id=r.workspace_id and m.id=r.meeting_id and m.lead_id=r.lead_id;
+ select r.workspace_id,'meeting',r.meeting_id,m.lead_id,m.project_id,case when automatic then null else auth.uid() end,case when automatic then 'Compartilhamento de tela encerrado automaticamente' else 'Compartilhamento de tela encerrado' end from public.hub_meetings m where m.workspace_id=r.workspace_id and m.id=r.meeting_id and m.lead_id=r.lead_id;
 end $$;
-revoke all on function hub_private.close_screen(uuid) from public,anon,authenticated;
+revoke all on function hub_private.close_screen(uuid,boolean) from public,anon,authenticated;
 
 create function hub_private.sweep_screens() returns void language plpgsql security definer set search_path='' as $$
 declare old_id uuid;
@@ -69,7 +69,7 @@ begin
  if not found or auth.uid() is null or r.host_id<>auth.uid() then raise insufficient_privilege using message='Acesso negado';end if;
  if r.ended_at is not null then return jsonb_build_object('state','ended');end if;
  if not public.hub_can(r.workspace_id,'projects',true) or r.ends_at<clock_timestamp() or r.heartbeat<clock_timestamp()-interval '45 seconds' then
-  perform hub_private.close_screen(s);return jsonb_build_object('state','ended');end if;
+  perform hub_private.close_screen(s,true);return jsonb_build_object('state','ended');end if;
  if action='stop' then perform hub_private.close_screen(s);return jsonb_build_object('state','ended');
  elsif action='approve' then
   if r.invite_until<clock_timestamp() or not exists(select 1 from hub_private.screen_requests where session_id=s and id=viewer and state='pending') or exists(select 1 from hub_private.screen_requests where session_id=s and state='approved') then raise exception 'Entrada indisponível';end if;
@@ -92,7 +92,7 @@ begin
  select * into r from hub_private.screen_sessions where id=s for update;
  if not found or credential is null or length(credential)<>43 or r.token_hash is distinct from extensions.digest(credential,'sha256') or r.ended_at is not null then return jsonb_build_object('state','unavailable');end if;
  if r.ends_at<clock_timestamp() or r.heartbeat<clock_timestamp()-interval '45 seconds' or not exists(select 1 from public.hub_members where workspace_id=r.workspace_id and user_id=r.host_id and active and (array[role]||extra_roles)&&array['admin','operations']) then
-  perform hub_private.close_screen(s);return jsonb_build_object('state','unavailable');end if;
+  perform hub_private.close_screen(s,true);return jsonb_build_object('state','unavailable');end if;
  select * into v from hub_private.screen_requests where session_id=s and id=viewer;
  if not found then
   if r.invite_until<clock_timestamp() or viewer is null or display_name is null then return jsonb_build_object('state','unavailable');end if;
