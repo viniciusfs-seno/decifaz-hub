@@ -16,7 +16,7 @@ export default function ScreenViewer({invite}:{invite:{id:string;credential:stri
   const watchdog=setInterval(()=>{if(live&&Date.now()-confirmed>15000){live=false;clearTimeout(timer);peer.current?.close();setStatus('Sem confirmação de autorização por 15 segundos. A recepção foi interrompida; peça um novo convite.')}},500)
   async function poll(){if(!live||!client||!invite)return;let negotiating=false;try{
    const r=await request({s:invite.id,credential:invite.credential,viewer,display_name:name});if(r.error)throw Error('network');if(!live)return
-   if(['unavailable','denied'].includes(r.data.state)){peer.current?.close();setStatus('Sessão encerrada, convite expirado ou entrada recusada. Peça um novo convite ao apresentador.');return}
+   if(['unavailable','denied'].includes(r.data.state)){live=false;clearInterval(watchdog);peer.current?.close();setStatus('Sessão encerrada, convite expirado ou entrada recusada. Peça um novo convite ao apresentador.');return}
    if(r.data.state==='approved'&&peer.current?.connectionState==='connected')setStatus('Recebendo a tela compartilhada.');
    if(r.data.state==='pending')setStatus('Aguardando o apresentador permitir sua entrada…')
    if(r.data.state==='approved'&&r.data.offer&&r.data.epoch!==epoch){
@@ -29,7 +29,7 @@ export default function ScreenViewer({invite}:{invite:{id:string;credential:stri
    }
    if(r.data.state==='approved'&&peer.current&&epoch===r.data.epoch){await receiveIce(peer.current,r.data.candidates??[],seen);if(ice.length){const batch=ice.slice(0,40);const sent=await request({s:invite.id,credential:invite.credential,viewer,offer_epoch:epoch,candidates:batch});if(sent.error)throw Error('ice');ice.splice(0,batch.length)}}
    failedAt=0
-  }catch{if(!live)return;if(negotiating){epoch=-1;peer.current?.close()}if(!failedAt)failedAt=Date.now();setStatus('Sem confirmação da rede. Tentando reconectar…');if(Date.now()-failedAt>12000){peer.current?.close();setStatus('Conexão perdida. Peça um novo convite se o apresentador já encerrou.');return}}
+  }catch{if(!live)return;if(negotiating){epoch=-1;peer.current?.close()}if(!failedAt)failedAt=Date.now();setStatus('Sem confirmação da rede. Tentando reconectar…');if(Date.now()-failedAt>12000){live=false;clearInterval(watchdog);peer.current?.close();setStatus('Conexão perdida. Peça um novo convite se o apresentador já encerrou.');return}}
   if(live)timer=setTimeout(()=>{void poll()},2000)
   }void poll();return()=>{live=false;clearInterval(watchdog);clearTimeout(timer);peer.current?.close()}
  },[joined,client,invite,viewer,name])
