@@ -1,9 +1,13 @@
 // Operational instructions describe the shipped shared portal, not the original
 // source manual. Stable IDs keep existing knowledge-base bookmarks intact.
 export const dailyGuide:{id:string;title:string;category:string;status:string;date:string;blocks:{kind:string;text?:string;rows?:string[][]}[]}={
- id:'inicio-diario-socios',title:'Início diário dos sócios',category:'Procedimentos',status:'Guia do portal compartilhado',date:'20/11/2026',
+ id:'inicio-diario-socios',title:'Início diário dos sócios',category:'Procedimentos',status:'Guia do portal compartilhado',date:'21/11/2026',
  blocks:[
   {kind:'paragraph',text:'Comece no Dashboard: confira Vencidos, Hoje e a Fila de ações. Cada item abre a origem; a Agenda permite filtrar tipo, prazo e responsável. Use apenas o espaço autorizado. Papéis são cumulativos e nomes de responsáveis não concedem acesso.'},
+  {kind:'heading',text:'Comece em três passos'},
+  {kind:'bullet',text:'1. Contrato: Administração → Contratos. Cadastre um contrato real, seu responsável, vigência e PDF privado.'},
+  {kind:'bullet',text:'2. Vencimentos: Gestão → Obrigações da Decifaz. Registre domínio anual e assinaturas mensais, com valor, responsável e próximo vencimento.'},
+  {kind:'bullet',text:'3. Reunião: Operação → Projetos e entregas → projeto → Reuniões. Prepare pauta; depois registre ata, decisões e acompanhamento.'},
   {kind:'heading',text:'Contratos e documentos'},
   {kind:'paragraph',text:'Administração → Contratos → Cadastrar contrato. Selecione o estabelecimento; registre o contrato existente ou sua proposta e versão de origem. Informe responsável, situação, início, término, renovação e avisos conhecidos. Confirme a alteração e anexe o PDF assinado. Consulte o registro para conferir vigência, projetos e Linha do tempo. O contrato não aceita a proposta nem cria o projeto automaticamente.'},
   {kind:'paragraph',text:'Só Administração altera contratos. Valores, condições e documentos privados exigem acesso financeiro. O PDF é um documento assinado anexado como informado: o Hub não realiza assinatura eletrônica nem verifica a assinatura.'},
@@ -16,6 +20,6 @@ export const dailyGuide:{id:string;title:string;category:string;status:string;da
   {kind:'paragraph',text:'Reuniões comerciais anteriores permanecem consultáveis. As sugestões de responsáveis vêm somente do diretório autorizado do espaço; o texto antigo não é associado automaticamente a uma conta. A captura de tela no Hub é uma prévia local. A transmissão depende da ferramenta externa; videoconferência nativa continua opcional e planejada. Clientes não usam o portal.'},
   {kind:'heading',text:'Quem fez a alteração'},
   {kind:'paragraph',text:'Gestão → Rastreabilidade ou Linha do tempo na ficha: filtre por integrante e confira data, ação e revisão. Contratos, projetos, reuniões, obrigações, ocorrências, baixas e anexos possuem eventos do servidor na transação da mudança, desde a implantação de suas migrações; ações anteriores não são reconstruídas. Ficha, atividades e papéis conservam auditorias próprias. Consultas, downloads e ações no fornecedor não são auditados. Dados financeiros permanecem restritos.'},
-  {kind:'paragraph',text:'Sem nome cadastrado, o diretório mostra Conta seguida do identificador do e-mail, sem presumir nome pessoal. Integrantes desativados permanecem identificáveis no histórico, mas não entram nas novas sugestões de responsáveis. Se as sugestões falharem, mantenha o responsável em texto e tente novamente; nunca associe uma conta pelo nome sozinho.'},
+  {kind:'paragraph',text:'Administração → Equipe → Identificação no espaço permite salvar o nome de cada integrante, com histórico e revisão concorrente. O nome vale somente nesse espaço, sem alterar Auth, papéis ou vínculos. Deixe vazio para voltar à identificação da conta. Sem nome cadastrado, o diretório mostra Conta seguida do identificador do e-mail, sem presumir nome pessoal. Integrantes desativados permanecem identificáveis no histórico, mas não entram nas novas sugestões de responsáveis. Se as sugestões falharem, mantenha o responsável em texto e tente novamente; nunca associe uma conta pelo nome sozinho.'},
  ]
 }

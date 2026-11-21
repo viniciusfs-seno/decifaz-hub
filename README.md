@@ -6,6 +6,8 @@ Guia de operação, cobertura de auditoria, migrações e recuperação: [rotina
 
 Para começar no portal: **Conhecimento → Base de conhecimento → Início diário dos sócios**. [Diretório autorizado, validação e publicação do guia](docs/inicio-diario.md).
 
+Preparação diária: [nomes por espaço, guia em três passos e recuperação](docs/preparacao-diaria.md).
+
 Contexto de produto e UI: [PRODUCT.md](PRODUCT.md), [DESIGN.md](DESIGN.md) e [revisão Impeccable da mesa de trabalho](docs/impeccable/mesa-de-trabalho.md), com comparações e validações da branch de revisão.
 
 ## Começar a usar

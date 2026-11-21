@@ -12,7 +12,7 @@ Nome: `full_name`, depois `name`, com espaços normalizados e limite de 100 cara
 
 O diretório do histórico inclui desativados; atribuições/sugestões incluem só ativos. Agenda/Dashboard mostram o rótulo atual para um responsável com UUID explicitamente atribuído ou para o antigo fallback técnico exato e não ambíguo. Texto histórico e vínculo não são regravados por uma consulta. Nomes comuns nunca são usados para inferir associação. Campos de reunião oferecem sugestões sem obrigar substituir responsáveis antigos em texto; isso não atribui UUID nem acesso. A ficha de atividades mantém a conta vinculada e seu texto registrado separados.
 
-Não há edição de perfil/nome nesta entrega. Mudança de rótulo não muda ator, conta, papel ou autoria; o histórico resolve o nome atual, sem reconstruir nomes anteriores.
+A evolução em [preparação diária](preparacao-diaria.md) permite Administração definir o nome no espaço, com revisão e auditoria. Mudança de rótulo não muda ator, conta, papel ou autoria; o histórico resolve o nome atual, sem reconstruir nomes anteriores.
 
 Evidência do guia com dados fictícios: [desktop claro](capturas/inicio-diario/desktop.png) e [celular escuro](capturas/inicio-diario/celular.png). Chromium com viewport emulado, sem overflow; não equivale a teste em aparelho físico.
 
