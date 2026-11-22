@@ -16,20 +16,21 @@ jobs:
     env:
       MEDIA_RESULT: ${{ needs.screen-external.result }}
       MEDIA_VERIFIED: ${{ needs.screen-external.outputs.verified }}
+      RELAY_VERIFIED: ${{ needs.screen-external.outputs.relay_verified }}
     steps:
       - name: Exigir mídia entre redes no SHA candidato
         run: |
-          if [ "$MEDIA_RESULT" != success ] || [ "$MEDIA_VERIFIED" != true ]; then
-            echo 'Publicação bloqueada: mídia externa não comprovada; prévia e vídeo local não substituem este gate.'
+          if [ "$MEDIA_RESULT" != success ] || [ "$MEDIA_VERIFIED" != true ] || [ "$RELAY_VERIFIED" != true ]; then
+            echo 'Publicação bloqueada: mídia externa com relay forçado não comprovada; prévia e vídeo local não substituem este gate.'
             exit 1
           fi
   daily-external:
-    if: github.event_name == 'pull_request' && github.event.pull_request.head.repo.full_name == github.repository && github.head_ref == 'feat/compartilhamento-tela' && vars.HUB_HML_PREVIEW_URL != ''
+    if: github.event_name == 'pull_request' && github.event.pull_request.head.repo.full_name == github.repository && github.head_ref == 'feat/compartilhamento-tela' && vars.HUB_SCREEN_HML_PREVIEW_URL != ''
     runs-on: ubuntu-24.04
     timeout-minutes: 8
     env:
-      HUB_HML_PREVIEW_URL: ${{ vars.HUB_HML_PREVIEW_URL }}
-      HUB_HML_REVIEW_PASSWORD: ${{ secrets.HUB_HML_REVIEW_PASSWORD }}
+      HUB_HML_PREVIEW_URL: ${{ vars.HUB_SCREEN_HML_PREVIEW_URL }}
+      HUB_HML_REVIEW_PASSWORD: ${{ secrets.HUB_SCREEN_HML_REVIEW_PASSWORD }}
       HUB_HML_EXPECTED_SHA: ${{ github.event.pull_request.head.sha }}
     steps:
       - uses: actions/checkout@v4
@@ -53,10 +54,11 @@ jobs:
     timeout-minutes: 12
     outputs:
       verified: ${{ steps.media.outputs.verified }}
+      relay_verified: ${{ steps.media.outputs.relay_verified }}
     env:
       HUB_SCREEN_FORCE_RELAY: ${{ vars.HUB_SCREEN_FORCE_RELAY }}
-      HUB_HML_PREVIEW_URL: ${{ vars.HUB_HML_PREVIEW_URL }}
-      HUB_HML_REVIEW_PASSWORD: ${{ secrets.HUB_HML_REVIEW_PASSWORD }}
+      HUB_HML_PREVIEW_URL: ${{ vars.HUB_SCREEN_HML_PREVIEW_URL }}
+      HUB_HML_REVIEW_PASSWORD: ${{ secrets.HUB_SCREEN_HML_REVIEW_PASSWORD }}
       HUB_HML_EXPECTED_SHA: ${{ github.event.pull_request.head.sha }}
     steps:
       - uses: actions/checkout@v4
