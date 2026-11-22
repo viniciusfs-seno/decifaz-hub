@@ -47,6 +47,22 @@ Chromium completo Windows para apresentação, Chromium Linux no GitHub para rec
 
 ## TURN: pesquisa e dependências
 
+### Homologação gratuita solicitada em 22/11/2026
+
+Opção preparada: **Xirsys Developer**, ainda **não configurada nem homologada**. A [página oficial de preços](https://xirsys.com/pricing) distingue o período inicial de 30 dias do plano contínuo: depois dele a conta continua gratuita, com uma região de testes, dois canais e **500 MB/mês com bloqueio rígido**. A [FAQ](https://xirsys.com/faq) informa que a retransmissão para ao atingir a franquia e volta no primeiro dia do mês; excedente cobrável é dos planos pagos. A [API oficial](https://docs.xirsys.com/api/turn) mantém credenciais dinâmicas no gratuito após os 30 dias; credenciais estáticas e múltiplas regiões não são pressupostos da integração.
+
+O cadastro não pôde ser concluído com os acessos conectados. **Ainda falta confirmar na conta Developer que não há cartão, assinatura paga ou excedente habilitado.** Os [termos gerais](https://xirsys.com/terms) mencionam excedentes conforme o plano; não substituir a confirmação da exceção gratuita pela leitura isolada desses termos. Não foi aceito compromisso, cadastrado cartão nem ativado provedor. Se o cadastro exigir cartão, interromper.
+
+Passos que faltam:
+
+1. Criar conta **Developer gratuita** em https://global.xirsys.net/ e canal `hub-hml`, sem cartão nem upgrade; conferir o limite de 500 MB e o corte. Não compartilhar senha ou chave no chat.
+2. Disponibilizar ident/secret/canal por mecanismo privado no servidor de homologação. Variáveis somente servidor: `HUB_TURN_PROVIDER=xirsys`, `HUB_TURN_XIRSYS_IDENT`, `HUB_TURN_XIRSYS_SECRET`, `HUB_TURN_XIRSYS_CHANNEL`. Só após conferir o plano: `HUB_TURN_FREE_PLAN_CONFIRMED=true` e `HUB_TURN_ENABLED=true` **no ambiente isolado**. Não há chaves no frontend nem valores nesses exemplos.
+3. A Edge existente valida o participante na RPC antes de pedir `PUT /_turn/{canal}?webrtc=1&expire={ttl}`. TTL de até 1.800 segundos, limitado à sessão; só a configuração ICE temporária filtrada é devolvida. Expirar a credencial impede novas alocações; não encerra uma chamada existente: o encerramento/revogação do Hub continua necessário.
+4. No controlador fictício, passar `relay:true` por stdin. No runner externo, configurar `HUB_SCREEN_FORCE_RELAY=true`. Ambos usam instrumentação exclusiva de teste (`iceTransportPolicy=relay`). O receptor exige **par selecionado com candidato local relay e frames decodificados avançando**, não apenas um candidato disponível. Nenhum SDP, IP ou segredo é registrado. Repetir encerramento, recuperação, expiração, revogação e novo convite no SHA final.
+5. Guardar artefatos e consumo antes/depois, sem segredos. A estimativa conservadora da FAQ é cerca de 15 MB/minuto para dois participantes a 512 kbit/s: 500 MB cobrem ensaios curtos, **não garantem uso diário**. Latência e região do plano gratuito também precisam de medição. Ao esgotar ou falhar, informar indisponibilidade e usar o link externo da reunião; não habilitar upgrade automático.
+
+O adaptador Xirsys e os testes simulados estão implementados, sem ativação. Cloudflare preparado anteriormente exige aprovação financeira própria e agora tem uma trava explícita adicional; não é alternativa gratuita autorizada. ExpressTURN gratuito não foi escolhido: a [FAQ oficial](https://www.expressturn.com/) reserva a emissão por segredo compartilhado/credenciais temporárias ao Premium. Metered permanece sem homologação das condições. **Nenhum teste relay real foi realizado nesta etapa por falta da conta/configuração. Áudio continua não homologado. O #40 permanece em rascunho e bloqueado para publicação.**
+
 Consultado em 22/11/2026, sem cadastro, cartão, ativação ou contratação. O par externo já recebeu mídia sem TURN; retransmissão não foi demonstrada necessária para esse par.
 
 | Opção | Condições atuais | Decisão |

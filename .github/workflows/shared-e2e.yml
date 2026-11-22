@@ -54,6 +54,7 @@ jobs:
     outputs:
       verified: ${{ steps.media.outputs.verified }}
     env:
+      HUB_SCREEN_FORCE_RELAY: ${{ vars.HUB_SCREEN_FORCE_RELAY }}
       HUB_HML_PREVIEW_URL: ${{ vars.HUB_HML_PREVIEW_URL }}
       HUB_HML_REVIEW_PASSWORD: ${{ secrets.HUB_HML_REVIEW_PASSWORD }}
       HUB_HML_EXPECTED_SHA: ${{ github.event.pull_request.head.sha }}

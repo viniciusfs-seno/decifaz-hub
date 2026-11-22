@@ -28,3 +28,16 @@ test('TURN: desativado não chama provedor; recusas e limites não emitem creden
  const failure=turnHandler({enabled:true,authorize:async()=>({data:{ttl:120}}),issue:async()=>{throw Error('sensitive-upstream-detail')}})
  const response=await failure(request({s:randomUUID()}));assert.equal(response.status,503);assert.equal(JSON.stringify(await response.json()).includes('sensitive-upstream-detail'),false)
 })
+
+test('Xirsys: credenciais temporárias, canal fixo no servidor e resposta estritamente filtrada',async()=>{
+ const secret=randomBytes(32).toString('hex'),credential=randomBytes(24).toString('base64url'),args={provider:'xirsys',ident:'fictional-ident',secret,channel:'hub-hml',ttl:120}
+ const result=await issueTurn(args,async(url,options)=>{
+  const target=new URL(url);assert.equal(target.hostname,'global.xirsys.net');assert.equal(target.pathname,'/_turn/hub-hml');assert.equal(target.searchParams.get('expire'),'120');assert.equal(target.searchParams.get('webrtc'),'1');assert.equal(options.method,'PUT');assert.equal(options.headers.Authorization,'Basic '+btoa(args.ident+':'+secret))
+  return Response.json({s:'ok',private:secret,v:{iceServers:[{urls:['stun:xx-turn1.xirsys.com','turn:xx-turn1.xirsys.com:3478?transport=udp','turns:xx-turn1.xirsys.com:443?transport=tcp'],username:'temporary-fictional',credential,extra:secret}]}})
+ })
+ assert.equal(result.ttl,120);assert.equal(result.iceServers[0].credential,credential);assert.equal(JSON.stringify(result).includes(secret),false)
+ await assert.rejects(issueTurn({...args,channel:'../foreign'}),/indisponível/)
+ await assert.rejects(issueTurn(args,async()=>Response.json({s:'error',v:'private upstream body'})),/indisponível/)
+ await assert.rejects(issueTurn(args,async()=>Response.json({s:'ok',v:{iceServers:[{urls:'turn:attacker.example.invalid:443',username:'fake',credential}]}})),/indisponível/)
+ await assert.rejects(issueTurn(args,async()=>new Response(null,{status:429})),/indisponível/)
+})

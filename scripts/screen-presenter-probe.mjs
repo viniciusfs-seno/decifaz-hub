@@ -6,7 +6,7 @@ import {recordTab} from '../e2e/helpers/portal-ui.mjs'
 import {sql} from '../e2e/helpers/local-db.mjs'
 import fs from 'node:fs'
 let input='';for await(const chunk of process.stdin)input+=chunk
-const {origin,password,expectedSha}=JSON.parse(input);input=''
+const {origin,password,expectedSha,relay=false}=JSON.parse(input);input=''
 if(!/^https:\/\/[a-z0-9-]+\.trycloudflare\.com$/.test(origin)||password.length<20)throw Error('Gateway isolado obrigatório')
 const browser=await chromium.launch({channel:'chromium',args:['--auto-select-tab-capture-source-by-title=Decifaz fonte externa ficticia','--enable-usermedia-screen-capturing','--autoplay-policy=no-user-gesture-required']}),context=await browser.newContext({permissions:['clipboard-read','clipboard-write']})
 let page,source,sessions=[],workspace
@@ -25,7 +25,7 @@ async function begin(){
  await expect(page.getByRole('status').filter({hasText:'Transmitindo para o espectador aprovado.'})).toBeVisible({timeout:100000})
 }
 try{
- page=await context.newPage();await page.addInitScript(installScreenDiagnostics);await page.addInitScript(()=>{const capture=navigator.mediaDevices.getDisplayMedia;navigator.mediaDevices.getDisplayMedia=async(...args)=>{const stream=await capture.apply(navigator.mediaDevices,args);window.__proofCapture=()=>({liveTracks:stream.getTracks().filter(t=>t.readyState==='live').length,audioTracks:stream.getAudioTracks().length});return stream}});await page.goto(origin)
+ page=await context.newPage();await page.addInitScript(installScreenDiagnostics,{relay});await page.addInitScript(()=>{const capture=navigator.mediaDevices.getDisplayMedia;navigator.mediaDevices.getDisplayMedia=async(...args)=>{const stream=await capture.apply(navigator.mediaDevices,args);window.__proofCapture=()=>({liveTracks:stream.getTracks().filter(t=>t.readyState==='live').length,audioTracks:stream.getAudioTracks().length});return stream}});await page.goto(origin)
  await page.getByLabel('Senha de revisão').fill(password);await page.getByRole('button',{name:'Entrar na homologação',exact:true}).click()
  const health=await(await context.request.get(origin+'/__health')).json();if(health.candidate!==expectedSha||!health.isolated)throw Error('Candidato/ambiente divergente')
  workspace=(await(await context.request.get(origin+'/__review/fixtures')).json()).workspace;if(!/^[0-9a-f-]{36}$/.test(workspace))throw Error('Fixture inválida')
@@ -36,7 +36,7 @@ try{
  await wait('second');await begin();console.log('Segunda sessão: nova captura nativa conectada.')
  await wait('expire-session');sql(`update hub_private.screen_sessions set ends_at=clock_timestamp()-interval '1 second' where id='${sessions[1]}' and workspace_id='${workspace}'`)
  await expect(page.getByRole('button',{name:'Compartilhar tela por link',exact:true})).toBeVisible({timeout:10000});expect((await page.evaluate(()=>window.__proofCapture())).liveTracks).toBe(0);await setPhase('session-expired');await wait('done')
- const diagnostics=await page.evaluate(()=>window.__screenSafeDiagnostics?.()??[]);fs.mkdirSync('.validation/screen-presenter',{recursive:true});fs.writeFileSync('.validation/screen-presenter/result.json',JSON.stringify({candidate:expectedSha,nativeCapture:true,secondAttempt:true,browserEnd:true,controlledDeadlines:true,diagnostics},null,2));console.log('Captura nativa, encerramento e nova tentativa aprovados; prazos induzidos somente na fixture local.')
+ const diagnostics=await page.evaluate(()=>window.__screenSafeDiagnostics?.()??[]);fs.mkdirSync('.validation/screen-presenter',{recursive:true});fs.writeFileSync('.validation/screen-presenter/result.json',JSON.stringify({candidate:expectedSha,nativeCapture:true,relayForced:relay,secondAttempt:true,browserEnd:true,controlledDeadlines:true,diagnostics},null,2));console.log('Captura nativa, encerramento e nova tentativa aprovados; prazos induzidos somente na fixture local.')
 }catch{
  const diagnostics=await page?.evaluate(()=>window.__screenSafeDiagnostics?.()??[]).catch(()=>[]);fs.mkdirSync('.validation/screen-presenter',{recursive:true});fs.writeFileSync('.validation/screen-presenter/diagnostic.json',JSON.stringify(diagnostics,null,2));console.log(JSON.stringify({diagnostics}));await setPhase('failed').catch(()=>{});process.exitCode=1
 }finally{await context.request.delete(origin+'/__review/screen-probe').catch(()=>{});await context.close();await browser.close()}
