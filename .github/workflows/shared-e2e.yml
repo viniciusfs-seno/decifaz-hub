@@ -9,6 +9,13 @@ permissions:
   contents: read
 
 jobs:
+  turn-secret-input-windows:
+    if: github.event_name == 'pull_request' && github.head_ref == 'feat/compartilhamento-tela'
+    runs-on: windows-2025
+    steps:
+      - uses: actions/checkout@v4
+      - name: Validar entrada oculta sem chave ou API reais
+        run: powershell -NoProfile -File scripts/test-turn-hidden-input.ps1
   screen-release-gate:
     if: always() && github.event_name == 'pull_request' && github.event.pull_request.head.repo.full_name == github.repository && github.head_ref == 'feat/compartilhamento-tela'
     needs: [screen-external]
