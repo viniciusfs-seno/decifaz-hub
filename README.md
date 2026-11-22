@@ -90,6 +90,8 @@ Para continuar no editor, consulte o [guia de VS Code e prompt de continuidade](
 
 ## Prioridades dos sócios
 
+- [Central de vencimentos e preferências](docs/central-vencimentos.md): recorte autorizado, pagamento na origem, reagendamento com motivo e avisos pessoais. Em homologação, sem ativação de produção e sem dependência da transmissão do PR #40.
+
 - [Contratos, documentos privados e rastreabilidade](docs/contratos-rastreabilidade.md): cadastro existente ou derivado de proposta, avisos, revisões e trilha por integrante.
 - [Obrigações, assinaturas e baixa manual](docs/obrigacoes-decifaz.md): competências sem duplicação, valores previstos/pagos/vencidos e comprovantes privados.
 - [Reuniões de projeto](docs/reunioes-projetos.md): atas, decisões e acompanhamento; chamada externa e captura local disponíveis; videoconferência nativa planejada, sem contratação automática.

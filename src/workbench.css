@@ -130,3 +130,6 @@
  .meeting-record .actions>.button {flex:1}
 }
 @media(max-width:360px) {.shared-app .crumb b {max-width:65px}.shared-app .header-actions {gap:4px}}
+
+/* Central: operational lists inherit the portal type, colors and table behavior. */
+.due-windows{margin:var(--section-gap,24px) 0 16px;flex-wrap:wrap}.due-notices{list-style:none;padding:0}.due-notices>li{padding:20px 0;border-bottom:1px solid var(--line);overflow-wrap:anywhere}.due-notices h3{margin:0 0 8px}.due-notices .actions{flex-wrap:wrap}

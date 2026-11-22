@@ -23,7 +23,9 @@
       "feat/importacao-csv": false,
       "feat/atividades-acompanhamentos": false,
       "feat/fichas-propostas": false,
-      "feat/busca-global": false
+      "feat/busca-global": false,
+      "feat/central-vencimentos": false,
+      "feat/avisos-agendados": false
     }
   }
 }

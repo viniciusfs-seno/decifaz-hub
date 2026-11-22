@@ -11,8 +11,13 @@ test('Busca global: projeção limitada, autorização, isolamento e sessão des
  const f=await operationalFixture();await registryFixture(f)
  try{
   const search=(client,w=f.workspace,q='horizonte',result_limit=20)=>client.rpc('hub_search_records',{w,q,result_limit})
+  // Identifiers can contain the same digits as protected fixture amounts.
+  // Make that collision deterministic; inspect content separately from IDs.
+  const numericId='18002400'+randomUUID().slice(8)
+  await checked(f.admin.from('hub_leads').insert({workspace_id:f.workspace,id:numericId,name:'Horizonte numérico fictício',segment:'Teste',city:'Fortaleza',stage:'Identificado'}))
   const rows=await checked(search(f.restricted.client));expect(new Set(rows.map(r=>r.kind))).toEqual(new Set(['lead','project','contract']))
-  for(const row of rows){expect(Object.keys(row).sort()).toEqual(['detail','id','kind','lead_id','title']);expect(JSON.stringify(row)).not.toMatch(/2400|180|Condição|scope|financial|snapshot/)}
+  expect(rows.some(row=>row.id===numericId)).toBe(true)
+  for(const row of rows){expect(Object.keys(row).sort()).toEqual(['detail','id','kind','lead_id','title']);expect(row.id).toMatch(/^[0-9a-f-]{36}$/);expect(JSON.stringify({title:row.title,detail:row.detail})).not.toMatch(/2400|180|Condição|scope|financial|snapshot/)}
   expect((await checked(search(f.owner.client,f.workspace,'CAFE'))).some(r=>r.id===f.lead)).toBe(true)
   expect(await checked(search(f.owner.client,f.workspace,'%_'))).toEqual([])
   expect(await checked(search(f.owner.client,f.workspace,'a'))).toEqual([])
