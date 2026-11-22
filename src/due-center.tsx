@@ -19,7 +19,7 @@ function restore(key:string):Filters{try{return {...initial,...JSON.parse(sessio
 
 export function DueDashboard({client,workspace,revision,open}:{client:SupabaseClient;workspace:string;revision:number;open:()=>void}){
  const [result,setResult]=useState<Result>(),[error,setError]=useState(false)
- useEffect(()=>{let alive=true;void client.rpc('hub_dues',{w:workspace,period:'all'}).then(r=>{if(alive){const valid=!r.error&&r.data?.counts&&typeof r.data.counts.overdue==='number';setResult(valid?r.data:undefined);setError(!valid)}}).catch(()=>{if(alive){setResult(undefined);setError(true)}});return()=>{alive=false}},[client,workspace,revision])
+ useEffect(()=>{let alive=true;void Promise.resolve(client.rpc('hub_dues',{w:workspace,period:'all'})).then(r=>{if(alive){const valid=!r.error&&r.data?.counts&&typeof r.data.counts.overdue==='number';setResult(valid?r.data:undefined);setError(!valid)}}).catch(()=>{if(alive){setResult(undefined);setError(true)}});return()=>{alive=false}},[client,workspace,revision])
  return <section className="panel card"><h2>Vencimentos e avisos</h2>{error?<p role="status">Central indisponível. <button className="text-button" onClick={open}>Abrir e tentar novamente</button></p>:result?<><p><strong>{result.counts.overdue} vencidos</strong> · {result.counts.today} para hoje · {result.counts['7']} nos próximos sete dias</p><p>Somente registros que seu papel pode consultar.</p><button className="button" onClick={open}>Abrir Central de vencimentos</button></>:<p role="status">Consultando vencimentos…</p>}</section>
 }
 
