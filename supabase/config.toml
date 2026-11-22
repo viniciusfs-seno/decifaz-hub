@@ -16,3 +16,6 @@ site_url = "http://127.0.0.1:4181"
 [functions.hub-workspaces]
 verify_jwt = false
 
+[functions.hub-screen-ice]
+verify_jwt = false
+

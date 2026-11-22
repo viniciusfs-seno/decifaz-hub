@@ -43,6 +43,7 @@ test('Tela: autorização, aprovação, expiração, encerramento, auditoria at�
  const f=await operationalFixture(),anon=createClient(process.env.VITE_SUPABASE_URL,process.env.VITE_SUPABASE_PUBLISHABLE_KEY,{auth:{persistSession:false}}),m=await meeting(f)
  try{
   const s=randomUUID(),credential=secret(),viewer=randomUUID(),args={w:f.workspace,m,s,credential}
+  const relayDisabled=await anon.functions.invoke('hub-screen-ice',{body:{s}});expect(relayDisabled.error).toBeNull();expect(relayDisabled.data).toEqual({enabled:false})
   expect((await f.restricted.client.rpc('hub_screen_start',args)).error?.code).toBe('42501');expect((await f.owner.client.rpc('hub_screen_start',{...args,w:f.other})).error?.code).toBe('42501');expect((await anon.rpc('hub_screen_start',args)).error?.code).toBe('42501')
   await rpc(f.owner.client,'hub_screen_start',args);await rpc(f.owner.client,'hub_screen_start',args)
   expect((await f.second.client.rpc('hub_screen_host',{s})).error?.code).toBe('42501')
@@ -53,7 +54,14 @@ test('Tela: autorização, aprovação, expiração, encerramento, auditoria at�
   await rpc(f.owner.client,'hub_screen_host',{s,action:'offer',payload:offer})
   expect((await rpc(anon,'hub_screen_watch',{s,credential,viewer})).offer).toBeNull()
   expect((await f.owner.client.rpc('hub_screen_host',{s,action:'ice',payload:{epoch:999,candidates:[]}})).error).toBeTruthy()
+  expect((await anon.rpc('hub_screen_relay',{s,credential,viewer})).error).toBeTruthy()
+  expect((await anon.rpc('hub_screen_relay',{s})).error).toBeTruthy()
+  expect((await f.restricted.client.rpc('hub_screen_relay',{s})).error).toBeTruthy()
+  expect((await f.second.client.rpc('hub_screen_relay',{s})).error).toBeTruthy()
   await rpc(f.owner.client,'hub_screen_host',{s,action:'approve',viewer})
+  expect((await rpc(f.owner.client,'hub_screen_relay',{s})).ttl).toBeGreaterThan(0)
+  expect((await anon.rpc('hub_screen_relay',{s,credential:secret(),viewer})).error).toBeTruthy()
+  const emissions=await Promise.all([anon.rpc('hub_screen_relay',{s,credential,viewer}),anon.rpc('hub_screen_relay',{s,credential,viewer})]);expect(emissions.filter(r=>!r.error)).toHaveLength(1);expect(emissions.filter(r=>r.error)).toHaveLength(1)
   const approved=await rpc(anon,'hub_screen_watch',{s,credential,viewer});expect(Object.keys(approved).sort()).toEqual(['candidates','ends_at','epoch','offer','state']);expect(approved.offer.type).toBe('offer');const candidate={candidate:'candidate:1 1 udp 1 192.0.2.1 5000 typ host',sdpMid:'0',sdpMLineIndex:0,usernameFragment:'ficticio'};await rpc(f.owner.client,'hub_screen_host',{s,action:'ice',payload:{epoch:approved.epoch,candidates:[candidate,candidate]}});expect((await rpc(anon,'hub_screen_watch',{s,credential,viewer})).candidates).toHaveLength(1);expect((await f.owner.client.rpc('hub_screen_host',{s,action:'ice',payload:{epoch:approved.epoch,candidates:Array(41).fill(candidate)}})).error).toBeTruthy()
   expect((await rpc(anon,'hub_screen_watch',{s,credential,viewer:randomUUID(),display_name:'Outro'})).state).toBe('unavailable')
   const answer={type:'answer',sdp:'Resposta fictícia'};await rpc(anon,'hub_screen_watch',{s,credential,viewer,answer,offer_epoch:approved.epoch});expect((await rpc(f.owner.client,'hub_screen_host',{s})).viewers[0].answer.type).toBe('answer')
@@ -64,6 +72,8 @@ test('Tela: autorização, aprovação, expiração, encerramento, auditoria at�
   sql(`create function public.test_screen_audit_failure() returns trigger language plpgsql as $$begin if new.workspace_id='${f.workspace}' and new.action='Compartilhamento de tela encerrado' then raise exception 'Falha fictícia';end if;return new;end$$;create trigger test_screen_audit_failure before insert on public.hub_registry_events for each row execute function public.test_screen_audit_failure();`)
   try{expect((await f.owner.client.rpc('hub_screen_host',{s,action:'stop'})).error).toBeTruthy();expect((await rpc(f.owner.client,'hub_screen_host',{s})).state).toBe('open')}finally{sql('drop trigger test_screen_audit_failure on public.hub_registry_events;drop function public.test_screen_audit_failure()')}
   await rpc(f.owner.client,'hub_screen_host',{s,action:'stop'});await rpc(f.owner.client,'hub_screen_host',{s,action:'stop'});expect((await rpc(anon,'hub_screen_watch',{s,credential,viewer})).state).toBe('unavailable')
+  expect((await anon.rpc('hub_screen_relay',{s,credential,viewer})).error).toBeTruthy();expect((await f.owner.client.rpc('hub_screen_relay',{s})).error).toBeTruthy()
+  expect((await anon.rpc('hub_screen_relay',{s,credential,viewer})).error).toBeTruthy()
   const events=await checked(f.owner.client.from('hub_registry_events').select('action,before_record,after_record').eq('workspace_id',f.workspace).like('action','Compartilhamento de tela%'));expect(events).toHaveLength(2);expect(events.every(e=>e.before_record===null&&e.after_record===null)).toBe(true)
   const expired=randomUUID(),expiredToken=secret();await rpc(f.owner.client,'hub_screen_start',{...args,s:expired,credential:expiredToken});sql(`update hub_private.screen_sessions set invite_until=clock_timestamp()-interval '1 second' where id='${expired}'`);expect((await rpc(anon,'hub_screen_watch',{s:expired,credential:expiredToken,viewer:randomUUID(),display_name:'Fictício'})).state).toBe('unavailable')
   sql(`update hub_private.screen_sessions set heartbeat=clock_timestamp()-interval '46 seconds' where id='${expired}'`);await rpc(f.owner.client,'hub_screen_start',{...args,s:randomUUID(),credential:secret()});const swept=await checked(f.owner.client.from('hub_registry_events').select('actor_id').eq('workspace_id',f.workspace).eq('action','Compartilhamento de tela encerrado automaticamente'));expect(swept).toHaveLength(1);expect(swept[0].actor_id).toBeNull()

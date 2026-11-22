@@ -59,8 +59,31 @@ Se outra rede falhar com SDP/ICE aplicado, testar relay para distinguir falta de
 
 ## Publicação futura e recuperação
 
-Só após revisão/autorização: conferir main/candidato/checks → dry-run remoto contendo apenas 20261121020000 → aplicar/verificar funções, grants, tabelas e auditoria sem alterar vínculos reais → merge/frontend → confirmar Vercel READY/SHA e canonical /assistir. Rewrite SPA restrito a /assistir. Nenhuma nova Edge necessária na versão direta.
+Só após revisão/autorização: conferir main/candidato/checks → dry-run remoto contendo apenas 20261121020000 → aplicar/verificar funções, grants, tabelas e auditoria sem alterar vínculos reais → merge/frontend → confirmar Vercel READY/SHA e canonical /assistir. Rewrite SPA restrito a /assistir. A versão direta tolera ausência da Edge; o relay opcional preparado exige hub-screen-ice antes do frontend quando for habilitado.
 
 Recuperar frontend do #41, SHA 100dc1ace52e1bd39d10d1fe39bbc3697bc15ec9, deployment dpl_AdADcyizc8PaFZatue6ed97JrXNj. Encerrar sessões pelo caminho administrativo; abandonadas perdem lease. Preservar migração, auditoria, restrições financeiras, membros e documentos. Não reabrir grants nem apagar registros. **Nada aplicado em produção nesta rodada.**
 
 Prévia temporária: gateway expira em 24 horas e depende da máquina, Docker e cloudflared. A URL/validade ativas são informadas na entrega; nunca gravar sua senha no repositório.
+
+## Reprodução de 22/11 e preparação de relay
+
+No SHA d918788ef51e156d75b5b0b8bda5674938818cb4, o [ensaio remoto](https://github.com/viniciusfs-seno/decifaz-hub/actions/runs/45022971883) falhou em first-negotiation. Receptor: três gerações, SDP remoto/local aplicado em todas, oito candidatos aceitos por geração, zero recusas e zero incompatibilidades de ufrag/mid. Apresentador: resposta aplicada e candidatos do receptor aceitos sem erro. Amostra de ICE mostrou dois pares, nenhum bem-sucedido, zero frames. A falha demonstrada fica **na conectividade ICE, depois da autorização/sinalização/SDP**. Não há evidência de erro de aplicação de candidatos nessa tentativa; tampouco foi comprovado qual NAT/firewall/rota a impede. O teste anterior e167ddf passou sem TURN, portanto a conectividade direta é dependente do par de redes, não uma garantia.
+
+O ensaio ampliado na **mesma máquina**, antes do teste remoto, passou: pixels/frames, perda deliberada do peer e reconexão, vencimento de convite, fim da fonte, reuso negado, segunda captura e prazo da sessão com tracks paradas. Não aprova redes distintas. O gate falhou corretamente junto à mídia; o histórico de falha foi preservado.
+
+Foi preparada uma integração TURN **desativada**, não homologada com provedor real:
+- Edge opcional hub-screen-ice; HUB_TURN_ENABLED ausente/false não consulta provedor.
+- Segredos exclusivos do servidor: HUB_TURN_KEY_ID e HUB_TURN_API_TOKEN. Nunca variáveis VITE, args de processos, Git ou logs.
+- A Edge usa a RPC hub_screen_relay com o JWT original do apresentador ou capacidade do espectador já aprovado; não usa service_role para contornar autorização. A RPC confere papel ativo, sessão, lease, encerramento e capacidade; lock serializa emissão e limita uma por participante a cada trinta segundos. TTL de no máximo trinta minutos, limitado ao restante da sessão.
+- Frontend pede credenciais após aprovação, guarda apenas em memória da sessão e reutiliza em renegociação. Falha/desativação do emissor conserva STUN e informa alternativa externa; disponibilizar relay não significa afirmar que ele foi a rota escolhida.
+- Unitários usam fetch/provedor **simulado**, chaves temporárias aleatórias e respostas filtradas; não comprovam TURN externo. SQL/API cobrem pendente, anônimo sem capacidade, integrante não apresentador, papel restrito, capacidade incorreta, concorrência de emissão e sessão encerrada. A Edge local foi invocada com relay desligado, sem acesso ao provedor.
+- Credenciais emitidas não são DRM nem revogação central de tráfego malicioso: clientes oficiais encerram por autorização/lease; credenciais expiram. Configurar limite rígido de uso do provedor antes da ativação; limite da RPC não é teto financeiro.
+
+### Configuração que falta para um ensaio relay
+
+1. Escolher e aprovar provedor/plano **sem presumir ausência de cobrança**. Cloudflare self-service requer cartão e pode cobrar excedente; não foi ativado. Metered free precisa confirmar acesso à API temporária e bloqueio da quota (documentação divergente). Não há conta TURN conectada disponível nesta rodada.
+2. Criar chave TURN e armazenar ID/token no secret manager do **ambiente isolado**, por mecanismo privado; não enviar segredo no chat nem incluir no frontend. Esta implementação preparada usa a API Cloudflare, não promete compatibilidade Metered sem adaptação.
+3. Aplicar a migração somente no descartável, servir hub-screen-ice e habilitar HUB_TURN_ENABLED apenas ali. Fazer teste com rota relay forçada por instrumentação de teste, validar candidato selecionado relay e frames; repetir fluxo completo entre redes no SHA final, sem relaxar gate.
+4. Só depois de mídia/encerramento/expiração/reuso aprovados e limites visíveis, pedir revisão de publicação. Ordem futura com relay: banco → Edge compatível → frontend. Desligar relay recupera apenas tentativa direta; se a rede exige retransmissão, usar chamada externa. Preservar todos os dados e restrições.
+
+O usuário não precisa repetir teste manual no portal. Enquanto faltar esse recurso ou o ensaio externo completo falhar, situação objetiva: **bloqueado para publicação**, PR em rascunho. O resultado de áudio permanece não homologado após nova tentativa isolada de tom no Chromium headless em 22/11.

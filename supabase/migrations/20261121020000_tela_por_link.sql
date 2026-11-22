@@ -5,7 +5,7 @@ create table hub_private.screen_sessions(
  token_hash bytea,created_at timestamptz not null default clock_timestamp(),
  invite_until timestamptz not null default clock_timestamp()+interval '10 minutes',
  ends_at timestamptz not null default clock_timestamp()+interval '30 minutes',
- heartbeat timestamptz not null default clock_timestamp(),ended_at timestamptz,
+ heartbeat timestamptz not null default clock_timestamp(),ended_at timestamptz,relay_at timestamptz,
  offer jsonb,host_ice jsonb not null default '[]',epoch integer not null default 0,
  foreign key(workspace_id,lead_id,meeting_id) references public.hub_meetings(workspace_id,lead_id,id) on delete cascade
 );
@@ -13,7 +13,7 @@ create table hub_private.screen_requests(
  session_id uuid not null references hub_private.screen_sessions(id) on delete cascade,
  id uuid not null,name text not null check(length(name) between 1 and 60),
  state text not null default 'pending' check(state in ('pending','approved','denied')),
- answer jsonb,viewer_ice jsonb not null default '[]',epoch integer,seen_at timestamptz not null default clock_timestamp(),
+ answer jsonb,viewer_ice jsonb not null default '[]',epoch integer,seen_at timestamptz not null default clock_timestamp(),relay_at timestamptz,
  primary key(session_id,id)
 );
 revoke all on hub_private.screen_sessions,hub_private.screen_requests from public,anon,authenticated;
@@ -134,4 +134,29 @@ end $$;
 revoke all on function public.hub_screen_start(uuid,uuid,uuid,text),public.hub_screen_host(uuid,text,uuid,jsonb),public.hub_screen_watch(uuid,text,uuid,text,jsonb,integer,jsonb) from public,anon,authenticated;
 grant execute on function public.hub_screen_start(uuid,uuid,uuid,text),public.hub_screen_host(uuid,text,uuid,jsonb) to authenticated;
 grant execute on function public.hub_screen_watch(uuid,text,uuid,text,jsonb,integer,jsonb) to anon,authenticated;
+
+-- Server credential issuer calls this with the original actor/capability, never
+-- service_role. Row locks enforce a cross-instance issuance limit per peer.
+create function public.hub_screen_relay(s uuid,credential text default null,viewer uuid default null) returns jsonb
+language plpgsql security definer set search_path='' as $$
+declare r hub_private.screen_sessions;v hub_private.screen_requests;
+begin
+ select * into r from hub_private.screen_sessions where id=s for update;
+ if not found or r.ended_at is not null or r.ends_at<=clock_timestamp() or r.heartbeat<clock_timestamp()-interval '45 seconds'
+ or not exists(select 1 from public.hub_members where workspace_id=r.workspace_id and user_id=r.host_id and active and (array[role]||extra_roles)&&array['admin','operations']) then raise insufficient_privilege using message='Emissão indisponível';end if;
+ if viewer is null then
+  if auth.uid() is null or auth.uid()<>r.host_id or not public.hub_can(r.workspace_id,'projects',true) then raise insufficient_privilege using message='Emissão indisponível';end if;
+  if r.relay_at>clock_timestamp()-interval '30 seconds' then raise exception 'Aguarde para tentar novamente';end if;
+  update hub_private.screen_sessions set relay_at=clock_timestamp() where id=s;
+ else
+  if credential is null or length(credential)<>43 or r.token_hash is distinct from extensions.digest(credential,'sha256') then raise insufficient_privilege using message='Emissão indisponível';end if;
+  select * into v from hub_private.screen_requests where session_id=s and id=viewer and state='approved' for update;
+  if not found then raise insufficient_privilege using message='Emissão indisponível';end if;
+  if v.relay_at>clock_timestamp()-interval '30 seconds' then raise exception 'Aguarde para tentar novamente';end if;
+  update hub_private.screen_requests set relay_at=clock_timestamp() where session_id=s and id=viewer;
+ end if;
+ return jsonb_build_object('ttl',least(1800,greatest(1,floor(extract(epoch from r.ends_at-clock_timestamp()))::integer)));
+end $$;
+revoke all on function public.hub_screen_relay(uuid,text,uuid) from public,anon,authenticated;
+grant execute on function public.hub_screen_relay(uuid,text,uuid) to anon,authenticated;
 commit;

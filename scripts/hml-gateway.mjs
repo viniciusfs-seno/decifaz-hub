@@ -18,7 +18,7 @@ export function createGateway({origin,password,root,fixture,publicKey,sha='test'
  // material stays in process memory and is neither logged nor written to disk.
  let screenProbe,screenProgress={phase:'waiting'}
  const storageKey='sb-'+new URL(origin).hostname.split('.')[0]+'-auth-token'
- const allowed=/^\/(auth\/v1\/(?:token|otp|verify|user|logout|signup|settings|recover)(?:\?|$)|rest\/v1\/|functions\/v1\/hub-workspaces(?:\?|$)|storage\/v1\/object\/(?:authenticated\/)?hub-private-documents\/[0-9a-f-]{36}\/(?:contract|bill)\/[0-9a-f-]{36}\/[0-9a-f-]{36}\.pdf(?:\?|$))/
+ const allowed=/^\/(auth\/v1\/(?:token|otp|verify|user|logout|signup|settings|recover)(?:\?|$)|rest\/v1\/|functions\/v1\/(?:hub-workspaces|hub-screen-ice)(?:\?|$)|storage\/v1\/object\/(?:authenticated\/)?hub-private-documents\/[0-9a-f-]{36}\/(?:contract|bill)\/[0-9a-f-]{36}\/[0-9a-f-]{36}\.pdf(?:\?|$))/
  const server=createServer(async(req,res)=>{
   res.setHeader('Cache-Control','no-store');res.setHeader('X-Content-Type-Options','nosniff');res.setHeader('X-Frame-Options','DENY');res.setHeader('Referrer-Policy','strict-origin')
   res.setHeader('Permissions-Policy','display-capture=(self),camera=(),microphone=()')
