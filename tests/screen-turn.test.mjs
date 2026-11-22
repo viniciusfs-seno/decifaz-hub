@@ -2,6 +2,7 @@ import test from 'node:test'
 import assert from 'node:assert/strict'
 import {randomBytes,randomUUID} from 'node:crypto'
 import {issueTurn,turnHandler} from '../supabase/functions/_shared/screen-turn.mjs'
+import {screenConfiguration,screenIce} from '../src/screen-peer.ts'
 
 test('TURN: emissão temporária mantém chave somente no servidor e filtra resposta',async()=>{
  const apiToken=randomBytes(32).toString('hex'),credential=randomBytes(24).toString('base64url')
@@ -40,4 +41,16 @@ test('Xirsys: credenciais temporárias, canal fixo no servidor e resposta estrit
  await assert.rejects(issueTurn(args,async()=>Response.json({s:'error',v:'private upstream body'})),/indisponível/)
  await assert.rejects(issueTurn(args,async()=>Response.json({s:'ok',v:{iceServers:[{urls:'turn:attacker.example.invalid:443',username:'fake',credential}]}})),/indisponível/)
  await assert.rejects(issueTurn(args,async()=>new Response(null,{status:429})),/indisponível/)
+})
+
+test('Franquia ou provedor indisponível: recusa sanitizada e fallback sem credencial TURN',async()=>{
+ const secret=randomBytes(32).toString('hex'),args={provider:'xirsys',ident:'fictional',secret,channel:'hml',ttl:120}
+ for(const fetcher of [async()=>new Response(secret,{status:429}),async()=>new Response(secret,{status:503}),async()=>Response.json({s:'error',v:secret}),async()=>{throw Error(secret)}]){
+  const handler=turnHandler({enabled:true,authorize:async()=>({data:{ttl:120}}),issue:ttl=>issueTurn({...args,ttl},fetcher)})
+  const response=await handler(new Request('https://edge.example.invalid',{method:'POST',body:JSON.stringify({s:randomUUID()})}))
+  assert.equal(response.status,503);const data=await response.json();assert(!JSON.stringify(data).includes(secret));assert.equal(data.iceServers,undefined)
+  const client={functions:{invoke:async()=>({data,error:new Error('provider unavailable')})}}
+  const result=await screenConfiguration(client,{s:randomUUID()});assert.equal(result.relay,false);assert.deepEqual(result.config,screenIce)
+ }
+ const failed=await screenConfiguration({functions:{invoke:async()=>{throw Error(secret)}}},{s:randomUUID()});assert.equal(failed.relay,false);assert.deepEqual(failed.config,screenIce)
 })

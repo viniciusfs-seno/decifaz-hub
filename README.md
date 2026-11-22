@@ -92,7 +92,7 @@ Para continuar no editor, consulte o [guia de VS Code e prompt de continuidade](
 
 ## Prioridades dos sócios
 
-Tela por link segue em homologação no PR #40, sem publicação: [fluxo, diagnóstico, testes entre redes e recuperação](docs/compartilhamento-tela.md). Áudio ainda não homologado; chamada externa continua disponível. A entrega diária #41 permanece publicada.
+Tela por link segue em homologação no PR #40, sem publicação: [fluxo e diagnóstico](docs/compartilhamento-tela.md), [revisão final, limites e preparação dos segredos na Edge](docs/revisao-publicacao-tela.md). A prova de relay do SHA62ebd6e está preservada com capturas e hashes do código. Áudio útil e região permanente continuam pendentes; chamada externa permanece disponível. Os avisos internos #42/#43 são independentes da transmissão.
 
 Próxima evolução proposta: [compromissos e avisos com o portal fechado](docs/proxima-entrega-avisos.md), sem ativação de envios reais ou contratação nesta rodada.
 
