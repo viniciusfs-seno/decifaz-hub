@@ -105,3 +105,6 @@ Contratos, obrigações, reuniões e hierarquia foram publicados pelos PRs #30�
 Busca por registros autorizados, publicação e rotina inicial dos sócios: [Busca global](docs/busca-global.md).
 
 Busca por registros autorizados, publicação e rotina inicial dos sócios: [Busca global](docs/busca-global.md).
+## Avisos em homologação
+
+Central, preferências e processamento sem navegador: [roteiro funcional, configuração e recuperação](docs/avisos-agendados.md). Geração agendada e e-mail de produção permanecem desativados; testes somente com dados fictícios e Mailpit.
