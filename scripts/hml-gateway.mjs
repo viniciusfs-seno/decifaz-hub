@@ -48,7 +48,7 @@ export function createGateway({origin,password,root,fixture,publicKey,sha='test'
     if(req.method==='GET')return send(200,JSON.stringify(screenProgress),'application/json')
     if(req.method==='POST'){
      const value=JSON.parse(body.toString())
-     if(!['waiting','frames','disconnect','recovered','expire-invite','invite-expired','stop','ended','second','second-frames','expire-session','session-expired','done','failed'].includes(value.phase))return send(400,'{}','application/json')
+     if(!['waiting','frames','disconnect','recovered','expire-invite','invite-expired','stop','ended','second','second-frames','expire-session','session-expired','third','revoke','revoked','revocation-seen','revocation-ended','done','failed'].includes(value.phase))return send(400,'{}','application/json')
      screenProgress={phase:value.phase};return send(200,'{}','application/json')
     }
     return send(405,'{}','application/json')

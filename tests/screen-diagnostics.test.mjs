@@ -21,3 +21,21 @@ test('Diagnóstico de tela preserva apenas contagens/estados e classifica erros 
  assert.equal(result[0].iceRejected,1);assert.equal(result[0].errors[0].reason,'ufrag');assert.equal(result[0].ufragMismatch,0)
  assert.ok(!json.includes(sensitive));assert.ok(!json.includes('192.0.2.99'));assert.ok(!json.includes('candidate:'));assert.ok(!json.includes('sdp'))
 })
+
+test('Budget fictício limita encoder, acumula bytes observados e interrompe tracks por bytes ou prazo',async()=>{
+ for(const reason of ['observed-bytes','duration']){
+  const timers=[],deadlines=[];let stopped=0,limited=0
+  class Peer{
+   connectionState='new';iceConnectionState='new';signalingState='stable'
+   addEventListener(){};close(){this.connectionState='closed'}
+   getSenders(){return[{track:{kind:'video',stop(){stopped++}},getParameters(){return{encodings:[{}]}},async setParameters(p){assert.equal(p.encodings[0].maxBitrate,128000);limited++}}]}
+   async setLocalDescription(){}
+   async getStats(){return new Map([['t',{type:'transport',bytesSent:60,bytesReceived:40}]])}
+  }
+  const sandbox={window:{RTCPeerConnection:Peer,dispatchEvent(){}},Event:class{},setTimeout:fn=>{deadlines.push(fn)},setInterval:fn=>{timers.push(fn);return 1},clearInterval(){}}
+  vm.runInNewContext('('+installScreenDiagnostics.toString()+')({relay:true,budget:{maxMilliseconds:1000,maxBytes:'+(reason==='duration'?1000:100)+'}})',sandbox)
+  const p=new sandbox.window.RTCPeerConnection();await p.setLocalDescription();assert.equal(limited,1)
+  await timers[0]();if(reason==='duration'){await timers[0]();assert.equal(sandbox.window.__screenBudgetProof().bytesSent,60);deadlines[0]()}
+  assert.equal(sandbox.window.__screenBudgetProof().stopped,reason);assert.equal(p.connectionState,'closed');assert.equal(stopped,1)
+ }
+})
