@@ -9,6 +9,20 @@ permissions:
   contents: read
 
 jobs:
+  screen-release-gate:
+    if: always() && github.event_name == 'pull_request' && github.event.pull_request.head.repo.full_name == github.repository && github.head_ref == 'feat/compartilhamento-tela'
+    needs: [screen-external]
+    runs-on: ubuntu-24.04
+    env:
+      MEDIA_RESULT: ${{ needs.screen-external.result }}
+      MEDIA_VERIFIED: ${{ needs.screen-external.outputs.verified }}
+    steps:
+      - name: Exigir mídia entre redes no SHA candidato
+        run: |
+          if [ "$MEDIA_RESULT" != success ] || [ "$MEDIA_VERIFIED" != true ]; then
+            echo 'Publicação bloqueada: mídia externa não comprovada; prévia e vídeo local não substituem este gate.'
+            exit 1
+          fi
   daily-external:
     if: github.event_name == 'pull_request' && github.event.pull_request.head.repo.full_name == github.repository && github.head_ref == 'feat/compartilhamento-tela' && vars.HUB_HML_PREVIEW_URL != ''
     runs-on: ubuntu-24.04
@@ -37,6 +51,8 @@ jobs:
     if: github.event_name == 'pull_request' && github.event.pull_request.head.repo.full_name == github.repository && github.head_ref == 'feat/compartilhamento-tela' && vars.HUB_SCREEN_PROBE_ENABLED == 'true'
     runs-on: ubuntu-24.04
     timeout-minutes: 12
+    outputs:
+      verified: ${{ steps.media.outputs.verified }}
     env:
       HUB_HML_PREVIEW_URL: ${{ vars.HUB_HML_PREVIEW_URL }}
       HUB_HML_REVIEW_PASSWORD: ${{ secrets.HUB_HML_REVIEW_PASSWORD }}
@@ -52,7 +68,8 @@ jobs:
       - run: npx playwright install --with-deps chromium
       - name: Conferir guia diário na prévia externa isolada
         run: node scripts/daily-external-review.mjs
-      - run: node scripts/screen-external-viewer.mjs
+      - id: media
+        run: node scripts/screen-external-viewer.mjs
       - uses: actions/upload-artifact@v4
         if: always()
         with:

@@ -1,94 +1,66 @@
-# Tela por link — estudo e homologação
+# Tela por link — funcionamento e homologação
 
-## Referências conferidas
+## Estado e limite de publicação
 
-Consultadas em 21/11/2026, por HTTP e navegador isolado. Nenhum código desses projetos foi copiado ou adaptado.
+O [PR #40](https://github.com/viniciusfs-seno/decifaz-hub/pull/40) permanece em rascunho, separado do acabamento #41 publicado na main 100dc1ace52e1bd39d10d1fe39bbc3697bc15ec9. Nesta rodada: **sem merge, migração remota ou frontend em produção**. Migração aditiva: 20261121020000_tela_por_link.sql, após 20261121010000.
 
-| Referência | Implementação observada | Licença e dependências |
-|---|---|---|
-| [Artigo](https://www.luannzin.com/writing/your-screen-as-a-link) e [Sightline](https://sightline.luannzin.com/) | Captura nativa, convite e visualizador enxuto; sinalização via Trystero/Nostr, mídia WebRTC. TURN próprio opcional, não fornecido pelo site | [Snapshot `6a0ed32`](https://github.com/luannzin/sightline/tree/6a0ed32490393cde9701276a22299019e7fc51f2): React, Base UI, Trystero, Tailwind, Vite/Bun. Não há arquivo LICENSE nem declaração de licença no pacote examinado; usar somente como referência de experiência |
-| [TelaLink](https://github.com/maya-gc/telalink) | Servidor Node HTTP/WebSocket local, túnel externo, sinalização e retransmissão cifrada; limite no servidor de 50 espectadores, com TURN opcional | [Snapshot `5539c0e`](https://github.com/maya-gc/telalink/tree/5539c0eaad0a934f786e07575b8fa73e0f3a579c): pacote/README declaram MIT, mas não foi encontrado arquivo LICENSE completo na raiz. Sem dependências npm de produção; distribuição inclui QR e launchers Node/cloudflared. Não reutilizado |
+A liberação exige mídia real entre redes no SHA final. O job **screen-release-gate** exige sucesso de screen-external **e** verified=true emitido após todas as asserções. Job pulado, acesso HTTPS e vídeo local não aprovam transmissão. SHAs e checks exatos ficam no corpo atualizado do PR e nos artefatos desse candidato.
 
-Licenças de bibliotecas não concedem automaticamente licença ao código dos aplicativos. A implementação do Hub é própria, baseada nas APIs padronizadas do navegador e nos contratos existentes do Supabase. Não se adota alegação de segurança, latência ou compatibilidade de uma referência sem teste próprio.
+## Fluxo, limites e privacidade
 
-## Decisão técnica
+Projeto → Reuniões → Preparar / registrar ata → Compartilhar tela por link. Administração ou Operação escolhe a fonte no seletor nativo, copia o convite e aprova o espectador. O nome é autodeclarado: confirme a identidade por outro canal. Preferir uma aba preparada; tela inteira pode revelar notas/notificações da própria fonte.
 
-Primeiro provar captura e recepção nativas em dois processos de navegador. Depois integrar o apresentador à reunião do projeto e manter o espectador numa rota exclusiva, sem sessão do Hub. Sinalização pelo Supabase já utilizado; mídia WebRTC entre os participantes. Isso evita novo servidor WebSocket, executável no computador dos sócios e contratação. Um módulo de mídia separado ou serviço externo permanece alternativa se as redes exigirem retransmissão.
+O espectador abre /assistir, informa o nome e aguarda aprovação. Recebe apenas a captura, sem sessão Auth, papel, vínculo ou navegação do Hub. Um apresentador e um espectador aprovado por sessão. Estados distinguem captura local, conexão e transmissão. Encerrar, sair da ficha, remover o espectador ou encerrar a fonte interrompe a mídia. A chamada externa permanece alternativa; não é videoconferência completa, câmera, microfone ou gravação.
 
-Primeira versão: um apresentador autenticado, um espectador aprovado por vez. O link é uma credencial temporária; não é convite de integrante nem concede papel ou vínculo. Entrada sujeita a aprovação do apresentador, nome do espectador autodeclarado. Encerrar revoga a sessão. Credencial em fragmento, removida da barra após leitura, mantida apenas em memória; nunca na reunião, auditoria ou telemetria. Registrar apenas início/encerramento administrativos, sem SDP, ICE, nomes de janelas ou conteúdo da captura.
+Convite: dez minutos para novas entradas/aprovações. Sessão: até trinta minutos. Lease: 45 segundos sem confirmação. RPC: timeout de oito segundos. Watchdog independente interrompe captura/recepção após quinze segundos sem confirmação, inclusive com HTTP pendente. Convite vencido não derruba quem já foi aprovado; sessão vencida encerra a captura. Recarregar perde a credencial em memória e requer novo convite.
 
-## Rede, dependências e custos
+WebRTC direto no próprio módulo, sem SDK ou servidor de vídeo novo: menor complexidade para 1:1. Sinalização REST/RPC no Supabase; vídeo não passa pela Vercel. hub_screen_start exige integrante ativo com Administração ou Operação e reunião de projeto no próprio espaço. hub_screen_host revalida acesso. hub_screen_watch é uma capacidade anônima de 256 bits, entrada limitada e aprovação explícita, sem consulta aos registros do portal. Tabelas privadas, sem grants diretos do app; vínculo desativado é recusado pelo banco.
 
-- [WebRTC](https://webrtc.org/getting-started/peer-connections) exige sinalização; STUN auxilia descobrir candidatos, mas não retransmite mídia. O REST/RPC do Supabase existente pode transportar a negociação, sem passar o vídeo pela Vercel.
-- [STUN Cloudflare](https://developers.cloudflare.com/realtime/turn/faq/) é declarado gratuito e ilimitado, sem garantia de conectividade universal. A mídia direta usa banda dos participantes. O Supabase continua sujeito às cotas do projeto existente.
-- Não há TURN provisionado nesta entrega. Redes corporativas, VPNs ou certos NATs de operadora podem impedir conexão direta; nesses casos, usar o link da chamada externa.
-- [TURN Cloudflare](https://developers.cloudflare.com/realtime/sfu/platform/pricing/) publica franquia compartilhada de 1.000 GB/mês e US$ 0,05/GB excedente. Exige conta/configuração; não foi contratado ou ativado. Mesmo com franquia, eventual cobrança exige aprovação. Coturn próprio requer servidor, tráfego e operação; não é infraestrutura gratuita presumida.
-- Sem SFU, gravação ou retransmissão pelo Hub. O limite de participantes do protótipo do Hub não deriva do limite do TelaLink. Nenhum compromisso pago foi assumido.
+Credencial em fragmento, removida da barra antes de iniciar o visualizador; somente memória no cliente, hash no servidor. Não persistir convite na reunião, auditoria, analytics, argumentos, logs ou artefatos. Não registrar corpos das RPCs, SDP, ICE bruto, endereços ou nomes de fontes. Visualizador usa cliente independente sem persistir Auth. Envelopes são apagados ao encerrar.
 
-## Evidência inicial isolada
+Início/encerramento administrativos são gravados na mesma transação, sem mídia. Prazo, lease, perda de autorização e varredura usam encerramento automático com ator nulo; não atribuir timeout ao usuário que inicia a próxima sessão. Falha na auditoria reverte a operação. Cada RPC confere prazo. Nova sessão varre até vinte expiradas e remove envelopes encerrados há mais de um dia. Sem cron: limpeza física pode aguardar tráfego, sem estender autorização.
 
-`node scripts/screen-prototype-validation.mjs`: captura real por `getDisplayMedia` numa aba fictícia, WebRTC em dois processos Chromium, frames decodificados e pixels mudando no receptor. Fechar a aba capturada encerra a track. SDP, candidatos e credenciais permanecem em memória; resultado em `.validation/screen-prototype/result.json`, sem endereços de rede ou identificadores pessoais.
+WebRTC não é DRM: não apaga frames recebidos nem impede gravação pelo espectador. Encerramento interrompe clientes oficiais; não se promete corte central contra clientes modificados que já negociaram mídia direta.
 
-O Chromium headless shell recusou captura com `NotSupportedError`; o Chromium completo em modo headless funcionou. A seleção automática de aba existe somente no teste e aponta para fonte fictícia; em uso normal, o navegador exige gesto e escolha do apresentador. Foi observada uma track de áudio, sem comprovação de som útil nesta primeira execução. Essa execução é **no mesmo computador**, não comprova redes distintas, NAT restritivo, aparelho físico ou suporte de áudio em outros navegadores.
+## Diagnóstico demonstrado
 
-## Critérios de publicação
+| Etapa | Evidência e correção | Limite |
+| --- | --- | --- |
+| Autorização/gateway | Regressões: anônimo, outro espaço, integrante desativado, aprovação e prazos. Runtime Edge parado após retomada do Docker causou falha local de acesso; inicializador agora restaura o container local. | Infraestrutura local não é diagnóstico de ICE. |
+| SDP | Regressão rejeita a primeira descrição remota, depois exige mídia. Falha transitória refaz negociação. | Não atribuir todas as falhas antigas sem traço original. |
+| ICE | Encontrados retorno sem callback ICE e candidatos descobertos após fotografia fixa do SDP. Corrigidos com trickle nos dois sentidos; teste atrasa retorno sete segundos e exige candidatos de ambos. | Vídeo local por rota reflexiva podia mascarar retorno ausente. |
+| Histórico | [773eecd](https://github.com/viniciusfs-seno/decifaz-hub/actions/runs/44948653615): HTTP respondeu e ICE não conectou. Fotografia final não distinguia aplicação de candidatos/troca de geração. | Causa exata de cada falha antiga inconclusiva; não prova necessidade de TURN. |
+| Mídia externa anterior | [e167ddf](https://github.com/viniciusfs-seno/decifaz-hub/actions/runs/44952791696): captura nativa Windows → Chromium no runner GitHub, vídeo decodificado e encerramento, sem TURN. [Banco aprovado](https://github.com/viniciusfs-seno/decifaz-hub/actions/runs/44952791697). | Não substitui ensaio ampliado no candidato final. |
 
-Manter rascunho até implementar autorização/entrada, expiração, encerramento, desconexão/retomada e evidência no receptor. Testar link expirado/reutilizado, papéis, espaço e integrante desativado. Prévia isolada protegida e jornada externa devem ser verificadas. Evidência entre redes deve distinguir tipo de candidato e frames recebidos, sem publicar IP, SDP ou convite. Se conexão externa não passar, documentar o bloqueio e manter a entrega de tela em homologação; publicar acabamento independente validado.
+O helper screen-diagnostics é somente de testes. Permite contagens de descrições aplicadas, ICE aceito/recusado, tipos, estados, incompatibilidades e frames. Exclui SDP, IP, credencial, URL, rótulo de track e erro bruto. Teste com sentinelas verifica privacidade. Separar falha de negociação, ICE sem rota e mídia sem frames.
 
-Ordem futura: migração de sinalização/controle de acesso → verificar grants e testes isolados → frontend do apresentador/visualizador → verificar domínio e limites reais. Recuperação do frontend mantém as restrições do banco e encerra sessões abertas; não deve expor credenciais nem remover registros administrativos. Artefatos, comandos, candidato e checks finais serão registrados no PR, sem herdar resultado de outro SHA.
+## Ensaios e evidência
 
-## Implementação e privacidade
+- npm run check; npm test; builds demo/compartilhado; scripts/security-review.mjs.
+- node scripts/local-validation.mjs screen-link-real.spec.mjs --workers=1: dez regressões SQL e quatro cenários de tela. Cancelamento/incompatibilidade, fonte encerrada durante gravação, HTTP pendente, autorização, espaço, prazos, repetição, limites ICE, auditoria atômica e desativação. Captura nativa em cenário próprio; canvas controlado é identificado separadamente.
+- node scripts/screen-upgrade-validation.mjs --reset-local-fixtures: **somente descartável e com prévia parada**. Baseline 20261121010000 → dry-run exclusivo → migração → frontend anterior/candidato/recuperação, registros/restrições preservados. CI também executa regressões anteriores.
+- scripts/screen-presenter-probe.mjs: configuração por stdin, gateway isolado; cada edição de prazo é vinculada ao espaço fictício. Captura nativa no Chromium completo, seletor automático de aba somente no teste; API nativa não substituída.
+- scripts/screen-external-viewer.mjs: runner remoto exige mesmo SHA, frames decodificados avançando e pixels mudando. Fecha deliberadamente peer receptor, exige nova geração e vídeo; induz expiração de convite/sessão na fixture; recusa entrada/reuso; encerra fonte pelo navegador; exige segunda captura/sessão. Perda controlada de transporte **não é** queda física do roteador.
+- Gateway, Auth e APIs da prévia usam somente Supabase local fictício. Probe/coordenação em memória, protegidos pelo cookie de revisão, nunca em produção. Senha no secret do CI/memória, fora do Git. Habilitar HUB_SCREEN_PROBE_ENABLED somente durante ensaio assistido. Artefato identifica SHA; execução na mesma máquina tem crossNetwork=false.
 
-Migração aditiva `20261121020000_tela_por_link.sql`, após nomes por espaço (20261121010000). Tabelas privadas de sessão/solicitações; sem SELECT, INSERT, UPDATE ou DELETE do app. `hub_screen_start` exige integrante ativo com Administração ou Operação e reunião persistida de projeto no próprio espaço. `hub_screen_host` valida o apresentador e o acesso a cada operação. `hub_screen_watch` é uma API de capacidade disponível ao anônimo: credencial de 256 bits, aprovação explícita, apenas oferta/resposta e estado daquela sessão. Não consulta nomes de estabelecimentos, reuniões, notas, valores, membros ou espaços.
+Chromium completo Windows para apresentação, Chromium Linux no GitHub para recepção. Shell headless recusou captura; não generalizar para navegador completo. Viewport celular/escuro avalia layout, não aparelho físico/Safari. Track de áudio observada e tentativa de tom sem comprovar som útil recebido: **áudio não homologado**. Não anunciar combinações não comprovadas, nem funcionamento universal em VPN/NAT corporativo.
 
-A fonte é escolhida no seletor nativo após gesto. O apresentador copia o convite; a credencial fica em fragmento e memória. O visualizador remove o fragmento antes de carregar seu cliente Supabase independente, sem sessão persistida do Hub. Não registrar corpos das RPCs de negociação em ferramentas de observabilidade, analytics, proxy ou logs personalizados. Nenhuma telemetria nova foi instalada. O servidor guarda somente hash da credencial; SDP efêmero permanece privado até o encerramento, quando é apagado.
+## TURN: pesquisa e dependências
 
-Até cinco solicitações por convite e um espectador aprovado. Nome autodeclarado, sem autenticação de identidade: confirme por outro canal antes de permitir. Convite novo por dez minutos, sessão até trinta minutos, validade renovada pelo apresentador a cada consulta e lease de 45 segundos. Um watchdog independente interrompe o cliente após 15 segundos sem confirmação, com timeout de 8 segundos por RPC. Encerrar, fechar a fonte pelo navegador ou sair da ficha para a captura e revoga a sessão. Reconexão de rede mantém o mesmo visualizador em memória; recarregar a página perde a credencial e exige novo convite. Não há histórico de URLs.
+Consultado em 22/11/2026, sem cadastro, cartão, ativação ou contratação. O par externo já recebeu mídia sem TURN; retransmissão não foi demonstrada necessária para esse par.
 
-Expiração é conferida em cada RPC. Iniciar outra sessão também varre até 20 sessões expiradas e apaga envelopes encerrados há mais de um dia. Não há cron novo: sem tráfego, a limpeza física aguarda próxima operação; a autorização já considera a expiração. Eventos de início/encerramento são duráveis, na mesma transação, sem credenciais, SDP, nome de janela ou mídia. Fechar após expiração registra o encerramento observado, sem inventar horário exato de queda.
+| Opção | Condições atuais | Decisão |
+| --- | --- | --- |
+| [Cloudflare](https://developers.cloudflare.com/realtime/turn/faq/) | STUN gratuito/ilimitado. TURN: franquia de 1.000 GB compartilhada; excedente US$ 0,05/GB; self-service com cartão. | Somente STUN em uso. Aprovar cobrança antes de ativar TURN. |
+| [Metered](https://www.metered.ca/pricing) | Trial 500 MB/mês entrada+saída, sem cartão. Growth US$ 99/mês, 150 GB, excedente US$ 0,40/GB. Preços e [documentação de API](https://www.metered.ca/docs/turn-rest-api/get-credentials-v2/) divergem sobre acesso no free. | Não configurado. Confirmar API temporária e quota com bloqueio rígido antes de recomendar conta. |
+| Coturn próprio | Servidor público, portas, TLS, banda e operação. | Infraestrutura não disponível; custo zero não presumido. |
 
-WebRTC direto não é DRM: não apaga frames já recebidos nem impede um participante de gravar a própria recepção. O encerramento fecha conexões dos clientes oficiais; não se promete corte centralizado contra clientes alterados que já negociaram a mídia. Sem gravação do Hub, câmera, microfone ou videoconferência. O áudio é somente o que a fonte do navegador fornecer e exige ativação no receptor.
+Se outra rede falhar com SDP/ICE aplicado, testar relay para distinguir falta de rota de defeito. Integração futura: endpoint servidor valida apresentador/sessão ou capacidade de espectador aprovado, aplica rate limit e devolve apenas credenciais TTL curto limitado à sessão. Segredo permanente no secret manager, resposta no-store e sem logs. [Cloudflare documenta emissão server-side](https://developers.cloudflare.com/realtime/turn/generate-credentials/). Não habilitar nem pôr segredo permanente no frontend.
 
-## Testes e publicação
+## Publicação futura e recuperação
 
-`node scripts/local-validation.mjs screen-link-real.spec.mjs project-meetings-real.spec.mjs --workers=1`: autorização, outro espaço, anônimo, entrada, aprovação, expiração, repetição, rollback do evento, desativação e envelopes privados; captura nativa e frames em outro processo, recuperação de HTTP, fechamento da fonte e tentativa de reuso. Fonte e contas fictícias, sem gravar SDP/ICE/IP/convites. Chromium completo: mesmo computador, sem prova de redes distintas nem áudio útil.
+Só após revisão/autorização: conferir main/candidato/checks → dry-run remoto contendo apenas 20261121020000 → aplicar/verificar funções, grants, tabelas e auditoria sem alterar vínculos reais → merge/frontend → confirmar Vercel READY/SHA e canonical /assistir. Rewrite SPA restrito a /assistir. Nenhuma nova Edge necessária na versão direta.
 
-`node scripts/screen-upgrade-validation.mjs --reset-local-fixtures`: esquema anterior 20261121010000 → dry-run exclusivo → expansão → frontend anterior/candidato/recuperação, registros e restrições preservados. Parar prévia antes de resetar. CI também executa tipagem, unitários, builds e regressões anteriores.
+Recuperar frontend do #41, SHA 100dc1ace52e1bd39d10d1fe39bbc3697bc15ec9, deployment dpl_AdADcyizc8PaFZatue6ed97JrXNj. Encerrar sessões pelo caminho administrativo; abandonadas perdem lease. Preservar migração, auditoria, restrições financeiras, membros e documentos. Não reabrir grants nem apagar registros. **Nada aplicado em produção nesta rodada.**
 
-Prévia protegida: o gateway permite /assistir e um probe de teste em memória, protegido pela senha/cookie da homologação. `screen-external-viewer.mjs` recebe em runner remoto somente o convite fictício mantido em memória, sem escrevê-lo em argumentos, artefatos ou logs. Habilitar `HUB_SCREEN_PROBE_ENABLED` apenas durante ensaio assistido por apresentador fictício automático. Link de revisão e senha nunca ficam no Git.
-
-Publicar somente depois da evidência exigida: conferir candidato/checks/main → dry-run remoto contendo só 20261121020000 → aplicar e verificar grants/tabelas/funções, sem criar sessão real de teste → merge/frontend → Vercel READY/SHA e acesso anônimo isolado ao visualizador. Recuperação: frontend anterior do acabamento diário; preservar migração, eventos e demais restrições. Encerrar sessões pelo caminho administrativo antes de recuperar; leases expiram sessões abandonadas. Não reabrir grants nem apagar vínculos/documentos. Sem prova externa, manter PR em rascunho e não aplicar migração em produção.
-
-Encerramentos automáticos por prazo, lease ou perda de autorização têm ação explícita e ator nulo; não são atribuídos ao apresentador como se ele tivesse clicado. A limpeza administrativa conserva os eventos. Cancelamento do seletor e navegador incompatível não criam sessão/evento. Falha transitória de negociação recria a conexão e é coberta por regressão que rejeita uma primeira descrição remota antes de receber vídeo. Escolher tela inteira pode revelar notas/notificações da fonte: a interface orienta usar aba preparada; o visualizador não consulta notas do portal.
-
-## Recepção entre redes — 21/11/2026
-
-Candidato `417714c50c5fa64a54660e528390d82ef20843e1`: [ensaio externo aprovado](https://github.com/viniciusfs-seno/decifaz-hub/actions/runs/44946132798), com apresentador Chromium nesta máquina e espectador Chromium no runner GitHub, conectados por redes distintas. Captura nativa fictícia, aprovação, frames decodificados no receptor e encerramento pelo navegador comprovados. Credencial e SDP somente em memória; artefatos contêm captura e resultados sanitizados. O guia diário também abriu externamente em desktop e celular escuro. Não é prova de todas as redes, aparelhos físicos ou áudio útil.
-
-A tentativa anterior não recebeu vídeo. A revisão encontrou uma falha reproduzível na retomada após erro de negociação; foi corrigida e coberta por uma descrição remota que falha uma vez no teste. Não se atribui toda a falha externa anterior a essa causa: a primeira tentativa não tinha diagnóstico suficiente. Durante a atualização da prévia, uma execução atingiu o gateway parado; o mesmo candidato foi reexecutado após restabelecê-lo e passou, mantendo as asserções.
-
-Para produção, `vercel.json` reescreve somente /assistir para /index.html, conforme a [orientação SPA da Vercel](https://vercel.com/docs/frameworks/frontend/vite). O fragmento permanece no navegador e é removido antes do visualizador. Após esta revisão, os checks e o ensaio externo são repetidos no candidato final antes de aplicar a migração.
-
-A revisão anterior à publicação conferiu por leitura a configuração de logs do banco: log_statement=ddl, log_min_duration_statement=-1, log_parameter_max_length_on_error=0 e pgaudit.log_parameter=off. Não se habilitou logging de argumentos ou corpos; manter essa restrição ao instrumentar as RPCs. A interface bloqueia copiar/aprovar convite vencido e o visualizador preserva o tema claro/escuro, sem reutilizar sessão do Hub.
-
-## Candidatos tardios e limites da rede
-
-A repetição do candidato d7082d2 não recebeu vídeo; o diagnóstico sanitizado mostrou negociação com resposta HTTP 200, ICE sem conexão e ausência de candidatos remotos no receptor. Uma única fotografia do SDP após espera fixa pode perder rotas descobertas depois. A implementação passou a **trickle ICE**: descrição inicial sem candidatos, fila incremental por negociação, envio em lotes de até 40 e limite de 64 por participante. Revisões antigas são recusadas; duplicatas não são acumuladas. Só o espectador aprovado recebe a sinalização. Encerramento/recusa apaga envelopes; ICE/SDP não vão ao histórico. O mecanismo continua sem TURN e não torna todas as redes alcançáveis.
-
-A regressão de navegador retarda as notificações ICE do receptor por sete segundos, mantém a primeira falha transitória de descrição remota e exige vídeo decodificado; assim não depende da descoberta rápida de rotas. As RPCs também testam revisão, deduplicação e limites. O novo candidato precisa dos próprios checks e recepção externa antes de publicar.
-
-Áudio: tentativa isolada com tom sintético no Chromium headless não comprovou energia de áudio recebida. Não se anuncia áudio útil homologado; controles dependem do que a fonte/navegador fornecer. Chromium em desktop foi o navegador de transmissão avaliado; celulares foram avaliados por viewport para recepção/layout, sem alegar teste em aparelho físico ou Safari.
-
-Uma execução anterior do CI falhou na restauração de foco do CRM; as mesmas asserções passaram em três execuções locais consecutivas. Não se alterou essa asserção nem se atribui causa ainda não reproduzida. A regressão completa permanece obrigatória no candidato final.
-
-A revisão incremental encontrou também uma omissão no registro do callback ICE do visualizador. A regressão foi fortalecida: além de exigir vídeo, verifica candidatos persistidos nos dois sentidos e ausência de candidatos no SDP inicial. Assim a conexão local por rota reflexiva não mascara um canal de retorno ausente. O receptor de teste atrasa os candidatos por sete segundos; produção não usa esse atraso.
-
-## Estado para revisão
-
-A entrega diária #41 foi integrada em `100dc1ace52e1bd39d10d1fe39bbc3697bc15ec9` e está publicada. **Tela por link permanece em rascunho, sem migração ou frontend em produção.** O candidato 773eecd passou no [CI de Supabase](https://github.com/viniciusfs-seno/decifaz-hub/actions/runs/44948653600) e nos 48 cenários locais, inclusive ICE nos dois sentidos. Duas tentativas de [recepção externa nesse candidato](https://github.com/viniciusfs-seno/decifaz-hub/actions/runs/44948653615) falharam na mídia. O resultado isolado de 417714c não é usado para aprovar um head posterior.
-
-No mesmo computador, a prévia HTTPS protegida passou com dois navegadores: vídeo e encerramento, sem servidor de desenvolvimento. Isso separa a cobertura local/HTTPS da cobertura entre redes e não comprova NAT restritivo. Ainda é necessária recepção externa aprovada do candidato final; investigar/validar retransmissão TURN com credenciais temporárias caso a conexão direta não atenda. Não há endpoint TURN, credenciais ou contratação configurados. Nenhum serviço pago foi ativado; eventual cobrança requer aprovação.
-
-Depois dos ensaios, o probe de mídia externo foi desabilitado (`HUB_SCREEN_PROBE_ENABLED=false`), sem apagar a asserção nem o resultado que falhou. A prévia/guia continuam verificados externamente por job independente, com comparação do SHA no /__health. Checks de interface e banco aprovados não removem o bloqueio da transmissão. Reabilitar o probe somente com apresentador fictício preparado; continuar em rascunho até a homologação de mídia passar.
-
-Endurecimento final: cada RPC tem limite de oito segundos e um watchdog independente interrompe captura/recepção após quinze segundos sem confirmação de autorização, inclusive quando HTTP fica pendente. Fonte encerrada enquanto a criação da sessão está em andamento não deixa sessão/captura ativa. Teste com canvas fictício e resposta atrasada cobre esses casos; não é apresentado como prova de captura nativa. A prova de vídeo nativo permanece no cenário separado.
+Prévia temporária: gateway expira em 24 horas e depende da máquina, Docker e cloudflared. A URL/validade ativas são informadas na entrega; nunca gravar sua senha no repositório.

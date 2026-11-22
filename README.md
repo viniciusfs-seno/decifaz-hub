@@ -92,6 +92,10 @@ Para continuar no editor, consulte o [guia de VS Code e prompt de continuidade](
 
 ## Prioridades dos sócios
 
+Tela por link segue em homologação no PR #40, sem publicação: [fluxo, diagnóstico, testes entre redes e recuperação](docs/compartilhamento-tela.md). Áudio ainda não homologado; chamada externa continua disponível. A entrega diária #41 permanece publicada.
+
+Próxima evolução proposta: [compromissos e avisos com o portal fechado](docs/proxima-entrega-avisos.md), sem ativação de envios reais ou contratação nesta rodada.
+
 - [Contratos, documentos privados e rastreabilidade](docs/contratos-rastreabilidade.md): cadastro existente ou derivado de proposta, avisos, revisões e trilha por integrante.
 - [Obrigações, assinaturas e baixa manual](docs/obrigacoes-decifaz.md): competências sem duplicação, valores previstos/pagos/vencidos e comprovantes privados.
 - [Reuniões de projeto](docs/reunioes-projetos.md): atas, decisões e acompanhamento; chamada externa e captura local disponíveis; videoconferência nativa planejada, sem contratação automática.
