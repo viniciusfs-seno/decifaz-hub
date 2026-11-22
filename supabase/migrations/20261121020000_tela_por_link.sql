@@ -32,7 +32,7 @@ revoke all on function hub_private.close_screen(uuid,boolean) from public,anon,a
 create function hub_private.sweep_screens() returns void language plpgsql security definer set search_path='' as $$
 declare old_id uuid;
 begin
- for old_id in select id from hub_private.screen_sessions where ended_at is null and (ends_at<clock_timestamp() or heartbeat<clock_timestamp()-interval '45 seconds') order by id for update skip locked limit 20 loop perform hub_private.close_screen(old_id);end loop;
+ for old_id in select id from hub_private.screen_sessions where ended_at is null and (ends_at<clock_timestamp() or heartbeat<clock_timestamp()-interval '45 seconds') order by id for update skip locked limit 20 loop perform hub_private.close_screen(old_id,true);end loop;
  delete from hub_private.screen_sessions where ended_at<clock_timestamp()-interval '1 day';
 end $$;
 revoke all on function hub_private.sweep_screens() from public,anon,authenticated;

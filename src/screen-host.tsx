@@ -28,7 +28,7 @@ export function ScreenHost({client,workspace,meeting}:{client:SupabaseClient;wor
     if(c.peer?.connectionState==='connected')setStatus('Transmitindo para o espectador aprovado.');
     const viewer=data.viewers.find(v=>v.state==='approved')
     if(!viewer){c.peer?.close();c.peer=undefined;c.viewer=undefined;setStatus('Captura local ativa. Aguardando aprovação de um espectador.')}
-    else if(!c.peer||c.viewer!==viewer.id||((['failed','disconnected'].includes(c.peer.connectionState)||!c.answered)&&Date.now()>c.retryAt)){
+    else if(!c.peer||c.viewer!==viewer.id||((['failed','disconnected','closed'].includes(c.peer.connectionState)||!c.answered)&&Date.now()>c.retryAt)){
      negotiating=true;c.peer?.close();const peer=new RTCPeerConnection(screenIce);c.peer=peer;c.viewer=viewer.id;c.answered=false;c.ice=[];c.seen=new Set();peer.onicecandidate=e=>{if(c.peer===peer&&e.candidate?.candidate)c.ice.push(e.candidate.toJSON())};c.retryAt=Date.now()+30000
      c.stream.getTracks().forEach(track=>peer.addTrack(track,c.stream));setStatus('Conectando ao espectador…')
      peer.onconnectionstatechange=()=>{if(!alive||c.peer!==peer)return;setStatus(peer.connectionState==='connected'?'Transmitindo para o espectador aprovado.':peer.connectionState==='failed'||peer.connectionState==='disconnected'?'Conexão interrompida. Tentando reconectar; use a chamada externa se a rede impedir a transmissão.':'Conectando ao espectador…')}
