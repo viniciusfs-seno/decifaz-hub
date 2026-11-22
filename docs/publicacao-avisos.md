@@ -1,6 +1,8 @@
 # Roteiro único — Central e avisos internos (#42 → #43)
 
-Preparação de 22/11/2026. **Não executado em produção nesta etapa. E-mail permanece desativado.** Base publicada conferida: `main` em `100dc1a`, esquema até `20261121010000`. Os candidatos finais e os checks vigentes são registrados nos corpos dos PRs, sem reaproveitar aprovação de SHA anterior.
+Roteiro autorizado pelo titular em22/11/2026 para **publicar #42 → #43 e ativar somente avisos internos**. E-mail permanece desativado. Base inicial: `main` em `100dc1a`, esquema até `20261121010000`. A primeira fase já foi conferida: migração `20261122010000`, merge #42 `aa94118f1d7c14d90c5a547d755265d4d781f1f0`, deployment de produção `dpl_HsFWoTdFm8h7nyNbs5F5Wf2tKJcv`, domínio principal no mesmo SHA e smoke de acesso aprovado. Contagens/digests das35 tabelas anteriores e restrições financeiras permaneceram iguais.
+
+O #43 foi reaplicado sobre essa main: range-diff dos dois commits próprios equivalente, sem incorporar a transmissão. Candidato revalidado, resultado final da segunda fase, ativação e próxima execução ficam no [registro operacional do PR #43](https://github.com/viniciusfs-seno/decifaz-hub/pull/43), atualizado após cada conferência. Não interpretar os ensaios locais ou um plano de ativação como confirmação de que o job remoto já está ativo. Nenhuma fixture será criada em produção.
 
 ## Antes de começar
 
@@ -36,6 +38,14 @@ O servidor reavalia origem, data, papéis e vínculo ativo. Pagamento, cancelame
 2. Confirmar zero jobs de avisos ativos e envio falso. Manter qualquer Edge de envio em `off`. Não resetar caixas aceitas/entregues/incertas para pendente.
 3. Recuperar o frontend #42 ou #41 pelo deployment registrado, preservando banco expandido, preferências, avisos, caixa e auditoria. Não dropar tabelas, reabrir JSONs protegidos, mexer em SMTP, desfazer papéis ou apagar vínculos.
 4. Diagnosticar no monitor e nos resultados sanitizados de `cron.job_run_details`. Após corrigir, revalidar o candidato e reativar somente o gerador interno. O catch-up recupera pendências elegíveis; não reproduz resumos obsoletos de e-mail. Nenhum envio real está autorizado por este roteiro.
+
+## Conferência de ativação sem dados de teste em produção
+
+Na sessão autorizada, configurar `SET hub.notice_activation='approved'` antes do template interno. Verificar flags `generation_enabled=true`, `mail_enabled=false`, `sandbox_only=true`; um único `hub-notice-generation` ativo com `* * * * *` e comando SQL privado; nenhum `hub-notice-outbox`, despacho HTTP ou função de e-mail publicada. Não alterar SMTP/Auth, não criar destinatários, obrigações ou pagamentos fictícios e não usar vínculos reais para testes de alteração. A geração pode criar somente ocorrências/avisos derivados dos registros reais já existentes, conforme a rotina autorizada.
+
+Esperar a execução natural do cron e conferir status, início/fim e execuções internas agregadas, sem títulos, endereços ou identificadores de integrantes nos relatórios. Em pg_cron1.6.4, `cron.job` não fornece uma coluna de próxima execução: para este agendamento a cada minuto, registrar **estimativa** `date_trunc('minute',clock_timestamp()) + interval '1 minute'`, em UTC e America/Fortaleza, junto do relógio do servidor e do último disparo efetivo. Não apresentar a estimativa como campo nativo do agendador nem prometer horário exato após indisponibilidade.
+
+Pausa/recuperação mantém os dados e permissões, removendo somente os dois nomes de jobs desta funcionalidade e desligando as flags. O deployment #42 acima e o #41 `dpl_AdADcyizc8PaFZatue6ed97JrXNj` são referências de frontend; após #43, registrar também seu deployment antes de qualquer recuperação. Contagens/digests comprovam preservação, mas não substituem um backup restaurável. Não afirmar que backup gerenciado foi verificado sem acesso a essa informação.
 
 ## Evidências e limites
 
