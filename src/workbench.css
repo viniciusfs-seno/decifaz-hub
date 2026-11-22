@@ -130,3 +130,18 @@
  .meeting-record .actions>.button {flex:1}
 }
 @media(max-width:360px) {.shared-app .crumb b {max-width:65px}.shared-app .header-actions {gap:4px}}
+
+/* Central: operational lists inherit the portal type, colors and table behavior. */
+.due-windows{margin:var(--section-gap,24px) 0 16px;flex-wrap:wrap}.due-notices{list-style:none;padding:0}.due-notices>li{padding:20px 0;border-bottom:1px solid var(--line);overflow-wrap:anywhere}.due-notices h3{margin:0 0 8px}.due-notices .actions{flex-wrap:wrap}
+
+/* Central mobile: keep a due date and its action in the same work unit. */
+.due-controls{display:flex;align-items:center;justify-content:space-between;gap:12px;margin:20px 0 12px}.due-controls .due-windows{margin:0}.shared-app .due-center .due-controls .due-period{display:none}.due-secondary{margin-top:12px}
+@media(max-width:700px){
+ .due-center .due-controls{display:grid;grid-template-columns:minmax(0,1fr) auto;gap:8px;margin:12px 0}
+ .shared-app .due-center .due-controls .due-period{display:grid;margin:0;font-size:.875rem}.due-center .due-refresh{align-self:end;min-height:44px}.due-center .due-controls .due-windows{display:none}
+ .shared-app .due-center .due-table tr{display:grid;grid-template-columns:minmax(0,1fr);gap:4px;padding:12px 0}
+ .shared-app .due-center .due-table td:first-child{display:block}.shared-app .due-center .due-table td:first-child::before,.shared-app .due-center .due-table td:last-child::before{display:none}
+ .shared-app .due-center .due-table td:first-child small{display:block;margin-top:4px}
+ .shared-app .due-center .due-table td:last-child{display:block;grid-row:2}.shared-app .due-center .due-table td:nth-child(2){grid-row:3}.shared-app .due-center .due-table td:nth-child(3){grid-row:4}
+ .due-center .due-table td:last-child .actions{display:flex;flex-wrap:wrap;gap:8px;margin-top:8px}.due-center .due-table td:last-child .button{flex:1 1 148px;overflow-wrap:normal;word-break:normal;min-height:44px}
+}
