@@ -17,7 +17,9 @@ Object.assign(process.env,{VITE_HUB_MODE:'shared',VITE_SUPABASE_URL:env.VITE_SUP
 const candidate=run('git',['rev-parse','HEAD']).trim(),version='20261121020000',file='supabase/migrations/'+version+'_tela_por_link.sql'
 const introduction=run('git',['log','-1','--format=%H','--diff-filter=A','HEAD','--',file]).trim()
 if(!introduction)throw Error('Histórico completo da migração necessário')
-const baseline=run('git',['rev-parse',introduction+'^1']).trim(),root=resolve('.validation/screen-upgrade-'+randomUUID())
+// Verified production recovery is #41, not the parent of the first prototype.
+const baseline=run('git',['rev-parse','100dc1ace52e1bd39d10d1fe39bbc3697bc15ec9']).trim(),root=resolve('.validation/screen-upgrade-'+randomUUID())
+run('git',['merge-base','--is-ancestor',baseline,candidate])
 mkdirSync(root,{recursive:true});const browser=await chromium.launch();let f
 async function frontend(ref,label){
  const source=join(root,label);mkdirSync(source,{recursive:true});const archive=spawnSync('git',['archive',ref,'src','public','index.html','package.json','tsconfig.json'],{maxBuffer:30*1024*1024});if(archive.status!==0)throw Error('Snapshot indisponível')

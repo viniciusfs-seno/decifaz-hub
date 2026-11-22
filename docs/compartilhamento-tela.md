@@ -87,3 +87,11 @@ Foi preparada uma integração TURN **desativada**, não homologada com provedor
 4. Só depois de mídia/encerramento/expiração/reuso aprovados e limites visíveis, pedir revisão de publicação. Ordem futura com relay: banco → Edge compatível → frontend. Desligar relay recupera apenas tentativa direta; se a rede exige retransmissão, usar chamada externa. Preservar todos os dados e restrições.
 
 O usuário não precisa repetir teste manual no portal. Enquanto faltar esse recurso ou o ensaio externo completo falhar, situação objetiva: **bloqueado para publicação**, PR em rascunho. O resultado de áudio permanece não homologado após nova tentativa isolada de tom no Chromium headless em 22/11.
+
+## Evidência ampliada e correção da regressão de busca
+
+O candidato 79298ea347d5b35fb5090df7de1fb9f6390563f0 passou no [ensaio completo entre redes](https://github.com/viniciusfs-seno/decifaz-hub/actions/runs/45024305172/job/137213831224): apresentador Chromium Windows com captura nativa e receptor Chromium Linux no runner GitHub. Frames/pixels avançando, perda deliberada do peer e retomada com nova geração, prazo do convite, encerramento pelo navegador, recusa de reuso, nova sessão e prazo da sessão com tracks encerradas. Tipos remotos srflx, um par bem-sucedido por geração, zero candidatos recusados; não houve relay. O gate de mídia passou. Viewports desktop/claro e celular/escuro possuem capturas no artefato tela-recebida-entre-redes, sem convites ou dados reais.
+
+O [CI completo desse SHA](https://github.com/viniciusfs-seno/decifaz-hub/actions/runs/45024305234) teve 48 cenários aprovados e uma falha em busca global: a asserção procurava o valor financeiro 180 em todo o JSON e encontrou esses dígitos dentro de um UUID fictício. A correção mantém a lista exata de campos permitidos e a verificação financeira no conteúdo retornado (título/detalhe); adiciona um UUID deliberadamente com 180/2400 para reproduzir o falso positivo. Não altera a busca ou suas permissões e não resolve a falha apenas reexecutando até passar.
+
+O ensaio de recuperação foi ajustado para usar **exatamente o frontend #41 (100dc1a)**, em vez do pai do primeiro protótipo de tela. A partir dessa correção, o head seguinte precisa dos próprios checks e de nova prova de mídia. O PR registra o SHA final e os links desses resultados; a prova 79298ea não é herdada automaticamente.
