@@ -14,12 +14,11 @@ jobs:
     runs-on: windows-2025
     strategy:
       matrix:
-        shell: [powershell, pwsh]
+        engine: [powershell.exe, pwsh.exe]
     steps:
       - uses: actions/checkout@v4
       - name: Validar entrada oculta sem chave ou API reais
-        shell: ${{ matrix.shell }}
-        run: ./scripts/test-turn-hidden-input.ps1
+        run: "& '${{ matrix.engine }}' -NoProfile -File scripts/test-turn-hidden-input.ps1"
   screen-release-gate:
     if: always() && github.event_name == 'pull_request' && github.event.pull_request.head.repo.full_name == github.repository && github.head_ref == 'feat/compartilhamento-tela'
     needs: [screen-external]
