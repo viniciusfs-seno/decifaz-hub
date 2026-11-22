@@ -2,6 +2,8 @@
 
 **Homologação isolada. Produção desativada.** PR dependente da Central (#42), sobre a main publicada #41 (`100dc1a`). Não depende do #40, da migração de tela ou de TURN. Não houve envio real, mudança de SMTP, migração remota ou contratação.
 
+Para revisão e execução futura, seguir o [roteiro único de publicação dos avisos internos](publicacao-avisos.md). Ele mantém e-mail desativado e não exige Edge, pg_net ou Vault para gerar avisos internos.
+
 ## Comportamento
 
 O servidor lê os cadastros existentes: contratos/avisos de renovação, obrigações, assinaturas, despesas e previsões de receita. Não cria cadastros paralelos. Para planos ativos, a geração de ocorrências existente é chamada com horizonte de um ano. Ocorrências e competências preservam suas chaves; pagar uma não paga as demais. Planos pausados/cancelados não geram lembretes novos. O gerador antigo limita cada plano a 132 intervalos desde a data-base; planos muito antigos exigem revisão da geração na origem e aparecem como execução parcial, sem descartar os demais planos.
@@ -54,7 +56,7 @@ Exemplo sem segredos em `supabase/functions/.env.example`. Nada em `VITE_*`:
 | Central | Revalidar #42/SHA/base/checks; dry-run exclusivo `20261122010000`; grants/RLS, dados preservados; frontend compatível. | Frontend #41, mantendo expansão e histórico. |
 | Processamento | Dry-run exclusivo `20261122020000`; funções service-only, monitor administrativo, flags false/false/true; frontend do PR dependente. | Frontend #42 ou #41; preservar tabelas, avisos, caixa e permissões. |
 | Edge inativa | `hub-notice-worker`/`hub-notice-events` em `off`; sem segredo retorna 401; nenhum envio. | Manter `off`; nenhuma mudança de SMTP/Auth. |
-| Geração interna | Aprovação própria, conferir extensões/jobs/quota remotos; template manual `supabase/ops/avisos-ativacao.sql`, travado por configuração da sessão; **mail_enabled continua false**. | `supabase/ops/avisos-pausa.sql`: parar jobs e flags; não remover registros. |
+| Geração interna | Aprovação própria, conferir extensões/jobs/quota remotos; template manual `supabase/ops/avisos-internos-ativacao.sql`, travado por configuração da sessão; um job SQL, sem dispatcher; **mail_enabled continua false**. | `supabase/ops/avisos-pausa.sql`: parar jobs e flags; não remover registros. |
 | E-mail | Aprovação posterior explícita, provedor/remetente/limites/callback verificados, Vault configurado por mecanismo privado, monitor e teste autorizado; só então modo/flags de envio. | Desativar flags/jobs e modo; reter incertos. E-mail já aceito não pode ser recolhido. |
 
 O template usa nomes do Vault, nunca credenciais literais na definição do cron. Antes de ativar pg_net, verificar que filas/respostas não são consultáveis pelo app; segredos podem passar pela fila transitória do servidor. Proteger acesso administrativo e retenção/logs. Não copiar conteúdo do Vault para PRs, CI, argumentos ou chat. Reexecutar uma pausa é seguro; não resetar mensagens aceitas/entregues para “pendente”.

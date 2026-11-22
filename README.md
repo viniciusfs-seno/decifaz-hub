@@ -108,3 +108,5 @@ Busca por registros autorizados, publicação e rotina inicial dos sócios: [Bus
 ## Avisos em homologação
 
 Central, preferências e processamento sem navegador: [roteiro funcional, configuração e recuperação](docs/avisos-agendados.md). Geração agendada e e-mail de produção permanecem desativados; testes somente com dados fictícios e Mailpit.
+
+Publicação futura com **somente avisos internos e e-mail desligado**: [roteiro único #42 → #43](docs/publicacao-avisos.md).

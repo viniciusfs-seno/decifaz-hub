@@ -6,6 +6,7 @@ import {registryFixture} from '../../scripts/registry-preview-fixture.mjs'
 import {sql,session} from '../../e2e/helpers/local-db.mjs'
 import {processNotices,workerConfig} from '../functions/_shared/notice-worker.mjs'
 import {verifyNoticeEvent} from '../functions/_shared/notice-webhook.mjs'
+import fs from 'node:fs'
 const rpc=async(c,n,b={})=>checked(c.rpc(n,b))
 const config=workerConfig({HUB_NOTICE_MODE:'mailpit',SUPABASE_URL:'http://127.0.0.1:54321',HUB_NOTICE_FROM:'avisos@example.invalid',HUB_NOTICE_PORTAL_URL:'https://preview.example.invalid'})
 const prefs={internal_enabled:true,email_enabled:true,lead_days:[30,7,1,0],daily_digest:false,digest_hour:9,watch_scope:'space'}
@@ -173,4 +174,33 @@ test('Prazo alterado e assinatura pausada invalidam mensagem já enfileirada',as
    assert.equal(called,false);assert.equal(outbox(f)[0].state,'suppressed')
   }finally{await f.cleanup()}
  }
+})
+
+test('Cancelamento e perda financeira com vínculo ativo impedem envio sem depender da desativação',async()=>{
+ for(const action of ['cancel','revoke-finance']){
+  const f=await fixture()
+  try{
+   generate(f);sql(`delete from hub_private.notice_outbox where workspace_id='${f.workspace}' and notice_id not in(select id from public.hub_notices where kind='bill')`);const id=keepOne(f)
+   const bill=data(`select b.obligation_id from public.hub_internal_bills b join public.hub_notices n on n.record_id=b.id join hub_private.notice_outbox o on o.notice_id=n.id where o.id='${id}'`)[0]
+   if(action==='cancel')sql(`update public.hub_internal_obligations set status='Cancelada' where id='${bill.obligation_id}'`)
+   else {await rpc(f.second.client,'hub_set_roles',{w:f.workspace,u:f.owner.id,r:['commercial']});assert.equal(sql(`select active from public.hub_members where workspace_id='${f.workspace}' and user_id='${f.owner.id}'`),'t')}
+   let called=false;await processNotices(f.admin,config,{pace:0,limit:1,fetcher:async()=>{called=true;throw Error('Must not send')}})
+   assert.equal(called,false);assert.equal(outbox(f)[0].state,'suppressed')
+   if(action==='revoke-finance')assert((await rpc(f.owner.client,'hub_list_notices',{w:f.workspace})).every(n=>!n.financial))
+  }finally{await f.cleanup()}
+ }
+})
+
+test('Roteiro interno: trava de aprovação, um único cron repetível, sem dispatcher e recuperação',async()=>{
+ const f=await fixture(),template=fs.readFileSync(new URL('../ops/avisos-internos-ativacao.sql',import.meta.url),'utf8'),pause=fs.readFileSync(new URL('../ops/avisos-pausa.sql',import.meta.url),'utf8')
+ try{
+  assert.throws(()=>sql(template),/Ativação não aprovada/)
+  sql("set hub.notice_activation='approved';"+template);sql("set hub.notice_activation='approved';"+template)
+  assert.equal(sql("select count(*) from cron.job where jobname='hub-notice-generation' and active"),'1')
+  assert.equal(sql("select count(*) from cron.job where jobname='hub-notice-outbox'"),'0')
+  assert.equal(sql('select generation_enabled and not mail_enabled and sandbox_only from hub_private.notice_settings'),'t')
+  assert.equal(await rpc(f.admin,'hub_notice_claim'),null)
+  sql(pause);assert.equal(sql("select count(*) from cron.job where jobname in ('hub-notice-generation','hub-notice-outbox')"),'0')
+  assert.equal(sql('select generation_enabled or mail_enabled from hub_private.notice_settings'),'f')
+ }finally{sql(pause);await f.cleanup()}
 })
