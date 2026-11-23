@@ -1,7 +1,8 @@
+import {WorkflowForm} from './workflow-form'
 import {useEffect,useId,useRef,useState} from 'react'
 import type {SupabaseClient} from '@supabase/supabase-js'
 import {money,dateLabel} from './domain'
-import {Disclosure,RecordSummary} from './portal-patterns'
+import {Disclosure,RecordSummary,DraftRecovery} from './portal-patterns'
 import {Empty} from './ui'
 import {memberOwner,type WorkspacePerson} from './workspace-people'
 import {useViewState} from './view-state'
@@ -15,6 +16,7 @@ export function FinancialWeek({client,workspace,week,revision,people,open,saved}
  const [owner,setOwner]=useViewState('financial-owner-'+week,''),[offset,setOffset]=useViewState('financial-offset-'+week,0),[cursors,setCursors]=useViewState<(number|null)[]>('financial-history-'+week,[null])
  const [report,setReport]=useState<FinancialReport>(),[history,setHistory]=useState<FinancialClosure[]>([]),[historyTotal,setHistoryTotal]=useState(0),[notes,setNotes]=useState(''),[expected,setExpected]=useState(0),[reload,setReload]=useState(0),[loading,setLoading]=useState(true),[historyLoading,setHistoryLoading]=useState(true),[busy,setBusy]=useState(false),[error,setError]=useState(''),[loadError,setLoadError]=useState(''),[historyError,setHistoryError]=useState(''),[notice,setNotice]=useState(''),[snapshot,setSnapshot]=useState<number>(),[trace,setTrace]=useState<FinancialItem>()
  const operation=useRef({id:crypto.randomUUID(),payload:''}),loaded=useRef('')
+ const [previousNotes,setPreviousNotes]=useState<string>()
  const cursor=cursors.at(-1)??null
  useEffect(()=>{let live=true;setLoading(true);setReport(undefined);setLoadError('')
   void client.rpc('hub_financial_week',{w:workspace,start_on:week,owner_id:owner||null,page_offset:offset}).then(r=>{if(!live)return;if(r.error)setLoadError('Não foi possível consultar a posição financeira. Confira seu acesso ou tente atualizar.');else if(offset>0&&offset>=r.data.count){setOffset(Math.floor(Math.max(0,r.data.count-1)/100)*100);return}else setReport(r.data as FinancialReport);setLoading(false)})
@@ -25,7 +27,7 @@ export function FinancialWeek({client,workspace,week,revision,people,open,saved}
   return()=>{live=false}
  },[client,workspace,week,cursor,revision,reload])
  async function close(){if(busy||!notes.trim())return;setBusy(true);setError('');setNotice('');const payload=JSON.stringify({workspace,week,notes});if(operation.current.payload&&operation.current.payload!==payload)operation.current.id=crypto.randomUUID();operation.current.payload=payload
-  try{const r=await client.rpc('hub_close_financial_week',{w:workspace,start_on:week,expected_revision:expected,operation_id:operation.current.id,notes_text:notes});if(r.error)throw Error();const current=r.data.current as FinancialClosure;if(r.data.status==='conflict'){setNotes(current?.notes??'');setExpected(current?.revision??0);operation.current={id:crypto.randomUUID(),payload:''};setError('Outra sessão fechou esta semana. As decisões da revisão mais recente foram carregadas; confira a posição atual antes de salvar novamente.')}else{setExpected(current.revision);setNotice('Revisão financeira registrada com fotografia completa das origens e identificação do autor.');setCursors([null]);saved()}setReload(v=>v+1)}catch{setError('Não foi possível registrar o fechamento. Seus apontamentos foram mantidos; confira o acesso e tente novamente.')}finally{setBusy(false)}
+  try{const r=await client.rpc('hub_close_financial_week',{w:workspace,start_on:week,expected_revision:expected,operation_id:operation.current.id,notes_text:notes});if(r.error)throw Error();const current=r.data.current as FinancialClosure;if(r.data.status==='conflict'){setPreviousNotes(notes);setNotes(current?.notes??'');setExpected(current?.revision??0);operation.current={id:crypto.randomUUID(),payload:''};setError('Outra sessão fechou esta semana. As decisões da revisão mais recente foram carregadas; confira a posição atual antes de salvar novamente.')}else{setPreviousNotes(undefined);setExpected(current.revision);setNotice('Revisão financeira registrada com fotografia completa das origens e identificação do autor.');setCursors([null]);saved()}setReload(v=>v+1)}catch{setError('Não foi possível registrar o fechamento. Seus apontamentos foram mantidos; confira o acesso e tente novamente.')}finally{setBusy(false)}
  }
  return <Disclosure title="Revisão financeira dos sócios" description="Posição atual e fotografias dos fechamentos" defaultOpen><section className="financial-week" aria-label="Revisão financeira semanal">
   <div className="toolbar"><div className="field"><label htmlFor={ownerFieldId}>Responsável financeiro</label><select id={ownerFieldId} value={owner} onChange={e=>{setOwner(e.target.value);setOffset(0)}}><option value="">Todo o espaço, inclusive sem responsável</option>{people.map(p=><option key={p.id} value={p.id}>{p.name}</option>)}</select></div><button type="button" className="button" disabled={loading||historyLoading} onClick={()=>setReload(v=>v+1)}>Atualizar posição financeira</button></div>
@@ -40,7 +42,7 @@ export function FinancialWeek({client,workspace,week,revision,people,open,saved}
   </>}
   <Disclosure key={expected} defaultOpen={!!error} title="Registrar conferência e decisões financeiras" description={'Revisão '+expected+' · histórico financeiro restrito'}>
    <p>O fechamento congela os totais e todas as origens do espaço nesta semana, independentemente do filtro de responsável. Os detalhes são paginados e não mudam com pagamentos posteriores. Fechar não paga nem altera vencimentos. Uma conferência tardia reflete os dados disponíveis no momento do registro.</p>
-   <form onSubmit={e=>{e.preventDefault();void close()}}><div className="field"><label htmlFor={notesId}>Conferência e decisões financeiras</label><textarea id={notesId} required maxLength={5000} value={notes} onChange={e=>setNotes(e.target.value)}/></div><button className="button primary" disabled={busy||loading||historyLoading||!!historyError||!report||!notes.trim()}>{busy?'Registrando…':'Registrar fechamento financeiro'}</button></form>
+   <WorkflowForm onSubmit={e=>{e.preventDefault();void close()}}><div className="field"><label htmlFor={notesId}>Conferência e decisões financeiras</label><textarea id={notesId} required maxLength={5000} value={notes} onChange={e=>setNotes(e.target.value)}/></div><button className="button primary" disabled={busy||loading||historyLoading||!!historyError||!report}>{busy?'Registrando…':'Registrar fechamento financeiro'}</button>{previousNotes!==undefined&&<DraftRecovery restore={()=>{setNotes(previousNotes);setPreviousNotes(undefined)}}/>}</WorkflowForm>
   </Disclosure>
   <Disclosure title="Histórico financeiro desta semana" count={historyTotal} defaultOpen>
    {historyLoading?<p role="status">Carregando histórico financeiro…</p>:historyError?<p role="alert">{historyError} <button className="button" onClick={()=>setReload(v=>v+1)}>Tentar histórico novamente</button></p>:<>

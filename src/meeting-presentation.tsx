@@ -1,3 +1,4 @@
+import {WorkflowForm} from './workflow-form'
 import {useEffect, useRef, useState} from 'react'
 import {ExternalLink, MonitorUp, Square} from 'lucide-react'
 import {dateLabel,script,type Lead,type Meeting} from './domain'
@@ -77,10 +78,10 @@ export function MeetingPresentation({meetings,leads}:{meetings:Meeting[];leads:L
     setSelected(id)
     setLink(linked.find(meeting=>meeting.id===id)?.callUrl??'')
    }}><option value="">Selecionar reunião</option>{linked.map(meeting=><option key={meeting.id} value={meeting.id}>{dateLabel(meeting.date)} · {leads.find(lead=>lead.id===meeting.leadId)?.name}</option>)}</select></label>}
-   <form className="toolbar" onSubmit={openCall}>
+   <WorkflowForm className="toolbar" onSubmit={openCall}>
     <label className="field"><span>Link da chamada</span><input type="url" required value={link} placeholder="https://…" onChange={event=>{setSelected('');setLink(event.target.value)}}/></label>
     <button className="button" type="submit"><ExternalLink size={16}/> Abrir chamada</button>
-   </form>
+   </WorkflowForm>
   </div>
   <div>
    <h3>Prévia da tela</h3>

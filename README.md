@@ -119,6 +119,10 @@ Publicação futura com **somente avisos internos e e-mail desligado**: [roteiro
 Perfil econômico de tela por link (#40, rascunho): sessão5min, uma sessão simultânea no Hub/um espectador, captura até1280×720/5FPS e encoder até256kbit/s com leitura dos controles aceitos. Áudio não homologado/desativado. Homologação e limites em [compartilhamento de tela](docs/compartilhamento-tela.md); sem ativação em produção.
 
 Revisão financeira semanal em desenvolvimento: [fluxo, métricas, permissões e publicação](docs/revisao-financeira-semanal.md). Integrada à semana operacional, sem pagamentos automáticos.
-# Confiabilidade da revisão financeira (PR #44, em rascunho)
+## Confiabilidade da revisão financeira (PR #44 publicado)
 
-Posição atual separada de fotografias completas e imutáveis, detalhes paginados e histórico além das últimas 20 revisões. “Rastrear baixa” consulta as auditorias existentes sem duplicar pagamentos. Migrações `20261123010000` → `20261123020000` somente em ambiente isolado nesta rodada. [Indicadores, cobertura, limites e publicação/recuperação](docs/revisao-financeira-semanal.md). Produção e e-mail permanecem sem alterações.
+Posição atual separada de fotografias completas e imutáveis, detalhes paginados e histórico além das últimas 20 revisões. “Rastrear baixa” consulta as auditorias existentes sem duplicar pagamentos. Migrações `20261123010000` → `20261123020000` publicadas com autorização, merge `8af8914`. [Indicadores, cobertura, limites e recuperação](docs/revisao-financeira-semanal.md). E-mail permanece desligado.
+
+## Formulários e rotina diária
+
+[Inventário, componentes de UX, validação, acessibilidade e recuperação](docs/ux-diaria.md). Rótulos visíveis, erros junto aos campos, detalhes progressivos que preservam dados e proteção de edição nos diálogos. A recuperação de rascunho após conflito exige revisão e nova gravação; não substitui os controles do servidor. Comparativos reproduzíveis: `node scripts/ux-baseline-captures.mjs`, com Supabase local e dados fictícios. Logs, caches e capturas geradas ficam ignorados; scripts, migrações e exceções aprovadas permanecem versionados.

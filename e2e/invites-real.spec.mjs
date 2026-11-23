@@ -146,6 +146,8 @@ test('Convites: gestão, Mailpit, primeiro acesso verificado, aceite explícito 
   await form.getByRole('button',{name:'Criar convite',exact:true}).click()
   const pendingCard=page.getByRole('article',{name:'Convite para '+pending})
   await pendingCard.getByRole('button',{name:'Revogar convite',exact:true}).click()
+  await expect(page.getByRole('dialog',{name:'Revogar convite pendente?'})).toBeVisible()
+  await page.getByRole('button',{name:'Confirmar revogação',exact:true}).click()
   await expect(pendingCard).toContainText('Revogado')
   await page.route('**/auth/v1/otp**',route=>route.fulfill({status:503,contentType:'application/json',body:'{"msg":"Fictitious mail outage"}'}))
   const failed=uuid()+'@example.invalid'

@@ -1,3 +1,4 @@
+import {WorkflowForm} from './workflow-form'
 import {FinancialWeek} from './financial-week'
 import {useWorkspacePeople,memberOwner} from './workspace-people'
 import {GlobalSearch,type SearchRecord} from './global-search'
@@ -84,7 +85,7 @@ export default function PilotApp(){
  if(session===undefined)return <main><p role="status">Carregando sessão…</p></main>
  if(session)return <SharedCrm key={session.user.id}/>
  return <main className="pilot-login"><img className="brand-logo" src={import.meta.env.BASE_URL+'identidade/assinatura-horizontal-escuro-selo.svg'} alt="Decifaz"/><h1>Decifaz Hub</h1><p>Entre com o e-mail autorizado para acessar o CRM compartilhado.</p>
-  <form className="card panel pilot-fields" onSubmit={signIn}><label>E-mail<input required type="email" autoComplete="email" value={email} onChange={e=>setEmail(e.target.value)}/></label><label className="invite-mail"><input type="checkbox" checked={invited} onChange={e=>setInvited(e.target.checked)}/>Recebi um convite</label><button className="button primary" disabled={busy}>Enviar link de acesso</button></form>
+  <WorkflowForm className="card panel pilot-fields" onSubmit={signIn}><label>E-mail<input required type="email" autoComplete="email" value={email} onChange={e=>setEmail(e.target.value)}/></label><label className="invite-mail"><input type="checkbox" checked={invited} onChange={e=>setInvited(e.target.checked)}/>Recebi um convite</label><button className="button primary" disabled={busy}>Enviar link de acesso</button></WorkflowForm>
   {sent&&<p role="status">Confira seu e-mail para entrar.</p>}{error&&<p role="alert">{error}</p>}
  </main>
 }

@@ -1,3 +1,4 @@
+import {WorkflowForm,markFormSaved} from './workflow-form'
 import {useEffect,useState} from 'react'
 import type {SupabaseClient} from '@supabase/supabase-js'
 import {dateLabel,day} from './domain'
@@ -25,18 +26,18 @@ export function ProjectSupport({client,workspace,revision,busy,write,project,pro
   return ()=>{current=false}
  },[client,workspace,project,revision])
  const content=<>
-  {project&&!readOnly&&<form className="fields" onSubmit={async event=>{
-   event.preventDefault()
+  {project&&!readOnly&&<WorkflowForm className="fields" onSubmit={async event=>{
+   event.preventDefault();const form=event.currentTarget
    if(busy||saving||!title.trim()||!owner.trim()||!due)return
    setSaving(true)
-   try{if(await write(()=>client.rpc('hub_open_support',{w:workspace,p:project,t:title.trim(),o:owner.trim(),d:due})))setTitle('')}
+   try{if(await write(()=>client.rpc('hub_open_support',{w:workspace,p:project,t:title.trim(),o:owner.trim(),d:due}))){setTitle('');markFormSaved(form)}}
    finally{setSaving(false)}
   }}>
    <Field label="Título do chamado" value={title} on={setTitle} required/>
    <Field label="Responsável pelo chamado" value={owner} on={setOwner} required/>
    <Field label="Prazo do chamado" type="date" value={due} on={setDue} required/>
    <button className="button" disabled={readOnly||busy||saving}>Abrir chamado</button>
-  </form>}
+  </WorkflowForm>}
   {!result?<p role="status">Carregando atividades…</p>:result.error?<p role="alert">Não foi possível carregar as atividades.</p>:
    result.rows.length?<ul>{result.rows.map(row=><li key={row.id}>
     <b>{row.title}</b> · {row.support?'Suporte':'Pós-venda'} · {!project&&projectName(row.project_proposal_id)+' · '}

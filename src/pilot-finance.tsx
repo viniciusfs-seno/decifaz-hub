@@ -1,3 +1,4 @@
+import {WorkflowForm} from './workflow-form'
 import {allRows} from './load-all'
 import {useViewState} from './view-state'
 import {useState} from 'react'
@@ -70,7 +71,7 @@ export function SharedFinance({client,workspace,projects,forecasts,receipts,expe
   </div>
   <div className="dashboard-grid">
    <section className="card panel"><h2>Nova previsão</h2>
-    {projects.length?<form className="pilot-fields" onSubmit={event=>{
+    {projects.length?<WorkflowForm className="pilot-fields" onSubmit={event=>{
      event.preventDefault()
      if(project&&due&&value&&!busy)void write(()=>client.rpc('hub_forecast',{w:workspace,p:project,k:kind,d:due}))
     }}>
@@ -80,11 +81,11 @@ export function SharedFinance({client,workspace,projects,forecasts,receipts,expe
      <Field label="Tipo" value={kind} options={kinds} on={setKind}/>
      <Field label="Vencimento" type="date" required value={due} on={setDue}/>
      {selected&&<p>Valor aprovado · {money(value??0)}</p>}
-     <button className="button primary" disabled={busy||!project||!value}>Registrar previsão</button>
-    </form>:<Empty title="Nenhum projeto disponível" detail="Abra um projeto a partir de uma proposta aceita."/>}
+     <button className="button primary" disabled={busy}>Registrar previsão</button>
+    </WorkflowForm>:<Empty title="Nenhum projeto disponível" detail="Abra um projeto a partir de uma proposta aceita."/>}
    </section>
    <section className="card panel"><h2>Registrar recebimento</h2>
-    {forecasts.some(item=>outstanding(item)>0)?<form className="pilot-fields" onSubmit={event=>{
+    {forecasts.some(item=>outstanding(item)>0)?<WorkflowForm className="pilot-fields" onSubmit={event=>{
      event.preventDefault()
      if(!current||busy||!Number(amount)||cents(Number(amount))>outstanding(current)||received>day())return
      void write(()=>client.rpc('hub_receive',{w:workspace,p:current.proposal_id,k:current.kind,m:current.period,i:receiptId,d:received,a:Number(amount)}),
@@ -95,13 +96,13 @@ export function SharedFinance({client,workspace,projects,forecasts,receipts,expe
        {label(item.proposal_id)} · {item.kind} · {dateLabel(item.due_on)}
       </option>)}
      </select></label>
-     <Field label="Data do recebimento" type="date" required value={received} on={setReceived}/>
-     <Field label="Valor recebido (R$)" type="number" required min={0.01} step="0.01" value={amount} on={setAmount}/>
+     <Field label="Data do recebimento" type="date" max={day()} required value={received} on={setReceived}/>
+     <Field label="Valor recebido (R$)" type="number" required min={0.01} max={current?outstanding(current)/100:undefined} step="0.01" value={amount} on={setAmount}/>
      {current&&<p>Saldo desta previsão · {money(outstanding(current)/100)}</p>}
      {current&&cents(Number(amount))>outstanding(current)&&<p role="alert">O valor informado excede o saldo.</p>}
      {received>day()&&<p role="alert">A data do recebimento deve ser hoje ou anterior.</p>}
-     <button className="button primary" disabled={busy||!current}>Salvar recebimento</button>
-    </form>:<Empty title="Nenhuma previsão em aberto"/>}
+     <button className="button primary" disabled={busy}>Salvar recebimento</button>
+    </WorkflowForm>:<Empty title="Nenhuma previsão em aberto"/>}
    </section>
   </div>
   <section className="card panel"><h2>Previsões</h2>{shownForecasts.length?<div className="table-wrap"><table>
@@ -114,13 +115,13 @@ export function SharedFinance({client,workspace,projects,forecasts,receipts,expe
    <tbody>{shownReceipts.map(item=><tr key={key(item)+item.id}><td>{label(item.proposal_id)}</td><td>{item.kind}</td>
     <td>{dateLabel(item.received_on)}</td><td>{money(item.amount)}</td><td>{item.reversed_at?
     <span>Estornado em {dateLabel(item.reversed_at)} · {item.reversal_reason}</span>:reverseId===item.id?
-    <form onSubmit={e=>{e.preventDefault();if(reason.trim()&&!busy)void write(()=>client.rpc('hub_reverse_receipt',{
+    <WorkflowForm onSubmit={e=>{e.preventDefault();if(reason.trim()&&!busy)void write(()=>client.rpc('hub_reverse_receipt',{
      w:workspace,p:item.proposal_id,k:item.kind,m:item.period,i:item.id,reason:reason.trim()
     }),()=>{setReverseId('');setReason('')})}}>
      <Field label="Motivo do estorno" value={reason} on={setReason} required/>
-     <button className="button" disabled={busy||!reason.trim()}>Confirmar estorno</button>
+     <button className="button" disabled={busy}>Confirmar estorno</button>
      <button className="button" type="button" onClick={()=>setReverseId('')}>Cancelar</button>
-    </form>:<button className="button" disabled={busy} onClick={()=>{setReason('');setReverseId(item.id)}}>Estornar</button>}</td></tr>)}</tbody>
+    </WorkflowForm>:<button className="button" disabled={busy} onClick={()=>{setReason('');setReverseId(item.id)}}>Estornar</button>}</td></tr>)}</tbody>
   </table></div>:<Empty title="Nenhum recebimento registrado"/>}</section>
   <ExpensePanel client={client} workspace={workspace} expenses={expenses} month={month} busy={busy} write={write}/>
   <section className="card panel"><h2>Últimas alterações financeiras</h2>
@@ -144,7 +145,7 @@ function ExpensePanel({client,workspace,expenses,month,busy,write}:{
  const [paidAmount,setPaidAmount]=useState('')
  const shown=expenses.filter(item=>!month||item.due_on.slice(0,7)===month||item.paid_on?.slice(0,7)===month)
  return <section className="card panel"><h2>Despesas</h2>
-  <form className="fields" onSubmit={e=>{
+  <WorkflowForm className="fields" onSubmit={e=>{
    e.preventDefault()
    if(!title.trim()||Number(value)<=0||busy)return
    void write(()=>client.from('hub_expenses').insert({workspace_id:workspace,id:uid(),title:title.trim(),due_on:due,amount:Number(value)}).select('id').single(),()=>{setTitle('');setValue('')})
@@ -153,11 +154,11 @@ function ExpensePanel({client,workspace,expenses,month,busy,write}:{
    <Field label="Vencimento da despesa" type="date" value={due} on={setDue} required/>
    <Field label="Valor previsto (R$)" type="number" min={0.01} step="0.01" value={value} on={setValue} required/>
    <button className="button primary" disabled={busy}>Registrar despesa prevista</button>
-  </form>
+  </WorkflowForm>
   {shown.length?<div className="table-wrap"><table><thead><tr><th>Despesa</th><th>Vencimento</th><th>Previsto</th><th>Pagamento</th></tr></thead><tbody>
    {shown.map(item=><tr key={item.id}><td>{item.title}</td><td>{dateLabel(item.due_on)}</td><td>{money(item.amount)}</td><td>{item.paid_on?
     dateLabel(item.paid_on)+' · '+money(item.paid_amount??0):selected===item.id?
-    <form onSubmit={e=>{
+    <WorkflowForm onSubmit={e=>{
      e.preventDefault()
      if(busy||paidOn>day()||Number(paidAmount)<=0)return
      void write(()=>client.from('hub_expenses').update({paid_on:paidOn,paid_amount:Number(paidAmount)}).eq('workspace_id',workspace).eq('id',item.id).select('id').single(),()=>setSelected(''))
@@ -165,9 +166,9 @@ function ExpensePanel({client,workspace,expenses,month,busy,write}:{
      <Field label="Data efetiva" type="date" value={paidOn} on={setPaidOn} required/>
      <Field label="Valor pago (R$)" type="number" min={0.01} step="0.01" value={paidAmount} on={setPaidAmount} required/>
      {paidOn>day()&&<p role="alert">Informe hoje ou uma data anterior.</p>}
-     <button className="button" disabled={busy||paidOn>day()}>Registrar pagamento</button>
+     <button className="button" disabled={busy}>Registrar pagamento</button>
      <button className="button" type="button" onClick={()=>setSelected('')}>Cancelar</button>
-    </form>:<button className="button" onClick={()=>{setSelected(item.id);setPaidOn(day());setPaidAmount(String(item.amount))}}>Dar baixa</button>}</td></tr>)}
+    </WorkflowForm>:<button className="button" onClick={()=>{setSelected(item.id);setPaidOn(day());setPaidAmount(String(item.amount))}}>Dar baixa</button>}</td></tr>)}
   </tbody></table></div>:<Empty title="Nenhuma despesa no período"/>}
  </section>
 }
