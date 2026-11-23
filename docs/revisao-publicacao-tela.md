@@ -8,6 +8,8 @@ Após a publicação de #42/#43, a base foi alinhada à main `510555b5dfa6d7ee01
 
 ## Limites efetivos
 
+Na integração da base, o ensaio de avisos recusou corretamente um dry-run que incluía também a migração independente de tela. O script de avisos agora recompõe o histórico Git publicado do #41 e adiciona exclusivamente as duas migrações de avisos, mantendo a exigência de uma migração por fase. Isso corrige o artefato de teste desta branch, sem alterar banco ou produto publicado. O ensaio de tela separado continua partindo do #43.
+
 | Item | Produto preparado | Ensaio comprovado |
 |---|---|---|
 | Qualidade | `getDisplayMedia` pede15fps como preferência, sem teto explícito de resolução/bitrate. WebRTC/navegador ajustam o resultado. Não há garantia de15fps,128kbit/s ou tamanho fixo. | Instrumentação de teste limita encoder a128kbit/s/5fps e32kbit/s para áudio;4min e8MiB observados, sem equivalência com faturamento. Esses limites **não se aplicam ao produto**. |
