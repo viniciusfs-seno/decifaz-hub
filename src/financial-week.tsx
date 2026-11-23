@@ -17,7 +17,7 @@ export function FinancialWeek({client,workspace,week,revision,people,open,saved}
  const operation=useRef({id:crypto.randomUUID(),payload:''}),loaded=useRef('')
  const cursor=cursors.at(-1)??null
  useEffect(()=>{let live=true;setLoading(true);setReport(undefined);setLoadError('')
-  void client.rpc('hub_financial_week',{w:workspace,start_on:week,owner_id:owner||null,page_offset:offset}).then(r=>{if(!live)return;if(r.error)setLoadError('Não foi possível consultar a posição financeira. Confira seu acesso ou tente atualizar.');else setReport(r.data as FinancialReport);setLoading(false)})
+  void client.rpc('hub_financial_week',{w:workspace,start_on:week,owner_id:owner||null,page_offset:offset}).then(r=>{if(!live)return;if(r.error)setLoadError('Não foi possível consultar a posição financeira. Confira seu acesso ou tente atualizar.');else if(offset>0&&offset>=r.data.count){setOffset(Math.floor(Math.max(0,r.data.count-1)/100)*100);return}else setReport(r.data as FinancialReport);setLoading(false)})
   return()=>{live=false}
  },[client,workspace,week,owner,offset,revision,reload])
  useEffect(()=>{let live=true;setHistoryLoading(true);setHistory([]);setHistoryError('');const key=workspace+week
