@@ -6,6 +6,7 @@ import {LeadImport} from './lead-import'
 import {ContactPlanner,ProspectingQueue} from './prospecting'
 import {ProjectMeetings} from './project-meetings'
 import {DueCenter,DueDashboard,type DueRow} from './due-center'
+import {NoticeProcessing} from './notice-processing'
 import {InternalFinance,InternalAlerts,useInternalFinance} from './internal-finance'
 import {Contracts,RegistryTimeline,RegistryAlerts,type Contract} from './registry'
 import {ManagementHistory} from './management-history'
@@ -407,7 +408,7 @@ function SharedCrm(){
    {page==='dashboard'&&<OperationalDashboard key={workspace} attention={<><DueDashboard key={workspace+String(can(role,'finance'))} client={client!} workspace={workspace} revision={revision} open={()=>go('vencimentos')}/><RegistryAlerts client={client!} workspace={workspace} revision={revision} openContract={id=>{setContractId(id);go('contratos')}}/>{can(role,'finance')&&<InternalAlerts people={people} loading={internal.loading} plans={internal.data.plans} bills={internal.data.bills} open={id=>{setBillId(id);go('obrigacoes')}}/>}</>} data={commercialData} entries={entries} projects={projects} errors={moduleErrors} finance={finance} financial={can(role,'finance')} month={reportMonth} setMonth={setReportMonth} openLead={openLead} openProject={openProject} openEntry={openEntry} openAgenda={openAgenda} openFinance={()=>go('financeiro')} addLead={()=>{setReturnPage('dashboard');go('crm');select()}}/>}
    {can(role,'finance')&&internal.error&&<p role="alert">{internal.error}</p>}
    {dueReturn&&['contratos','obrigacoes','financeiro'].includes(page)&&<button className="button" onClick={()=>{setDueReturn(false);go('vencimentos')}}>← Voltar à Central de vencimentos</button>}
-   {page==='vencimentos'&&<DueCenter key={workspace+String(can(role,'finance'))+currentUser} client={client!} workspace={workspace} userId={currentUser} people={people} projects={projects} contracts={contractRows} revision={revision} open={openDue}/>}
+   {page==='vencimentos'&&<DueCenter key={workspace+String(can(role,'finance'))+currentUser} client={client!} workspace={workspace} userId={currentUser} people={people} projects={projects} contracts={contractRows} revision={revision} open={openDue} processing={administrator?<NoticeProcessing key={workspace} client={client!} workspace={workspace} people={people}/>:undefined}/>}
    {page==='obrigacoes'&&(can(role,'finance')?<InternalFinance revision={revision} key={workspace} client={client!} workspace={workspace} plans={internal.data.plans} bills={internal.data.bills} leads={commercialData.leads} contracts={contractRows} projects={projects} openPlan={obligationId} openBill={billId} saved={()=>reload(v=>v+1)}/>:<p role="status">Seu papel não permite consultar obrigações financeiras.</p>)}
    {page==='contratos'&&<Contracts revision={revision} key={workspace} client={client!} workspace={workspace} admin={administrator} financial={can(role,'finance')} leads={commercialData.leads} proposals={proposals} projects={projects} openId={contractId} onSaved={()=>reload(v=>v+1)}/>}
    {page==='rastreabilidade'&&<RegistryTimeline key={workspace+String(can(role,'finance'))} client={client!} workspace={workspace} revision={revision}/>}

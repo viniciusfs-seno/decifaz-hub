@@ -16,3 +16,9 @@ site_url = "http://127.0.0.1:4181"
 [functions.hub-workspaces]
 verify_jwt = false
 
+# Dedicated server secret / signed provider callback. Neither accepts app JWTs.
+[functions.hub-notice-worker]
+verify_jwt = false
+[functions.hub-notice-events]
+verify_jwt = false
+
