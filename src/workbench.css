@@ -153,4 +153,4 @@
 .financial-week .record-summary{grid-template-columns:repeat(4,minmax(0,1fr))}
 .financial-week .record-summary dd{white-space:nowrap;font-variant-numeric:tabular-nums}
 .financial-week .toolbar .field{min-width:0;flex:1}
-@media(max-width:760px){.financial-week .record-summary{grid-template-columns:repeat(2,minmax(0,1fr))}}
+@media(max-width:760px){.financial-week .record-summary{grid-template-columns:repeat(2,minmax(0,1fr))}.financial-week .toolbar{display:flex;flex-direction:column;align-items:stretch}.financial-week .toolbar .field{width:100%;flex:0 0 auto}.financial-week .toolbar>button{width:100%}}
