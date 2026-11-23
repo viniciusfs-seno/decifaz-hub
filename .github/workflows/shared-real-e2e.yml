@@ -65,6 +65,7 @@ jobs:
             .validation/daily-captures
             .validation/member-label-captures
             .validation/dues-captures
+            .validation/financial-week
             .validation/screen-captures
           retention-days: 7
       - name: Validar migração de vínculos existentes do PR 17

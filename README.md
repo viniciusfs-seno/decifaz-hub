@@ -119,3 +119,6 @@ Publicação futura com **somente avisos internos e e-mail desligado**: [roteiro
 Perfil econômico de tela por link (#40, rascunho): sessão5min, uma sessão simultânea no Hub/um espectador, captura até1280×720/5FPS e encoder até256kbit/s com leitura dos controles aceitos. Áudio não homologado/desativado. Homologação e limites em [compartilhamento de tela](docs/compartilhamento-tela.md); sem ativação em produção.
 
 Revisão financeira semanal em desenvolvimento: [fluxo, métricas, permissões e publicação](docs/revisao-financeira-semanal.md). Integrada à semana operacional, sem pagamentos automáticos.
+# Confiabilidade da revisão financeira (PR #44, em rascunho)
+
+Posição atual separada de fotografias completas e imutáveis, detalhes paginados e histórico além das últimas 20 revisões. “Rastrear baixa” consulta as auditorias existentes sem duplicar pagamentos. Migrações `20261123010000` → `20261123020000` somente em ambiente isolado nesta rodada. [Indicadores, cobertura, limites e publicação/recuperação](docs/revisao-financeira-semanal.md). Produção e e-mail permanecem sem alterações.
