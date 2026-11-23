@@ -32,7 +32,7 @@ Se o provedor aceitar emitir credenciais e bloquear o relay por franquia no mome
 
 1. Após autorização própria, alinhar #40 à main que contém #42/#43, resolver eventuais conflitos sem perder a prova histórica e revalidar os fluxos afetados. Não usar um artefato antigo que omita migrações já publicadas.
 2. Preparar artefato de banco com o histórico atual mais `20261121020000_tela_por_link.sql`. Por ter versão anterior às migrações de avisos, o CLI pode exigir `--include-all`; só usá-lo depois de dry-run que liste **exclusivamente** a migração de tela. Não reparar/apagar histórico remoto nem aplicar outros pendentes por conveniência.
-3. No projeto correto, em **Supabase → Edge Functions → Secrets**, configurar as variáveis abaixo por mecanismo privado. Alternativa CLI: `supabase secrets set --project-ref <projeto> --env-file <arquivo-privado-absoluto>`. Nunca valores em argumentos, `VITE_*`, commits, CI público ou chat. O arquivo deve ficar fora do Git e com DACL do usuário/SYSTEM no Windows. Não copiar o arquivo de runtime de homologação habilitado para produção.
+3. No projeto correto, em **Supabase → Edge Functions → Secrets**, configurar as variáveis abaixo por mecanismo privado. Alternativa CLI: `supabase secrets set --remote=<projeto> --env-file <arquivo-privado-absoluto>`. Nunca valores em argumentos, `VITE_*`, commits, CI público ou chat. O arquivo deve ficar fora do Git e com DACL do usuário/SYSTEM no Windows. Não copiar o arquivo de runtime de homologação habilitado para produção.
 
 | Nome | Configuração |
 |---|---|
@@ -48,3 +48,5 @@ Se o provedor aceitar emitir credenciais e bloquear o relay por franquia no mome
 6. Depois do banco/Edge compatíveis, integrar frontend autorizado e confirmar SHA/deployment/domínio. Recuperação: parar sessões e desligar `HUB_TURN_ENABLED` (com runtime recarregado), preservar banco/auditoria/permissões, recuperar frontend compatível e manter chamada externa. Não usar rollback de banco que reabra dados protegidos.
 
 Nenhum segredo de tela, migração ou Edge desse fluxo foi aplicado em produção. #42/#43 e seus avisos internos são independentes; não publicar worker/eventos de e-mail por causa desta configuração.
+
+Publicação experimental concluída em23/11: merge12f94ca69b6427932cf239170956997003f8181e, migração20261121020000 e somente hub-screen-ice. Deployment dpl_GUSW59WHvqyTEaFgKhdxALb5vSDj READY no domínio principal. Proteções verificadas por chamadas sem sessão/capacidade inválida, sem registros fictícios ou identidade simulada. Região permanente aceita como pendência; áudio desligado. Registro completo no PR40.

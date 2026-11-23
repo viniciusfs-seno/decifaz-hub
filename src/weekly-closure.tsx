@@ -1,13 +1,16 @@
+import type {ReactNode} from 'react'
 import {useEffect,useRef,useState} from 'react'
 import type {SupabaseClient} from '@supabase/supabase-js'
 import {businessDay,type SharedActivity} from './shared-operational'
 import {weekStart} from './management-data'
 import {dateLabel,type Lead} from './domain'
 import {Empty} from './ui'
+import {useViewState} from './view-state'
 type Closure={week_start:string;revision:number;summary:string;decisions:string;actions:{id:string;title:string;owner:string;due:string;lead_id:string;project_id?:string}[];closed_at:string}
-export function WeeklyClosure({client,workspace,admin,leads,tasks,onSaved,openLead,revision:refreshRevision}:{revision:number;client:SupabaseClient;workspace:string;admin:boolean;leads:Lead[];tasks:SharedActivity[];onSaved:()=>void;openLead:(id:string)=>void}){
+export function WeeklyClosure({financial,client,workspace,admin,leads,tasks,onSaved,openLead,revision:refreshRevision}:{financial?:(week:string)=>ReactNode;revision:number;client:SupabaseClient;workspace:string;admin:boolean;leads:Lead[];tasks:SharedActivity[];onSaved:()=>void;openLead:(id:string)=>void}){
  const loaded=useRef('')
- const [week,setWeek]=useState(weekStart(businessDay())),[history,setHistory]=useState<Closure[]>([]),[summary,setSummary]=useState(''),[decisions,setDecisions]=useState(''),[revision,setRevision]=useState(0),[selected,setSelected]=useState<string[]>([]),[newAction,setNewAction]=useState({source:'',title:'',owner:'',due:businessDay()}),[error,setError]=useState(''),[notice,setNotice]=useState(''),[loading,setLoading]=useState(true),[busy,setBusy]=useState(false),[reload,setReload]=useState(0)
+ const [week,setWeek]=useViewState('weekly-week',weekStart(businessDay()))
+ const [history,setHistory]=useState<Closure[]>([]),[summary,setSummary]=useState(''),[decisions,setDecisions]=useState(''),[revision,setRevision]=useState(0),[selected,setSelected]=useState<string[]>([]),[newAction,setNewAction]=useState({source:'',title:'',owner:'',due:businessDay()}),[error,setError]=useState(''),[notice,setNotice]=useState(''),[loading,setLoading]=useState(true),[busy,setBusy]=useState(false),[reload,setReload]=useState(0)
  const [drafts,setDrafts]=useState<{kind:string;source:string;title:string;owner:string;due:string}[]>([])
  function current(c?:Closure){setSummary(c?.summary??'');setDecisions(c?.decisions??'');setRevision(c?.revision??0);setSelected((c?.actions??[]).map(a=>a.id));setDrafts([])}
  useEffect(()=>{let alive=true;const key=workspace+week;if(loaded.current!==key)setLoading(true);setError('');void client.from('hub_weekly_closure_history').select('week_start,revision,summary,decisions,actions,closed_at').eq('workspace_id',workspace).order('week_start',{ascending:false}).order('revision',{ascending:false}).then(({data,error})=>{if(!alive)return;setLoading(false);if(error){setError('Não foi possível carregar os fechamentos.');return}setHistory(data as Closure[]);if(loaded.current!==key||!admin){current((data as Closure[]).find(c=>c.week_start===week));loaded.current=key}});return()=>{alive=false}},[client,workspace,week,reload,refreshRevision])
@@ -19,5 +22,6 @@ export function WeeklyClosure({client,workspace,admin,leads,tasks,onSaved,openLe
   </fieldset>}
   {error&&<p role="alert">{error}</p>}{notice&&<p role="status">{notice}</p>}
   <h3>Histórico de fechamentos</h3>{history.length?history.map(c=><details className="closure-record" key={c.week_start+c.revision}><summary>{dateLabel(c.week_start)} · revisão {c.revision} · {new Intl.DateTimeFormat('pt-BR',{timeZone:'America/Fortaleza',dateStyle:'short',timeStyle:'short'}).format(new Date(c.closed_at))}</summary><p className="closure-notes">{c.summary}</p><p className="closure-notes">{c.decisions}</p><ul>{c.actions.map(a=><li key={a.id}><button className="text-button" onClick={()=>openLead(a.lead_id)}>{a.title}</button> · {a.owner} · {dateLabel(a.due)}</li>)}</ul></details>):<Empty title="Nenhuma semana fechada neste espaço"/>}
+ {financial?.(week)}
  </section>
 }
