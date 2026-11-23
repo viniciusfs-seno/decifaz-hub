@@ -8,6 +8,8 @@ Para começar no portal: **Conhecimento → Base de conhecimento → Início di�
 
 Preparação diária: [nomes por espaço, guia em três passos e recuperação](docs/preparacao-diaria.md).
 
+Reunião do projeto → [Tela por link](docs/compartilhamento-tela.md): fonte escolhida no navegador, um espectador aprovado, convite temporário e visualizador sem acesso ao Hub. Conexão direta por WebRTC; sem TURN, algumas redes podem exigir a chamada externa.
+
 Contexto de produto e UI: [PRODUCT.md](PRODUCT.md), [DESIGN.md](DESIGN.md) e [revisão Impeccable da mesa de trabalho](docs/impeccable/mesa-de-trabalho.md), com comparações e validações da branch de revisão.
 
 ## Começar a usar
@@ -25,7 +27,7 @@ Contexto de produto e UI: [PRODUCT.md](PRODUCT.md), [DESIGN.md](DESIGN.md) e [re
 - [Contratos e rastreabilidade](docs/contratos-rastreabilidade.md), [obrigações e assinaturas](docs/obrigacoes-decifaz.md), [reuniões de projeto](docs/reunioes-projetos.md).
 - [Hierarquia e componentes](docs/hierarquia-e-usabilidade.md), [experiência do portal](docs/experiencia-portal.md), [publicação integrada #19–#22](docs/publicacao-integrada.md).
 
-Os avisos são internos ao abrir o portal; não há cobrança automática nem notificação externa com o portal fechado. Videoconferência nativa permanece planejada: o link abre a chamada externa, e captura local não transmite a tela a outros participantes. Assinatura eletrônica é integração futura; anexar um PDF não verifica sua assinatura. Veja os limites e procedimentos de recuperação em cada guia. SHAs, checks e estado efetivo de publicação estão nos respectivos PRs.
+Os avisos são internos ao abrir o portal; não há cobrança automática nem notificação externa com o portal fechado. Videoconferência completa permanece planejada. O link de chamada externa continua disponível, e a prévia local é distinta de Tela por link, que transmite a um espectador aprovado. Assinatura eletrônica é integração futura; anexar um PDF não verifica sua assinatura. Veja os limites e procedimentos de recuperação em cada guia. SHAs, checks e estado efetivo de publicação estão nos respectivos PRs.
 
 ## Desenvolvimento local
 
@@ -90,7 +92,10 @@ Para continuar no editor, consulte o [guia de VS Code e prompt de continuidade](
 
 ## Prioridades dos sócios
 
-- [Central de vencimentos e preferências](docs/central-vencimentos.md): recorte autorizado, pagamento na origem, reagendamento com motivo e avisos pessoais. Em homologação, sem ativação de produção e sem dependência da transmissão do PR #40.
+Tela por link segue em homologação no PR #40, sem publicação: [fluxo e diagnóstico](docs/compartilhamento-tela.md), [revisão final, limites e preparação dos segredos na Edge](docs/revisao-publicacao-tela.md). A prova de relay do SHA62ebd6e está preservada com capturas e hashes do código. Áudio útil e região permanente continuam pendentes; chamada externa permanece disponível. Os avisos internos #42/#43 são independentes da transmissão.
+
+
+- [Central de vencimentos e preferências](docs/central-vencimentos.md): recorte autorizado, pagamento na origem, reagendamento com motivo e avisos pessoais. Publicada pelos PRs #42/#43, com geração interna no servidor, e-mail desligado e sem dependência da transmissão do PR #40.
 
 - [Contratos, documentos privados e rastreabilidade](docs/contratos-rastreabilidade.md): cadastro existente ou derivado de proposta, avisos, revisões e trilha por integrante.
 - [Obrigações, assinaturas e baixa manual](docs/obrigacoes-decifaz.md): competências sem duplicação, valores previstos/pagos/vencidos e comprovantes privados.
@@ -110,3 +115,5 @@ Busca por registros autorizados, publicação e rotina inicial dos sócios: [Bus
 Central, preferências e processamento sem navegador: [roteiro funcional, configuração e recuperação](docs/avisos-agendados.md). Geração agendada e e-mail de produção permanecem desativados; testes somente com dados fictícios e Mailpit.
 
 Publicação futura com **somente avisos internos e e-mail desligado**: [roteiro único #42 → #43](docs/publicacao-avisos.md).
+
+Perfil econômico de tela por link (#40, rascunho): sessão5min, uma sessão simultânea no Hub/um espectador, captura até1280×720/5FPS e encoder até256kbit/s com leitura dos controles aceitos. Áudio não homologado/desativado. Homologação e limites em [compartilhamento de tela](docs/compartilhamento-tela.md); sem ativação em produção.

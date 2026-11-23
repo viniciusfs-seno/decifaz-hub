@@ -1,0 +1,152 @@
+{
+  "proofSha": "62ebd6e965e590069b4cd43579eaecd9509886e7",
+  "run": "https://github.com/viniciusfs-seno/decifaz-hub/actions/runs/45077355994/attempts/2",
+  "sourceFiles": {
+    "src/main.tsx": "008f7c8f3df80a88d9336616dff2a21e50255a2622610438cf0c8665a44de32e",
+    "src/pilot-app.tsx": "ae1604b0398bee112f29ae0c04caa90ab8d4cd9001a47776d214b4b894180f2b",
+    "src/screen-host.tsx": "be588f51d8bd5e6fe2c68b07c33e08199e8d69c68ad43e248039f7e0baeba98b",
+    "src/screen-viewer.tsx": "3da70a6ed710f05e8215903370d293319adfc563e882748a920502b79f2ded9d",
+    "src/screen-peer.ts": "4764825264a10adc9a4cb106cf2f8208ae686cdd9e204ce4558a027ba8438c79",
+    "src/screen-rpc.ts": "ed819fcacd9f7212306a96ea564132c21e57f94f8c1e4db389d3f703999b9eb1",
+    "supabase/functions/hub-screen-ice/index.ts": "08f147967e7d14e4ad048454bda211f14186706b01a5ffb3019bed544737e1dd",
+    "supabase/functions/_shared/screen-turn.mjs": "3b51a2cfce2356684aa395d55fe1744f9ffd7cc0a748c138cc95f8cb653619e9",
+    "supabase/migrations/20261121020000_tela_por_link.sql": "28d8d77a5cfe38b7d49fddc2cf0529c639d918317626d4763def8b24d8f66c19"
+  },
+  "capture": "native Chromium tab; automated selection; synthetic content",
+  "participants": [
+    "Chromium Windows",
+    "Chromium Linux GitHub runner"
+  ],
+  "separateNetworks": true,
+  "relayForcedBoth": true,
+  "relaySelectedReceiver": true,
+  "framesAdvancing": true,
+  "changingPixels": true,
+  "reconnect": "controlled peer shutdown; not physical router disconnect",
+  "invitationExpiry": "test fixture date reduced",
+  "sessionExpiry": "test fixture date reduced",
+  "revocation": true,
+  "closedPeerBeforeStop": true,
+  "endedSessions": 3,
+  "openSessions": 0,
+  "sessionSpanSeconds": 107,
+  "decodedFramesSamples": [
+    [
+      9,
+      31
+    ],
+    [
+      12
+    ],
+    [
+      14
+    ]
+  ],
+  "observedTransport": {
+    "presenter": {
+      "bytesSent": 411252,
+      "bytesReceived": 23703,
+      "stopped": null,
+      "maxBytes": 8388608,
+      "maxMilliseconds": 240000,
+      "measurement": "browser-transport-not-provider-billing"
+    },
+    "receiver": [
+      {
+        "bytesSent": 13768,
+        "bytesReceived": 250610,
+        "stopped": null,
+        "maxBytes": 8388608,
+        "maxMilliseconds": 240000,
+        "measurement": "browser-transport-not-provider-billing"
+      },
+      {
+        "bytesSent": 4722,
+        "bytesReceived": 71149,
+        "stopped": null,
+        "maxBytes": 8388608,
+        "maxMilliseconds": 240000,
+        "measurement": "browser-transport-not-provider-billing"
+      },
+      {
+        "bytesSent": 5299,
+        "bytesReceived": 81021,
+        "stopped": null,
+        "maxBytes": 8388608,
+        "maxMilliseconds": 240000,
+        "measurement": "browser-transport-not-provider-billing"
+      }
+    ],
+    "notProviderBilling": true
+  },
+  "providerUsage": {
+    "state": "unavailable",
+    "reporting": "hourly_delayed",
+    "snapshots": [
+      {
+        "label": "before",
+        "reportedAt": "2026-11-22T22:25:55.953Z",
+        "accountBytes": null,
+        "channelBytes": null
+      },
+      {
+        "label": "after",
+        "reportedAt": "2026-11-22T22:27:43.434Z",
+        "accountBytes": null,
+        "channelBytes": null
+      }
+    ]
+  },
+  "audio": {
+    "capturedTracks": [
+      1,
+      1,
+      1
+    ],
+    "received": [
+      [
+        {
+          "bytesReceived": 6296,
+          "samplesReceived": 171840,
+          "energy": 0
+        }
+      ],
+      [
+        {
+          "bytesReceived": 5771,
+          "samplesReceived": 157440,
+          "energy": 0
+        }
+      ],
+      [
+        {
+          "bytesReceived": 17251,
+          "samplesReceived": 472800,
+          "energy": 0
+        }
+      ],
+      [
+        {
+          "bytesReceived": 3776,
+          "samplesReceived": 103200,
+          "energy": 0
+        }
+      ],
+      [
+        {
+          "bytesReceived": 3671,
+          "samplesReceived": 100320,
+          "energy": 0
+        }
+      ]
+    ],
+    "support": "not homologated; received samples had zero energy"
+  },
+  "finalState": {
+    "turnDisabled": true,
+    "originalConfigDisabled": true,
+    "githubProbeEnabled": false,
+    "productionChanged": false
+  },
+  "permanentRegion": "unknown"
+}

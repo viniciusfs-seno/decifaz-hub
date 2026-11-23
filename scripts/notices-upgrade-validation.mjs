@@ -23,11 +23,18 @@ async function frontend(ref,label){
  try{await page.addInitScript(s=>localStorage.setItem('sb-127-auth-token',JSON.stringify(s)),f.owner.session);await page.goto('http://127.0.0.1:4186');await expect(page.getByRole('heading',{name:'Fila de ações',exact:true})).toBeVisible();await page.getByRole('navigation').getByRole('button',{name:'Captação e CRM',exact:true}).click();await expect(page.getByRole('button',{name:'Café Horizonte · fictício',exact:true})).toBeVisible();if(ref===candidate){await page.getByRole('navigation').getByRole('button',{name:'Central de vencimentos',exact:true}).click();await expect(page.getByRole('tab',{name:'Preferências',exact:true})).toBeVisible()}console.log('Frontend '+label+': aprovado.')}finally{await context.close();await server.close()}
 }
 try{
- cli(['db','reset','--local','--version','20261121010000','--no-seed','--yes']);f=await operationalFixture(env);await registryFixture(f)
+ // Reconstruct published history: screen is an independent pending migration.
+ const published=join(root,'published');mkdirSync(published,{recursive:true})
+ const schema=spawnSync('git',['archive',baseline,'supabase/config.toml','supabase/migrations'],{maxBuffer:10*1024*1024});if(schema.status!==0)throw Error('Histórico publicado indisponível')
+ run('tar',['-xf','-','-C',published],{input:schema.stdout,encoding:undefined})
+ cli(['db','reset','--local','--no-seed','--yes','--workdir',published]);f=await operationalFixture(env);await registryFixture(f)
  const digest=()=>sql(`select md5(jsonb_build_object('members',(select jsonb_agg(to_jsonb(x) order by user_id) from public.hub_members x where workspace_id='${f.workspace}'),'contracts',(select jsonb_agg(to_jsonb(x) order by id) from public.hub_contracts x where workspace_id='${f.workspace}'),'documents',(select jsonb_agg(to_jsonb(x) order by id) from public.hub_private_documents x where workspace_id='${f.workspace}'),'bills',(select jsonb_agg(to_jsonb(x) order by id) from public.hub_internal_bills x where workspace_id='${f.workspace}'),'events',(select jsonb_agg(to_jsonb(x) order by id) from public.hub_registry_events x where workspace_id='${f.workspace}'))::text)`)
  const before=digest();await frontend(baseline,'anterior')
  for(const version of versions){
-  const phase=join(root,version),dir=join(phase,'supabase');mkdirSync(join(dir,'migrations'),{recursive:true});copyFileSync('supabase/config.toml',join(dir,'config.toml'));for(const name of readdirSync('supabase/migrations').filter(n=>n.slice(0,14)<=version))copyFileSync(join('supabase/migrations',name),join(dir,'migrations',name))
+  const phase=join(root,version),dir=join(phase,'supabase');mkdirSync(join(dir,'migrations'),{recursive:true});copyFileSync('supabase/config.toml',join(dir,'config.toml'))
+  const baseMigrations=join(published,'supabase','migrations')
+  for(const name of readdirSync(baseMigrations))copyFileSync(join(baseMigrations,name),join(dir,'migrations',name))
+  for(const name of readdirSync('supabase/migrations').filter(n=>versions.includes(n.slice(0,14))&&n.slice(0,14)<=version))copyFileSync(join('supabase/migrations',name),join(dir,'migrations',name))
   const output=cli(['db','push','--local','--skip-vault','--dry-run','--yes','--workdir',phase,'--output-format','stream-json'])
   const report=output.split(/\r?\n/).flatMap(l=>{try{const o=JSON.parse(l);return[o.type==='result'?o.data:o]}catch{return[]}}).find(o=>o.migrations)
   if(report?.migrations?.length!==1||!report.migrations[0].startsWith(version))throw Error('Dry-run não exclusivo')

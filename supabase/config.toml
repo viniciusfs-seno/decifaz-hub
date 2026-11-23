@@ -22,3 +22,6 @@ verify_jwt = false
 [functions.hub-notice-events]
 verify_jwt = false
 
+
+[functions.hub-screen-ice]
+verify_jwt = false
