@@ -52,7 +52,9 @@ jobs:
           docker exec -i supabase_db_decifaz-hub-e2e psql -U postgres -v ON_ERROR_STOP=1 < supabase/tests/fechamentos.sql
           docker exec -i supabase_db_decifaz-hub-e2e psql -U postgres -v ON_ERROR_STOP=1 < supabase/tests/identificacao_integrantes.sql
           docker exec -i supabase_db_decifaz-hub-e2e psql -U postgres -v ON_ERROR_STOP=1 < supabase/tests/nomes_no_espaco.sql
-          npm run test:e2e -- --workers=1 shared-real.spec.mjs roles-real.spec.mjs concurrency-real.spec.mjs team-real.spec.mjs team-concurrency-real.spec.mjs role-history-real.spec.mjs invites-real.spec.mjs invite-auth-real.spec.mjs member-state-real.spec.mjs operational-real.spec.mjs catalog-real.spec.mjs meeting-studio-real.spec.mjs management-real.spec.mjs commercial-management-real.spec.mjs experience-real.spec.mjs lead-details-real.spec.mjs crm-pagination-real.spec.mjs metric-history-real.spec.mjs contracts-real.spec.mjs internal-finance-real.spec.mjs project-meetings-real.spec.mjs hierarchy-real.spec.mjs record-work-real.spec.mjs global-search-real.spec.mjs prospecting-real.spec.mjs productivity-real.spec.mjs activity-work-real.spec.mjs activity-clock-real.spec.mjs workspace-refresh-real.spec.mjs import-real.spec.mjs workbench-real.spec.mjs daily-use-real.spec.mjs member-labels-real.spec.mjs screen-link-real.spec.mjs
+          npm run test:e2e -- --workers=1 shared-real.spec.mjs roles-real.spec.mjs concurrency-real.spec.mjs team-real.spec.mjs team-concurrency-real.spec.mjs role-history-real.spec.mjs invites-real.spec.mjs invite-auth-real.spec.mjs member-state-real.spec.mjs operational-real.spec.mjs catalog-real.spec.mjs meeting-studio-real.spec.mjs management-real.spec.mjs commercial-management-real.spec.mjs experience-real.spec.mjs lead-details-real.spec.mjs crm-pagination-real.spec.mjs metric-history-real.spec.mjs contracts-real.spec.mjs internal-finance-real.spec.mjs project-meetings-real.spec.mjs hierarchy-real.spec.mjs record-work-real.spec.mjs global-search-real.spec.mjs prospecting-real.spec.mjs productivity-real.spec.mjs activity-work-real.spec.mjs activity-clock-real.spec.mjs workspace-refresh-real.spec.mjs import-real.spec.mjs workbench-real.spec.mjs daily-use-real.spec.mjs member-labels-real.spec.mjs due-center-real.spec.mjs notice-processing-real.spec.mjs screen-link-real.spec.mjs
+      - name: Homologar avisos sem navegador e captura no Mailpit
+        run: node scripts/notice-validation.mjs
       - uses: actions/upload-artifact@v4
         if: success()
         with:
@@ -62,10 +64,13 @@ jobs:
             .validation/search-captures
             .validation/daily-captures
             .validation/member-label-captures
+            .validation/dues-captures
             .validation/screen-captures
           retention-days: 7
       - name: Validar migração de vínculos existentes do PR 17
         run: node scripts/member-state-migration-validation.mjs --reset-local-fixtures
+      - name: Ensaiar Central e processamento desativado a partir de produção
+        run: node scripts/notices-upgrade-validation.mjs --reset-local-fixtures
       - name: Ensaiar expansão integrada a partir do esquema do PR 18
         run: node scripts/integrated-upgrade-validation.mjs --reset-local-fixtures
       - name: Ensaiar ficha, paginação e histórico a partir do PR 23

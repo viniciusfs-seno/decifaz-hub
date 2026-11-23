@@ -5,6 +5,8 @@ import {ActivityEditor} from './activity-editor'
 import {LeadImport} from './lead-import'
 import {ContactPlanner,ProspectingQueue} from './prospecting'
 import {ProjectMeetings} from './project-meetings'
+import {DueCenter,DueDashboard,type DueRow} from './due-center'
+import {NoticeProcessing} from './notice-processing'
 import {InternalFinance,InternalAlerts,useInternalFinance} from './internal-finance'
 import {Contracts,RegistryTimeline,RegistryAlerts,type Contract} from './registry'
 import {ManagementHistory} from './management-history'
@@ -87,7 +89,7 @@ export default function PilotApp(){
 }
 
 const navigation=[
- ['Visão Geral',[['dashboard','Dashboard',LayoutDashboard],['revisao','Revisão semanal',ClipboardList]]],
+ ['Visão Geral',[['vencimentos','Central de vencimentos',CalendarDays],['dashboard','Dashboard',LayoutDashboard],['revisao','Revisão semanal',ClipboardList]]],
  ['Comercial',[['prospeccao','Central de prospecção',ListTodo],['central','Central comercial',ListTodo],['crm','Captação e CRM',Users],['importacao','Importar estabelecimentos',Users],['triagem','Triagem comercial',ClipboardList],['reunioes','Reuniões e diagnósticos',CalendarDays],['propostas','Propostas comerciais',FileCheck2]]],
  ['Operação',[['agenda','Agenda operacional',CalendarDays],['projetos','Projetos e entregas',FolderKanban]]],
  ['Gestão',[['indicadores','Indicadores',LayoutDashboard],['financeiro','Financeiro',Wallet],['obrigacoes','Obrigações da Decifaz',Wallet],['rastreabilidade','Rastreabilidade',ClipboardList]]],
@@ -100,6 +102,7 @@ type Section=typeof sections[number][0]|'equipe'|'convites'|'ficha'
 function SharedCrm(){
  const [searchOpen,setSearchOpen]=useState(false),recordRequest=useRef(0)
  const [contractId,setContractId]=useState('')
+ const [obligationId,setObligationId]=useState(''),[dueReturn,setDueReturn]=useState(false)
  const [activityEditor,setActivityEditor]=useState<{item?:SharedActivity;leadId?:string;projectId?:string;initialStatus?:string}>()
  const [currentUser,setCurrentUser]=useState('')
  useEffect(()=>{void client!.auth.getUser().then(r=>setCurrentUser(r.data.user?.id??''))},[])
@@ -108,7 +111,7 @@ function SharedCrm(){
  const [allActivities,setAllActivities]=useState<SharedActivity[]>([])
  const [loadingData,setLoadingData]=useState(false)
  const loadedWorkspace=useRef('')
- const [page,setPage]=useState<Section>(()=>new URLSearchParams(location.search).has('convite')?'convites':'dashboard')
+ const [page,setPage]=useState<Section>(()=>new URLSearchParams(location.search).has('convite')?'convites':new URLSearchParams(location.search).has('central')?'vencimentos':'dashboard')
  const [returnPage,setReturnPage]=useState<Section>('crm')
  const [projectReturn,setProjectReturn]=useState<Section>('projetos')
  const [agendaRequest,setAgendaRequest]=useState(0)
@@ -157,7 +160,7 @@ function SharedCrm(){
    return current&&current.name===space.name&&current.role===space.role&&JSON.stringify(current.roles)===JSON.stringify(space.roles)?current:space
   }))
   const next=data.workspaces.find(space=>space.id===(preferred??workspace))??data.workspaces[0]
-  if(next.id!==workspace){clearWorkspaceData();setWorkspace(next.id);if(!preferred)setPage('dashboard')}
+  if(next.id!==workspace){clearWorkspaceData();setWorkspace(next.id);if(!preferred)setPage(new URLSearchParams(location.search).has('central')?'vencimentos':'dashboard')}
   if(preferred){setError('');setNotice('Acesso atualizado. Alterações de papéis existentes devem ser feitas pela Administração em Equipe.');const clean=new URL(location.href);clean.searchParams.delete('convite');history.replaceState(null,'',clean.href)}
  }
  const [workspace,setWorkspace]=useState('')
@@ -329,6 +332,7 @@ function SharedCrm(){
   if(status==='Concluída'&&item){setActivityEditor({item,initialStatus:status});return}
   void write(()=>client!.from('hub_activities').update({status}).eq('workspace_id',workspace).eq('id',entry.id).select('id').single())
  }
+ function openDue(row:DueRow){setDueReturn(true);if(row.kind.startsWith('contract')){setContractId(row.record_id);go('contratos')}else if(row.kind==='bill'){setObligationId('');setBillId(row.record_id);go('obrigacoes')}else if(row.kind==='subscription'){setBillId('');setObligationId(row.record_id);go('obrigacoes')}else{setReportMonth(row.due_on.slice(0,7));go('financeiro')}}
  function openAgenda(filter:WorkFilter){go('agenda');setAgendaFilter(filter);setAgendaRequest(n=>n+1)}
  const pageLabel=page==='ficha'?'Ficha do estabelecimento':page==='convites'?'Meus convites':page==='equipe'?'Administração / Equipe':sections.find(([id])=>id===page)?.[1]
  const recordContext=useRef({page,returnPage})
@@ -401,9 +405,11 @@ function SharedCrm(){
    {searchOpen&&<GlobalSearch key={workspace+JSON.stringify(role)} client={client!} workspace={workspace} close={closeSearch} open={openSearchRecord}/>}
    {page==='equipe'&&(administrator?<Team key={workspace} client={client!} workspace={workspace} onSaved={refreshMemberships} sendInviteLink={sendInviteLink}/>:<p role="alert">Seu papel não permite gerir a equipe deste espaço.</p>)}
 
-   {page==='dashboard'&&<OperationalDashboard key={workspace} attention={<><RegistryAlerts client={client!} workspace={workspace} revision={revision} openContract={id=>{setContractId(id);go('contratos')}}/>{can(role,'finance')&&<InternalAlerts people={people} loading={internal.loading} plans={internal.data.plans} bills={internal.data.bills} open={id=>{setBillId(id);go('obrigacoes')}}/>}</>} data={commercialData} entries={entries} projects={projects} errors={moduleErrors} finance={finance} financial={can(role,'finance')} month={reportMonth} setMonth={setReportMonth} openLead={openLead} openProject={openProject} openEntry={openEntry} openAgenda={openAgenda} openFinance={()=>go('financeiro')} addLead={()=>{setReturnPage('dashboard');go('crm');select()}}/>}
+   {page==='dashboard'&&<OperationalDashboard key={workspace} attention={<><DueDashboard key={workspace+String(can(role,'finance'))} client={client!} workspace={workspace} revision={revision} open={()=>go('vencimentos')}/><RegistryAlerts client={client!} workspace={workspace} revision={revision} openContract={id=>{setContractId(id);go('contratos')}}/>{can(role,'finance')&&<InternalAlerts people={people} loading={internal.loading} plans={internal.data.plans} bills={internal.data.bills} open={id=>{setBillId(id);go('obrigacoes')}}/>}</>} data={commercialData} entries={entries} projects={projects} errors={moduleErrors} finance={finance} financial={can(role,'finance')} month={reportMonth} setMonth={setReportMonth} openLead={openLead} openProject={openProject} openEntry={openEntry} openAgenda={openAgenda} openFinance={()=>go('financeiro')} addLead={()=>{setReturnPage('dashboard');go('crm');select()}}/>}
    {can(role,'finance')&&internal.error&&<p role="alert">{internal.error}</p>}
-   {page==='obrigacoes'&&(can(role,'finance')?<InternalFinance revision={revision} key={workspace} client={client!} workspace={workspace} plans={internal.data.plans} bills={internal.data.bills} leads={commercialData.leads} contracts={contractRows} projects={projects} openBill={billId} saved={()=>reload(v=>v+1)}/>:<p role="status">Seu papel não permite consultar obrigações financeiras.</p>)}
+   {dueReturn&&['contratos','obrigacoes','financeiro'].includes(page)&&<button className="button" onClick={()=>{setDueReturn(false);go('vencimentos')}}>← Voltar à Central de vencimentos</button>}
+   {page==='vencimentos'&&<DueCenter key={workspace+String(can(role,'finance'))+currentUser} client={client!} workspace={workspace} userId={currentUser} people={people} projects={projects} contracts={contractRows} revision={revision} open={openDue} processing={administrator?<NoticeProcessing key={workspace} client={client!} workspace={workspace} people={people}/>:undefined}/>}
+   {page==='obrigacoes'&&(can(role,'finance')?<InternalFinance revision={revision} key={workspace} client={client!} workspace={workspace} plans={internal.data.plans} bills={internal.data.bills} leads={commercialData.leads} contracts={contractRows} projects={projects} openPlan={obligationId} openBill={billId} saved={()=>reload(v=>v+1)}/>:<p role="status">Seu papel não permite consultar obrigações financeiras.</p>)}
    {page==='contratos'&&<Contracts revision={revision} key={workspace} client={client!} workspace={workspace} admin={administrator} financial={can(role,'finance')} leads={commercialData.leads} proposals={proposals} projects={projects} openId={contractId} onSaved={()=>reload(v=>v+1)}/>}
    {page==='rastreabilidade'&&<RegistryTimeline key={workspace+String(can(role,'finance'))} client={client!} workspace={workspace} revision={revision}/>}
    {page==='revisao'&&<WeeklyClosure revision={revision} client={client!} workspace={workspace} admin={administrator} leads={commercialData.leads} tasks={allActivities} onSaved={()=>reload(v=>v+1)} openLead={openLead}/>}

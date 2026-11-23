@@ -2,6 +2,10 @@
 
 **Sem publicação nesta etapa.** Prova preservada no commit `62ebd6e965e590069b4cd43579eaecd9509886e7`, [ensaio externo, tentativa2](https://github.com/viniciusfs-seno/decifaz-hub/actions/runs/45077355994/attempts/2). Resumo sanitizado e hashes do código em `capturas/tela/relay-62ebd6e.json`; capturas fictícias no mesmo diretório. O PR registra o head documental atual e seus próprios checks; não apresentar o SHA novo como uma nova execução de mídia. Documentação/testes adicionais não alteram os arquivos de transmissão ou autorização que foram homologados. Não repetir mídia somente para atualizar o relatório.
 
+Após a publicação de #42/#43, a base foi alinhada à main `510555b5dfa6d7ee016900852c6c844a35ece77b`. Conflitos de workflows, documentação, defaults de validação, estilos e exemplos de configuração foram combinados preservando as entregas independentes. O shell do portal incorpora os avisos; os componentes de tela, RPCs e Edge mantêm o código da prova62ebd6e. A revalidação de interface/autorização é automatizada com fixtures, sem nova mídia externa. O gate continua exigindo prova do SHA candidato para uma liberação futura e não foi dispensado. A comparação por hashes é evidência de escopo, não uma declaração de nova transmissão no head atual.
+
+`scripts/screen-upgrade-validation.mjs` parte do histórico Git do #43 publicado (sem a migração de tela), simula no isolado geração interna ligada/e-mail desligado e exige dry-run exclusivo da migração mais antiga com `--include-all`. Confere dados, JSONs financeiros protegidos, grants, flags dos avisos, frontend anterior/candidato e recuperação para #43. Não rodar o reset na pilha local com prévia ativa; o workflow usa Docker descartável.
+
 ## Limites efetivos
 
 | Item | Produto preparado | Ensaio comprovado |

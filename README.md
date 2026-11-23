@@ -94,7 +94,8 @@ Para continuar no editor, consulte o [guia de VS Code e prompt de continuidade](
 
 Tela por link segue em homologação no PR #40, sem publicação: [fluxo e diagnóstico](docs/compartilhamento-tela.md), [revisão final, limites e preparação dos segredos na Edge](docs/revisao-publicacao-tela.md). A prova de relay do SHA62ebd6e está preservada com capturas e hashes do código. Áudio útil e região permanente continuam pendentes; chamada externa permanece disponível. Os avisos internos #42/#43 são independentes da transmissão.
 
-Próxima evolução proposta: [compromissos e avisos com o portal fechado](docs/proxima-entrega-avisos.md), sem ativação de envios reais ou contratação nesta rodada.
+
+- [Central de vencimentos e preferências](docs/central-vencimentos.md): recorte autorizado, pagamento na origem, reagendamento com motivo e avisos pessoais. Publicada pelos PRs #42/#43, com geração interna no servidor, e-mail desligado e sem dependência da transmissão do PR #40.
 
 - [Contratos, documentos privados e rastreabilidade](docs/contratos-rastreabilidade.md): cadastro existente ou derivado de proposta, avisos, revisões e trilha por integrante.
 - [Obrigações, assinaturas e baixa manual](docs/obrigacoes-decifaz.md): competências sem duplicação, valores previstos/pagos/vencidos e comprovantes privados.
@@ -109,3 +110,8 @@ Contratos, obrigações, reuniões e hierarquia foram publicados pelos PRs #30�
 Busca por registros autorizados, publicação e rotina inicial dos sócios: [Busca global](docs/busca-global.md).
 
 Busca por registros autorizados, publicação e rotina inicial dos sócios: [Busca global](docs/busca-global.md).
+## Avisos em homologação
+
+Central, preferências e processamento sem navegador: [roteiro funcional, configuração e recuperação](docs/avisos-agendados.md). Geração agendada e e-mail de produção permanecem desativados; testes somente com dados fictícios e Mailpit.
+
+Publicação futura com **somente avisos internos e e-mail desligado**: [roteiro único #42 → #43](docs/publicacao-avisos.md).

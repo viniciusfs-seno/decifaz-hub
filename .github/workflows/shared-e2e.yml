@@ -35,7 +35,7 @@ jobs:
             exit 1
           fi
   daily-external:
-    if: github.event_name == 'pull_request' && github.event.pull_request.head.repo.full_name == github.repository && github.head_ref == 'feat/compartilhamento-tela' && vars.HUB_SCREEN_HML_PREVIEW_URL != ''
+    if: github.event_name == 'pull_request' && github.event.pull_request.head.repo.full_name == github.repository && github.head_ref == 'feat/compartilhamento-tela' && vars.HUB_SCREEN_PROBE_ENABLED == 'true' && vars.HUB_SCREEN_HML_PREVIEW_URL != ''
     runs-on: ubuntu-24.04
     timeout-minutes: 8
     env:
@@ -90,6 +90,30 @@ jobs:
           path: |
             .validation/screen-external
             .validation/daily-external
+          retention-days: 7
+  avisos-preview-externa:
+    if: github.event_name == 'pull_request' && github.head_ref == 'feat/avisos-agendados' && github.event.pull_request.head.repo.full_name == github.repository && vars.HUB_HML_PREVIEW_URL != ''
+    runs-on: ubuntu-24.04
+    timeout-minutes: 10
+    env:
+      HUB_HML_PREVIEW_URL: ${{ vars.HUB_HML_PREVIEW_URL }}
+      HUB_HML_REVIEW_PASSWORD: ${{ secrets.HUB_HML_REVIEW_PASSWORD }}
+      HUB_HML_EXPECTED_SHA: ${{ github.event.pull_request.head.sha }}
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '24'
+          cache: npm
+      - run: npm ci
+      - run: bash scripts/prepare-browser-deps.sh
+      - run: npx playwright install --with-deps chromium webkit
+      - run: node scripts/notice-preview-external.mjs
+      - uses: actions/upload-artifact@v4
+        if: success()
+        with:
+          name: avisos-previa-externa
+          path: .validation/notice-external
           retention-days: 7
   shared-browser:
     runs-on: ubuntu-24.04

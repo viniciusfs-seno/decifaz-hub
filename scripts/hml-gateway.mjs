@@ -6,6 +6,7 @@ import {fileURLToPath} from 'node:url'
 import {spawnSync} from 'node:child_process'
 import {commercialFixture} from './commercial-preview-fixture.mjs'
 import {registryFixture} from './registry-preview-fixture.mjs'
+import {noticePreviewFixture} from './notice-preview-fixture.mjs'
 
 const cookieName='__Host-decifaz_hml'
 const page=body=>'<!doctype html><html lang="pt-BR"><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>Homologação · Decifaz Hub</title><style>body{font:16px system-ui;background:#f5f6fa;color:#1f2433;border-top:5px solid #ff6a13;margin:0}main{max-width:460px;margin:8vh auto;padding:26px}input,button,a{font:inherit}input,button{padding:12px;border-radius:8px;border:1px solid #8f9ab3}label{display:grid;gap:10px}button{background:#ff6a13;margin-top:16px;cursor:pointer}a{color:#3a4a6f;display:block;padding:15px;background:white;margin:12px 0;border-radius:8px}p{line-height:1.6}</style><main><h1>Decifaz Hub</h1>'+body+'</main></html>'
@@ -136,6 +137,7 @@ if(process.argv[1]&&fileURLToPath(import.meta.url)===resolve(process.argv[1])){
  if(build.status!==0)throw Error('Build de homologação recusado')
  const fixture=await commercialFixture({VITE_SUPABASE_URL:values.API_URL,VITE_SUPABASE_PUBLISHABLE_KEY:values.PUBLISHABLE_KEY,HUB_TEST_ADMIN_KEY:values.SECRET_KEY||values.SERVICE_ROLE_KEY})
  await registryFixture(fixture)
+ await noticePreviewFixture(fixture)
  const foreign=await fixture.admin.from('hub_leads').insert({workspace_id:fixture.other,name:'Registro isolado fictício',segment:'Teste',city:'Fortaleza',stage:'Identificado',profile:{}})
  if(foreign.error){await fixture.cleanup();throw Error('Falha na fixture de isolamento')}
  const sha=spawnSync('git',['rev-parse','HEAD'],{encoding:'utf8'}).stdout.trim(),expires=Date.now()+86400000
