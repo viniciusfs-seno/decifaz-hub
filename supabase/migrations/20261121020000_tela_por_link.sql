@@ -3,8 +3,8 @@ begin;
 create table hub_private.screen_sessions(
  id uuid primary key, workspace_id uuid not null,meeting_id uuid not null,lead_id uuid not null,host_id uuid not null,
  token_hash bytea,created_at timestamptz not null default clock_timestamp(),
- invite_until timestamptz not null default clock_timestamp()+interval '10 minutes',
- ends_at timestamptz not null default clock_timestamp()+interval '30 minutes',
+ invite_until timestamptz not null default clock_timestamp()+interval '2 minutes',
+ ends_at timestamptz not null default clock_timestamp()+interval '5 minutes',
  heartbeat timestamptz not null default clock_timestamp(),ended_at timestamptz,relay_at timestamptz,
  offer jsonb,host_ice jsonb not null default '[]',epoch integer not null default 0,
  foreign key(workspace_id,lead_id,meeting_id) references public.hub_meetings(workspace_id,lead_id,id) on delete cascade
@@ -58,6 +58,9 @@ declare r hub_private.screen_sessions; old_id uuid;lead uuid;
 begin
  if auth.uid() is null or not public.hub_can(w,'projects',true) then raise insufficient_privilege using message='Acesso negado';end if;
  if credential is null or credential !~ '^[A-Za-z0-9_-]{43}$' then raise exception 'Credencial inválida';end if;
+ -- One session for this Hub installation, across spaces/hosts. Take this lock
+ -- before workspace/session locks so concurrent starts cannot exceed the cap.
+ perform pg_catalog.pg_advisory_xact_lock(734020040);
  perform hub_private.sweep_screens();
  -- A workspace lock also serializes concurrent start, role changes and deactivation.
  perform 1 from public.hub_workspaces where id=w for update;
@@ -68,7 +71,9 @@ begin
   if r.host_id<>auth.uid() or r.workspace_id<>w or r.meeting_id<>m or r.token_hash is distinct from extensions.digest(credential,'sha256') or r.ended_at is not null or r.ends_at<clock_timestamp() or r.heartbeat<clock_timestamp()-interval '45 seconds' then raise exception 'Sessão indisponível';end if;
   return jsonb_build_object('id',r.id,'invite_until',r.invite_until,'ends_at',r.ends_at);
  end if;
- for old_id in select id from hub_private.screen_sessions where host_id=auth.uid() and ended_at is null for update loop perform hub_private.close_screen(old_id);end loop;
+ if exists(select 1 from hub_private.screen_sessions where ended_at is null and ends_at>clock_timestamp() and heartbeat>clock_timestamp()-interval '45 seconds') then
+  raise exception 'Limite de compartilhamento atingido. Encerre a sessão ativa ou aguarde sua expiração.' using errcode='P0001';
+ end if;
  select lead_id into lead from public.hub_meetings where workspace_id=w and id=m;
  insert into hub_private.screen_sessions(id,workspace_id,meeting_id,lead_id,host_id,token_hash) values(s,w,m,lead,auth.uid(),extensions.digest(credential,'sha256')) returning * into r;
  insert into public.hub_registry_events(workspace_id,kind,record_id,lead_id,project_id,actor_id,action)

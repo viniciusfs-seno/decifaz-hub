@@ -1,5 +1,32 @@
 # Tela por link — funcionamento e homologação
 
+## Perfil econômico atual — substitui limites anteriores
+
+O #40 permanece em rascunho sobre a main `510555b` (#42/#43 publicados). Sem merge, migração remota, publicação ou contratação nesta rodada. Central, avisos internos e e-mail desligado preservados. SHA final e resultados no corpo do PR e nos artefatos imutáveis do CI correspondente.
+
+| Limite | Valor | Aplicação e verificação |
+|---|---|---|
+| Sessões simultâneas | 1 em toda a instalação, entre espaços/apresentadores | `hub_screen_start` com lock transacional global antes de espaço/sessão. Inícios concorrentes: somente um vence; outro espaço recebe recusa sem identidade. Repetição do mesmo início não renova prazo. |
+| Espectadores | 1 aprovado; até5 solicitações | Aprovação/entrada sob lock da sessão; regressões de segunda entrada e isolamento. |
+| Duração | 5 minutos | Servidor fixa `ends_at`, host/watch/relay revalidam. Clientes oficiais fecham peer/tracks ao atingir prazo; teste reduz prazo somente na fixture e espera expiração. |
+| Convite | 2 minutos | Sem novas entradas/aprovações após `invite_until`; aprovado continua somente até fim da sessão. |
+| Captura | até1280×720, 5FPS | `applyConstraints` após seleção nativa, leitura de `getSettings` e rechecagem durante a captura. Ausência/recusa/excesso encerra captura. |
+| Encoder | até256.000bit/s de vídeo e5FPS | `setParameters` e leitura de `getParameters` em cada peer/reconexão. `contentHint=detail`, preferência por manter resolução. Recusa encerra. |
+| Autorização | watchdog15s, lease45s, RPC timeout8s | Perda de acesso/HTTP pendente interrompe mídia, com regressões fictícias. |
+| Áudio | não capturado | `audio:false`, interface mantém “Áudio ainda não homologado”. Sem suporte anunciado. |
+
+Valores conservadores para apresentações curtas de textos e sistemas: HD preserva detalhes e5FPS priorizam leitura sobre animação. Preferir aba/janela preparada e texto ampliado. A qualidade depende da fonte, movimento e rede; o novo ensaio salva um quadro de texto para inspeção de legibilidade. **Controles do navegador não garantem limite global de consumo ou faturamento**. Reiniciar sessões permite mais uso; overhead/retransmissões e corte da conta pertencem ao provedor.
+
+O apresentador mostra configuração aceita e tempo restante. Estados distinguem captura local, espera, conexão, transmissão/recepção, reconexão e encerramento. Falha do provedor não é rotulada como franquia esgotada; saldo indisponível não vira zero. Encerrar/sair da ficha/fonte ou perder autorização libera recursos dos clientes oficiais. Revogar espectador encerra sua recepção; o apresentador pode continuar capturando localmente até encerrar/prazo.
+
+O novo ensaio usa o **encoder do produto sem alteração pela instrumentação**, relay forçado Windows→runnerLinux, par ICE selecionado, frames/pixels, quadro de texto e capturas desktop/celular. Watchdog de4min/8MiB observados limita somente o teste. Revalida reconexão controlada, fim pelo navegador, revogação, expiração reduzida e reuso recusado. Bytes dos navegadores não são faturamento, nem devem ser somados entre pontas. Consumo ausente do provedor permanece indisponível. Região permanente segue pendente externa, sem impedir o ensaio já autorizado.
+
+Prova histórica `62ebd6e` e seus arquivos permanecem intactos; não substituem a nova validação. `screen-release-gate` exige mídia do SHA final. Após ensaio, desligar runtime TURN e probe. Configuração privada já existente é reutilizada, sem pedir segredo novamente. Procedimento de publicação/recuperação e pendências em [revisao-publicacao-tela.md](revisao-publicacao-tela.md).
+
+## Registro histórico anterior ao perfil econômico
+
+As seções abaixo preservam diagnósticos e decisões dos ensaios anteriores. Seus limites30min/10min e alterações de encoder de teste foram **substituídos** pelo perfil acima; frases históricas “não executado” não descrevem o estado atual. Resultados e checks atuais ficam no PR, vinculados ao candidato. #42/#43 já foram publicados independentemente.
+
 ## Estado e limite de publicação
 
 O [PR #40](https://github.com/viniciusfs-seno/decifaz-hub/pull/40) permanece em rascunho, separado do acabamento #41 publicado na main 100dc1ace52e1bd39d10d1fe39bbc3697bc15ec9. Nesta rodada: **sem merge, migração remota ou frontend em produção**. Migração aditiva: 20261121020000_tela_por_link.sql, após 20261121010000.

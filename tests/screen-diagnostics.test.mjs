@@ -22,7 +22,7 @@ test('Diagnóstico de tela preserva apenas contagens/estados e classifica erros 
  assert.ok(!json.includes(sensitive));assert.ok(!json.includes('192.0.2.99'));assert.ok(!json.includes('candidate:'));assert.ok(!json.includes('sdp'))
 })
 
-test('Budget fictício limita encoder, acumula bytes observados e interrompe tracks por bytes ou prazo',async()=>{
+test('Budget fictício observa sem alterar encoder e interrompe tracks por bytes ou prazo',async()=>{
  for(const reason of ['observed-bytes','duration']){
   const timers=[],deadlines=[];let stopped=0,limited=0
   class Peer{
@@ -34,7 +34,7 @@ test('Budget fictício limita encoder, acumula bytes observados e interrompe tra
   }
   const sandbox={window:{RTCPeerConnection:Peer,dispatchEvent(){}},Event:class{},setTimeout:fn=>{deadlines.push(fn)},setInterval:fn=>{timers.push(fn);return 1},clearInterval(){}}
   vm.runInNewContext('('+installScreenDiagnostics.toString()+')({relay:true,budget:{maxMilliseconds:1000,maxBytes:'+(reason==='duration'?1000:100)+'}})',sandbox)
-  const p=new sandbox.window.RTCPeerConnection();await p.setLocalDescription();assert.equal(limited,1)
+  const p=new sandbox.window.RTCPeerConnection();await p.setLocalDescription();assert.equal(limited,0)
   await timers[0]();if(reason==='duration'){await timers[0]();assert.equal(sandbox.window.__screenBudgetProof().bytesSent,60);deadlines[0]()}
   assert.equal(sandbox.window.__screenBudgetProof().stopped,reason);assert.equal(p.connectionState,'closed');assert.equal(stopped,1)
  }

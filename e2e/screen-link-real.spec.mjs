@@ -18,6 +18,37 @@ const rpc=async(client,name,args)=>{const r=await client.rpc(name,args);if(r.err
 async function meeting(f){const m=randomUUID();await checked(f.owner.client.rpc('hub_save_project_meeting',{w:f.workspace,p:f.proposal,m,expected_revision:null,operation_id:randomUUID(),follow:false,body:{date:f.today,state:'Agendada',participants:'Sócios fictícios',agenda:'PAUTA INTERNA RESERVADA',summary:'ATA INTERNA RESERVADA',decisions:'',owner:'Marina fictícia',next:'',due:'',callUrl:''}}));return m}
 const secret=()=>randomBytes(32).toString('base64url')
 
+test('Tela econômica: navegador que ignora limites não deixa captura ou sessão ativa',async({browser})=>{
+ test.skip(process.env.HUB_REAL_E2E!=='1');test.setTimeout(90000);const f=await operationalFixture();await meeting(f)
+ const context=await browser.newContext()
+ try{
+  await context.addInitScript(session=>{localStorage.setItem('sb-127-auth-token',JSON.stringify(session));navigator.mediaDevices.getDisplayMedia=async()=>{const canvas=document.createElement('canvas');canvas.width=1920;canvas.height=1080;const stream=canvas.captureStream(30),track=stream.getVideoTracks()[0];track.applyConstraints=async()=>{};window.__ignoredProfileTrack=track;return stream}},f.owner.session)
+  const page=await context.newPage();await page.goto('/');await page.getByRole('navigation').getByRole('button',{name:'Projetos e entregas',exact:true}).click();await page.getByRole('button',{name:'Pedidos digitais · Horizonte',exact:true}).click();await recordTab(page,'Reuniões');await page.getByRole('button',{name:'Preparar / registrar ata',exact:true}).click();await page.getByRole('button',{name:'Compartilhar tela por link',exact:true}).click()
+  await expect(page.getByRole('status').filter({hasText:'Este navegador não confirmou o perfil econômico'})).toBeVisible();expect(await page.evaluate(()=>window.__ignoredProfileTrack.readyState)).toBe('ended')
+  expect(sql(`select count(*) from hub_private.screen_sessions where workspace_id='${f.workspace}'`)).toBe('0')
+ }finally{await context.close();await f.cleanup()}
+})
+
+test('Tela econômica: início concorrente respeita limite global, duração, idempotência e liberação',async()=>{
+ test.skip(process.env.HUB_REAL_E2E!=='1');test.setTimeout(90000)
+ const f=await operationalFixture(),other=await operationalFixture(),m=await meeting(f),otherMeeting=await meeting(other)
+ try{
+  const first={w:f.workspace,m,s:randomUUID(),credential:secret()},second={...first,s:randomUUID(),credential:secret()}
+  const result=await Promise.all([f.owner.client.rpc('hub_screen_start',first),f.second.client.rpc('hub_screen_start',second)])
+  expect(result.filter(r=>!r.error)).toHaveLength(1);expect(result.filter(r=>r.error)).toHaveLength(1)
+  const i=result.findIndex(r=>!r.error),winner=i===0?first:second,client=i===0?f.owner.client:f.second.client
+  const data=result[i].data
+  expect(Date.parse(data.ends_at)-Date.now()).toBeGreaterThan(280000);expect(Date.parse(data.ends_at)-Date.now()).toBeLessThanOrEqual(300000)
+  expect(Date.parse(data.invite_until)-Date.now()).toBeLessThanOrEqual(120000)
+  expect((await rpc(client,'hub_screen_start',winner)).ends_at).toBe(data.ends_at)
+  expect((await other.owner.client.rpc('hub_screen_start',{w:other.workspace,m:otherMeeting,s:randomUUID(),credential:secret()})).error?.message).toMatch(/^Limite de compartilhamento/)
+  sql(`update hub_private.screen_sessions set ends_at=clock_timestamp()+interval '2 seconds' where id='${winner.s}' and workspace_id='${f.workspace}'`)
+  await new Promise(r=>setTimeout(r,2200));expect((await rpc(client,'hub_screen_host',{s:winner.s})).state).toBe('ended')
+  const next=randomUUID();await rpc(other.owner.client,'hub_screen_start',{w:other.workspace,m:otherMeeting,s:next,credential:secret()});await rpc(other.owner.client,'hub_screen_host',{s:next,action:'stop'})
+  expect(sql(`select count(*) from hub_private.screen_sessions where workspace_id in ('${f.workspace}','${other.workspace}') and ended_at is null`)).toBe('0')
+ }finally{await f.cleanup();await other.cleanup()}
+})
+
 test('Tela: fonte encerrada durante a gravação e HTTP pendente não deixam captura ativa',async({browser})=>{
  test.skip(process.env.HUB_REAL_E2E!=='1');test.setTimeout(90000);const f=await operationalFixture();await meeting(f)
  try{for(const ended of [true,false]){
@@ -76,8 +107,8 @@ test('Tela: autorização, aprovação, expiração, encerramento, auditoria at�
   expect((await anon.rpc('hub_screen_relay',{s,credential,viewer})).error).toBeTruthy()
   const events=await checked(f.owner.client.from('hub_registry_events').select('action,before_record,after_record').eq('workspace_id',f.workspace).like('action','Compartilhamento de tela%'));expect(events).toHaveLength(2);expect(events.every(e=>e.before_record===null&&e.after_record===null)).toBe(true)
   const expired=randomUUID(),expiredToken=secret();await rpc(f.owner.client,'hub_screen_start',{...args,s:expired,credential:expiredToken});sql(`update hub_private.screen_sessions set invite_until=clock_timestamp()-interval '1 second' where id='${expired}'`);expect((await rpc(anon,'hub_screen_watch',{s:expired,credential:expiredToken,viewer:randomUUID(),display_name:'Fictício'})).state).toBe('unavailable')
-  sql(`update hub_private.screen_sessions set heartbeat=clock_timestamp()-interval '46 seconds' where id='${expired}'`);await rpc(f.owner.client,'hub_screen_start',{...args,s:randomUUID(),credential:secret()});const swept=await checked(f.owner.client.from('hub_registry_events').select('actor_id').eq('workspace_id',f.workspace).eq('action','Compartilhamento de tela encerrado automaticamente'));expect(swept).toHaveLength(1);expect(swept[0].actor_id).toBeNull()
-  const deactivated=randomUUID(),token=secret();await rpc(f.second.client,'hub_screen_start',{...args,s:deactivated,credential:token});await checked(f.owner.client.rpc('hub_update_member_active',{w:f.workspace,u:f.second.id,enabled:false,expected_revision:0}));expect((await rpc(anon,'hub_screen_watch',{s:deactivated,credential:token,viewer:randomUUID(),display_name:'Fictício'})).state).toBe('unavailable');expect((await rpc(f.second.client,'hub_screen_host',{s:deactivated})).state).toBe('ended');const automatic=await checked(f.owner.client.from('hub_registry_events').select('actor_id').eq('workspace_id',f.workspace).eq('action','Compartilhamento de tela encerrado automaticamente'));expect(automatic).toHaveLength(2);expect(automatic.every(e=>e.actor_id===null)).toBe(true)
+  sql(`update hub_private.screen_sessions set heartbeat=clock_timestamp()-interval '46 seconds' where id='${expired}'`);const replacement=randomUUID();await rpc(f.owner.client,'hub_screen_start',{...args,s:replacement,credential:secret()});const swept=await checked(f.owner.client.from('hub_registry_events').select('actor_id').eq('workspace_id',f.workspace).eq('action','Compartilhamento de tela encerrado automaticamente'));expect(swept).toHaveLength(1);expect(swept[0].actor_id).toBeNull()
+  await rpc(f.owner.client,'hub_screen_host',{s:replacement,action:'stop'});const deactivated=randomUUID(),token=secret();await rpc(f.second.client,'hub_screen_start',{...args,s:deactivated,credential:token});await checked(f.owner.client.rpc('hub_update_member_active',{w:f.workspace,u:f.second.id,enabled:false,expected_revision:0}));expect((await rpc(anon,'hub_screen_watch',{s:deactivated,credential:token,viewer:randomUUID(),display_name:'Fictício'})).state).toBe('unavailable');expect((await rpc(f.second.client,'hub_screen_host',{s:deactivated})).state).toBe('ended');const automatic=await checked(f.owner.client.from('hub_registry_events').select('actor_id').eq('workspace_id',f.workspace).eq('action','Compartilhamento de tela encerrado automaticamente'));expect(automatic).toHaveLength(2);expect(automatic.every(e=>e.actor_id===null)).toBe(true)
  }finally{await f.cleanup()}
 })
 

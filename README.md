@@ -115,3 +115,5 @@ Busca por registros autorizados, publicação e rotina inicial dos sócios: [Bus
 Central, preferências e processamento sem navegador: [roteiro funcional, configuração e recuperação](docs/avisos-agendados.md). Geração agendada e e-mail de produção permanecem desativados; testes somente com dados fictícios e Mailpit.
 
 Publicação futura com **somente avisos internos e e-mail desligado**: [roteiro único #42 → #43](docs/publicacao-avisos.md).
+
+Perfil econômico de tela por link (#40, rascunho): sessão5min, uma sessão simultânea no Hub/um espectador, captura até1280×720/5FPS e encoder até256kbit/s com leitura dos controles aceitos. Áudio não homologado/desativado. Homologação e limites em [compartilhamento de tela](docs/compartilhamento-tela.md); sem ativação em produção.
