@@ -27,6 +27,23 @@ test('CRM: busca/contagem/exportação completa acima de 1000, ordem estável, f
   await expect(page.getByRole('navigation',{name:'Páginas do CRM'})).toContainText('26–50 de 1005')
   await expect(page.getByLabel('Buscar leads')).toHaveValue('Volume')
   await expect(page.getByRole('button',{name:'Volume fictício 0025',exact:true})).toBeFocused()
+  // A refresh after returning must not unmount the focused row while its RPC is pending.
+  let release;const held=new Promise(resolve=>{release=resolve})
+  await page.route('**/rest/v1/rpc/hub_crm_page',async route=>{await held;await route.continue()},{times:1})
+  const refreshing=page.waitForRequest(r=>r.url().includes('/rpc/hub_crm_page'))
+  await page.evaluate(w=>{const channel=new BroadcastChannel('decifaz-work-'+w);channel.postMessage('changed');channel.close()},f.workspace)
+  await refreshing
+  try{await expect(page.getByRole('button',{name:'Volume fictício 0025',exact:true})).toBeFocused();await page.getByLabel('Buscar leads').focus()}finally{release()}
+  await expect(page.getByRole('navigation',{name:'Páginas do CRM'})).toContainText('26–50 de 1005')
+  await expect(page.getByLabel('Buscar leads')).toBeFocused()
+  await page.getByRole('button',{name:'Volume fictício 0025',exact:true}).focus()
+  await checked(f.admin.from('hub_leads').update({name:'Saiu do filtro fictício'}).eq('id',next.rows[0].id))
+  await page.evaluate(w=>{const channel=new BroadcastChannel('decifaz-work-'+w);channel.postMessage('changed');channel.close()},f.workspace)
+  await expect(page.getByRole('navigation',{name:'Páginas do CRM'})).toContainText('26–50 de 1004')
+  await expect(page.getByLabel('Buscar leads')).toBeFocused()
+  await checked(f.admin.from('hub_leads').update({name:'Volume fictício 0025'}).eq('id',next.rows[0].id))
+  await page.evaluate(w=>{const channel=new BroadcastChannel('decifaz-work-'+w);channel.postMessage('changed');channel.close()},f.workspace)
+  await expect(page.getByRole('navigation',{name:'Páginas do CRM'})).toContainText('26–50 de 1005')
   const download=page.waitForEvent('download');await page.getByRole('button',{name:'Exportar CRM CSV'}).click();let exported='';for await(const c of await(await download).createReadStream())exported+=c.toString()
   expect(exported.replace(/^\uFEFF/,'').split('\r\n')).toHaveLength(1006)
   await page.getByRole('navigation',{name:'Navegação principal'}).getByRole('button',{name:'Dashboard',exact:true}).click()

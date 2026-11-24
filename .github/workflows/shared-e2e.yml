@@ -10,7 +10,7 @@ permissions:
 
 jobs:
   ux-preview:
-    if: github.event_name == 'pull_request' && github.event.pull_request.head.repo.full_name == github.repository && github.head_ref == 'feat/ux-diaria'
+    if: github.event_name == 'pull_request' && github.event.pull_request.head.repo.full_name == github.repository && (github.head_ref == 'feat/ux-diaria' || github.head_ref == 'fix/retorno-foco-crm')
     runs-on: ubuntu-24.04
     timeout-minutes: 8
     env:

@@ -57,3 +57,9 @@ PR #44 foi publicado primeiro: migrações `20261123010000` → `20261123020000`
 Esta entrega de UX é somente frontend. Reconferir main/diff/SHA/checks finais, integrar o PR, aguardar Vercel READY e conferir o SHA no domínio principal. Não aplicar migração adicional nem publicar Edge. Smoke público de acesso/inputs e bundle; jornada autenticada é validada com fixtures isoladas no CI, sem simular um integrante real em produção.
 
 Recuperação de UX: restaurar o deployment do #44 acima, preservando as duas migrações financeiras, fotografias, RLS, auditorias, avisos internos e compartilhamento experimental. Não remover vínculos, ativar e-mail ou alterar SMTP. Publicação efetiva, SHAs e evidências finais ficam registrados no corpo do PR.
+
+## Retorno ao CRM durante atualização
+
+O CI da main após o #45 revelou uma corrida herdada: consultar novamente a mesma página removia a tabela e o botão que acabara de receber foco ao voltar da ficha. O teste original foi mantido e ampliado com uma RPC retida enquanto chega uma atualização de outra sessão. Durante atualização do mesmo recorte, as linhas permanecem montadas e a interface informa “Atualizando CRM”. Nova busca, filtro, página ou espaço não reutiliza linhas do recorte anterior; respostas antigas continuam descartadas. Se o registro focado sair do recorte, o foco volta para a busca, sem roubar foco de quem já escolheu outro controle.
+
+O frontend do #44 foi restaurado preventivamente enquanto esta correção é validada. Banco, snapshots, avisos, compartilhamento e e-mail desligado foram preservados. Republicar somente após checks do candidato corrigido e confirmar novamente domínio/SHA; após rollback da Vercel, conferir promoção explícita do novo deployment, pois o auto-assignment pode ficar desabilitado.
