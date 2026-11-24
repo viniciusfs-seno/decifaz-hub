@@ -37,9 +37,13 @@ test('Gerencial: período/CSV, fechamento concorrente, ações atômicas, histó
   await page.getByLabel('Responsável dos indicadores').selectOption('')
   for(const p of [page,other])await p.getByRole('navigation').getByRole('button',{name:'Revisão semanal',exact:true}).click()
   for(const p of [page,other]){await p.getByLabel('Resumo da semana').fill('Fechamento em duas sessões');await p.getByLabel('Decisões da semana').fill('Priorizar diagnóstico fictício')}
+  await other.getByLabel('Resumo da semana').fill('Rascunho da segunda sessão')
   await page.getByLabel('Origem da ação').selectOption(f.prospect);await page.getByLabel('Ação do fechamento').fill('Planejar a semana seguinte');await page.getByLabel('Responsável do fechamento').fill('Caio fictício');await page.getByRole('button',{name:'Adicionar ao plano do fechamento'}).click()
   await page.getByRole('button',{name:'Salvar fechamento semanal'}).click();await expect(page.getByText('Fechamento salvo com suas ações na mesma transação.')).toBeVisible()
   await other.getByRole('button',{name:'Salvar fechamento semanal'}).click();await expect(other.getByRole('alert')).toContainText('Outra sessão alterou')
+  await expect(other.getByLabel('Resumo da semana')).toHaveValue('Fechamento em duas sessões')
+  await other.getByRole('button',{name:'Recuperar meu rascunho para revisar',exact:true}).click()
+  await expect(other.getByLabel('Resumo da semana')).toHaveValue('Rascunho da segunda sessão')
   expect(await checked(f.admin.from('hub_weekly_closure_history').select('revision').eq('workspace_id',f.workspace))).toHaveLength(1)
   const params={w:f.workspace,start_on:weekStart(f.today),expected_revision:1,summary_text:'Fechamento API concorrente',decision_text:'Decisão',planned:[]}
   const results=await Promise.all([f.owner.client,f.second.client].map(c=>checked(c.rpc('hub_close_week',params))))

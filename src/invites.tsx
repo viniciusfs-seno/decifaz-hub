@@ -1,6 +1,8 @@
+import {WorkflowForm} from './workflow-form'
 import {useEffect,useState,type FormEvent} from 'react'
 import type {SupabaseClient} from '@supabase/supabase-js'
 import type {Role} from './access'
+import {Dialog} from './ui'
 
 const options:[Role,string][]=[['admin','Administração'],['commercial','Comercial'],['operations','Operação'],['finance','Financeiro']]
 const labels=(roles:Role[])=>options.filter(([role])=>roles.includes(role)).map(([,label])=>label).join(', ')
@@ -14,6 +16,7 @@ export function InviteManager({client,workspace,sendLink}:{client:SupabaseClient
  const [mail,setMail]=useState(true),[busy,setBusy]=useState(false)
  const [rows,setRows]=useState<Invite[]>([]),[loading,setLoading]=useState(true)
  const [error,setError]=useState(''),[notice,setNotice]=useState(''),[revision,refresh]=useState(0)
+ const [revokeId,setRevokeId]=useState<string>()
  useEffect(()=>{
   let current=true;setRows([]);setLoading(true)
   void client.rpc('hub_list_invites',{w:workspace}).then(({data,error})=>{
@@ -34,7 +37,7 @@ export function InviteManager({client,workspace,sendLink}:{client:SupabaseClient
   catch{setError('Convite pendente. O envio do link está indisponível; tente enviar novamente ou compartilhe o link do convite.')}
  }
  async function create(event:FormEvent){
-  event.preventDefault();setBusy(true);setError('');setNotice('')
+  event.preventDefault();if(!roles.length){setError('Selecione pelo menos um papel para o convite.');return}setBusy(true);setError('');setNotice('')
   try{
    const {data,error}=await client.rpc('hub_create_invite',{w:workspace,e:email,r:roles})
    if(error||!data)throw Error()
@@ -52,18 +55,18 @@ export function InviteManager({client,workspace,sendLink}:{client:SupabaseClient
  }
  async function revoke(id:string){
   setBusy(true);setError('');setNotice('')
-  try{const {data,error}=await client.rpc('hub_revoke_invite',{i:id});if(error||data!==true)throw Error();setNotice('Convite revogado.');refresh(n=>n+1)}
+  try{const {data,error}=await client.rpc('hub_revoke_invite',{i:id});if(error||data!==true)throw Error();setNotice('Convite revogado.');setRevokeId(undefined);refresh(n=>n+1)}
   catch{setError('Não foi possível revogar. Atualize a lista para conferir o estado do convite.')}
   finally{setBusy(false)}
  }
  return <section aria-labelledby="invite-heading"><h2 id="invite-heading">Convites</h2>
   <p>Validade de sete dias. O destinatário precisa entrar com o e-mail verificado e aceitar. Convite pendente não concede acesso.</p>
-  <form className="card panel" aria-label="Novo convite" onSubmit={create}><fieldset disabled={busy}>
+  <WorkflowForm className="card panel" aria-label="Novo convite" onSubmit={create}><fieldset disabled={busy}>
    <label>E-mail do convite<input type="email" required maxLength={254} value={email} onChange={e=>setEmail(e.target.value)}/></label>
-   <div className="team-roles">{options.map(([role,label])=><label key={role}><input type="checkbox" checked={roles.includes(role)} onChange={e=>setRoles(e.target.checked?[...roles,role]:roles.filter(value=>value!==role))}/>{label}</label>)}</div>
+   <fieldset className="team-roles"><legend>Papéis do convite · selecione um ou mais</legend>{options.map(([role,label])=><label key={role}><input type="checkbox" checked={roles.includes(role)} onChange={e=>setRoles(e.target.checked?[...roles,role]:roles.filter(value=>value!==role))}/>{label}</label>)}</fieldset>
    <label className="invite-mail"><input type="checkbox" checked={mail} onChange={e=>setMail(e.target.checked)}/>Enviar link de acesso por e-mail</label>
-   <button className="button primary" disabled={!roles.length}>Criar convite</button>
-  </fieldset></form>
+   <button className="button primary" disabled={busy}>Criar convite</button>
+  </fieldset></WorkflowForm>
   <button className="button compact" disabled={busy||loading} onClick={()=>{setError('');refresh(n=>n+1)}}>Atualizar convites</button>
   {error&&<p role="alert">{error}</p>}{notice&&<p role="status">{notice}</p>}
   {loading&&<p role="status">Carregando convites…</p>}
@@ -73,8 +76,9 @@ export function InviteManager({client,workspace,sendLink}:{client:SupabaseClient
    <p>Válido até {new Date(row.expires_at).toLocaleString('pt-BR')}{row.acceptance_outcome==='existing_member'?' · Vínculo existente preservado':''}</p>
    {row.state==='pending'&&<div className="actions"><button className="button" disabled={busy} onClick={()=>{setBusy(true);setError('');setNotice('');void deliver(row.id).finally(()=>setBusy(false))}}>Enviar link</button>
     <button className="button" disabled={busy} onClick={()=>void navigator.clipboard.writeText(new URL('/?convite='+row.id,location.origin).href).then(()=>setNotice('Link do convite copiado.'),()=>setError('Não foi possível copiar o link.'))}>Copiar link do convite</button>
-    <button className="button" disabled={busy} onClick={()=>void revoke(row.id)}>Revogar convite</button></div>}
+    <button className="button danger" disabled={busy} onClick={()=>setRevokeId(row.id)}>Revogar convite</button></div>}
   </article>)}
+ {revokeId&&<Dialog title="Revogar convite pendente?" onClose={()=>{if(!busy)setRevokeId(undefined)}}><div className="dialog-body"><p>O convite deixará de permitir aceite. Esta ação não remove contas, vínculos ou papéis já existentes.</p>{error&&<p role="alert">{error}</p>}</div><div className="dialog-foot"><button type="button" className="button" disabled={busy} onClick={()=>setRevokeId(undefined)}>Manter convite</button><button type="button" className="button danger" disabled={busy} onClick={()=>void revoke(revokeId)}>Confirmar revogação</button></div></Dialog>}
  </section>
 }
 

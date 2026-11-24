@@ -12,3 +12,9 @@ dist/
 *.tsbuildinfo
 /.validation/
 /supabase/functions/hub-workspaces-legacy-test/
+*.log
+/.cache/
+/coverage/
+/blob-report/
+/test-artifacts/
+/.impeccable/config.local.json

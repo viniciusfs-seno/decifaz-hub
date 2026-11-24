@@ -36,10 +36,10 @@
 .shared-app .op-filters {display:grid;grid-template-columns:repeat(auto-fit,minmax(min(100%,190px),1fr));align-items:end}
 .shared-app .op-filters label {min-width:0}
 .shared-app .view-hint {font-size:.875rem;line-height:1.55;max-width:70ch;padding-bottom:8px}
-.shared-app .nav-group h2 {font-size:.75rem;letter-spacing:.04em}
+.shared-app .nav-group h2 {font-size:.8125rem;letter-spacing:.04em}
 .shared-app details.nav-group>summary {list-style:none;display:flex;align-items:center;justify-content:space-between;gap:8px;min-height:40px;padding-inline:6px;color:#bdc8df;cursor:pointer;border-radius:8px}
 .shared-app details.nav-group>summary::-webkit-details-marker {display:none}
-.shared-app details.nav-group>summary h2 {padding:0;font-size:.75rem;margin:0}
+.shared-app details.nav-group>summary h2 {padding:0;font-size:.8125rem;margin:0}
 .shared-app details.nav-group>summary svg {transform:rotate(-90deg)}
 .shared-app details.nav-group[open]>summary svg {transform:none}
 .shared-app .nav-group button {min-height:40px;font-size:.875rem;line-height:1.4}
@@ -124,7 +124,7 @@
  .day-slices span {font-size:.8125rem;line-height:1.3}
  .day-reference {flex-wrap:wrap;gap:4px}
  .shared-app .op-queue button {min-height:92px}
- .shared-app .op-queue button>.tag {max-width:110px;font-size:.75rem}
+ .shared-app .op-queue button>.tag {max-width:110px;font-size:.8125rem}
  .shared-app .client-presentation .team-roles {grid-template-columns:minmax(0,1fr)}
  .meeting-editor form>.actions>.button {flex:1}
  .meeting-record .actions>.button {flex:1}
@@ -154,3 +154,45 @@
 .financial-week .record-summary dd{white-space:nowrap;font-variant-numeric:tabular-nums}
 .financial-week .toolbar .field{min-width:0;flex:1}
 @media(max-width:760px){.financial-week .record-summary{grid-template-columns:repeat(2,minmax(0,1fr))}.financial-week .toolbar{display:flex;flex-direction:column;align-items:stretch}.financial-week .toolbar .field{width:100%;flex:0 0 auto}.financial-week .toolbar>button{width:100%}}
+.dialog-content{display:contents}
+.discard-confirmation{padding:24px;display:grid;gap:16px}
+.workflow-form{min-width:0;--form-error-ink:#974f3d;--form-error-paper:#f8eae5}
+:root[data-theme=dark] .workflow-form{--form-error-ink:#ffd0c2;--form-error-paper:#56382f}
+.shared-app .workflow-form :is(.fields,.pilot-fields){grid-template-columns:minmax(0,1fr);gap:18px}
+.shared-app .workflow-form .form-pair{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:16px}
+.workflow-form :is(input,textarea,select){scroll-margin-block:100px}
+.workflow-form>.form-errors{margin:16px 18px}
+.form-errors{border:1px solid var(--form-error-ink);border-radius:8px;background:var(--form-error-paper);color:var(--ink);padding:14px}
+.form-errors ul{padding-left:20px;margin:8px 0 0}
+.form-errors .text-button{text-align:left;text-decoration:underline;min-height:32px}
+.field-error{display:block;font-size:.875rem;font-weight:600;line-height:1.5;color:var(--form-error-ink);margin-block:6px}
+.field-help,.field label small{font-size:.8125rem;font-weight:400;color:var(--muted)}
+.shared-app .workflow-form :is(label,.field){font-size:.875rem;line-height:1.5;min-width:0}
+.workflow-form .field>label{margin:0}
+.workflow-form label:has(>input[type=checkbox]){display:flex;align-items:flex-start;gap:10px;min-height:44px;padding-block:8px}
+.workflow-form input:is([type=checkbox],[type=radio]){min-width:20px;min-height:20px;accent-color:var(--primary);flex:none}
+.workflow-form [aria-invalid=true]{border-color:var(--form-error-ink);outline:1px solid var(--form-error-ink)}
+.option-group{margin:0;padding:0;border:0;min-width:0}
+.option-group legend{font-size:.875rem;font-weight:600;margin-bottom:8px}
+.option-group>div{display:flex;flex-wrap:wrap;gap:8px}
+.option-group label{display:flex;align-items:center;gap:8px;padding:10px 12px;border:1px solid var(--line);border-radius:8px;min-height:44px;cursor:pointer}
+.option-group label:has(:checked){background:var(--soft);border-color:var(--accent)}
+.workflow-form :is(button,input,select,textarea):focus-visible,.option-group label:has(:focus-visible){outline:2px solid var(--accent);outline-offset:3px}
+.shared-app .workflow-form .actions{gap:12px;margin-top:16px}
+.workflow-form .dialog-foot{padding-bottom:max(14px,env(safe-area-inset-bottom))}
+@media(max-width:700px){.shared-app .workflow-form .form-pair{grid-template-columns:minmax(0,1fr)}.option-group>div{display:grid;grid-template-columns:repeat(2,minmax(0,1fr))}.workflow-form .dialog-foot .button{min-height:44px}.discard-confirmation .actions{display:grid}.shared-app .workflow-form :is(input:not([type=checkbox]):not([type=radio]),select,textarea){font-size:1rem}}
+@media(prefers-reduced-motion:reduce){.portal-disclosure summary svg{transition:none}}
+.secondary-fields{border-top:1px solid var(--line);padding-block:8px}
+.secondary-trigger{display:flex;align-items:center;justify-content:space-between;gap:16px;width:100%;background:none;color:var(--ink);border:0;text-align:left;min-height:48px;padding:8px 0;font:inherit;font-weight:600}
+.secondary-trigger[aria-expanded=true] svg{transform:rotate(180deg)}
+.secondary-fields>div{padding-block:12px}
+.secondary-fields>div[hidden]{display:none}
+.draft-recovery{border:1px solid var(--line);padding:16px;display:grid;gap:12px;border-radius:8px;background:var(--soft)}
+.shared-app .toolbar .search:has(>span){display:grid;position:relative;padding:0;border:0;background:none;gap:6px}
+.shared-app .toolbar .search>span{font-size:.875rem;font-weight:600}
+.shared-app .toolbar .search>svg{display:none}
+.shared-app .toolbar .search>input{width:100%;border:1px solid var(--line);border-radius:8px;background:var(--paper);padding:10px 12px}
+.field-heading{display:flex;align-items:baseline;flex-wrap:wrap;gap:4px}
+.field-heading>label{font-weight:600}
+.field-heading>small{font-size:.8125rem;font-weight:400;color:var(--muted)}
+.toolbar .field-heading>small{display:none}

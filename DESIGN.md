@@ -183,6 +183,8 @@ Card é uma unidade de conteúdo, não uma maneira de dar margem a todo bloco. F
 
 Diálogo é apropriado para edição com foco protegido e confirmação; não é a resposta padrão para cada detalhe. `Dialog` usa o elemento nativo, nome acessível, Escape e retorno do foco. Mensagens informam o que falhou e a ação possível. Confirmações de aceite, baixa e alteração de papéis preservam suas consequências e auditoria.
 
+`WorkflowForm` centraliza validação no blur e no envio, erro associado ao controle e resumo com atalhos. `SecondaryFields` mantém detalhes opcionais montados sem aninhar accordions; `DraftRecovery` permite recuperar a edição anterior depois de conferir a revisão atual. Diálogos confirmam descarte somente quando há edição pendente; salvamento e retorno ao estado inicial liberam o fechamento. Formulários usam uma coluna e pares explícitos, mantendo uma ação primária por tarefa. Contratos, obrigações e fichas mantêm os contratos do servidor; recolher não equivale a remover dados. Procedimento e cobertura: `docs/ux-diaria.md`.
+
 ## Do's and Don'ts
 
 ### Do:

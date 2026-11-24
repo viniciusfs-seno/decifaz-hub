@@ -17,7 +17,7 @@ test('Atividades: conclusão/follow-up atômicos, duas sessões, revisão, isola
   await other.getByRole('button',{name:'Minhas atividades',exact:true}).click();await expect(other.getByRole('button',{name:'Contato de rotina fictício',exact:true})).toHaveCount(0)
   await other.getByRole('button',{name:'Agenda do espaço',exact:true}).click()
   await page.getByRole('article').filter({hasText:'Contato de rotina fictício'}).getByRole('button',{name:'Editar acompanhamento',exact:true}).click()
-  const dialog=page.getByRole('dialog');await dialog.getByRole('combobox',{name:/Situação da atividade/}).selectOption('Concluída')
+  const dialog=page.getByRole('dialog');await dialog.getByRole('radio',{name:'Concluída',exact:true}).check()
   await dialog.getByLabel('Resultado da atividade',{exact:true}).fill('Conversa fictícia registrada; retorno combinado.')
   await dialog.getByLabel('Criar próximo acompanhamento nesta conclusão').check()
   await dialog.getByLabel(/^Título do próximo acompanhamento/).fill('Retorno fictício confirmado')

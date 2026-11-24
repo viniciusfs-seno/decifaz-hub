@@ -1,3 +1,4 @@
+import {WorkflowForm} from './workflow-form'
 import {MemberLabelEditor,type MemberLabel} from './member-label-editor'
 import {Disclosure} from './portal-patterns'
 import {norm} from './domain'
@@ -79,6 +80,7 @@ function MemberEditor({member,save,changeActive,identification}:{identification:
  const [error,setError]=useState('')
  const [notice,setNotice]=useState('')
  async function persist(stateChange=false){
+  if(!stateChange&&!selected.length){setError('Selecione pelo menos um papel. Para remover acesso, use Desativar integrante.');return}
   setBusy(true);setError('');setNotice('')
   try{
    const result=await (stateChange?changeActive(!active,revision):save(selected,revision))
@@ -89,19 +91,19 @@ function MemberEditor({member,save,changeActive,identification}:{identification:
   finally{setBusy(false);setConfirm(false)}
  }
  function submit(event:FormEvent){event.preventDefault();void persist()}
- return <><form className="card panel" aria-label={'Papéis de '+member.email} onSubmit={submit}>
+ return <><WorkflowForm className="card panel" aria-label={'Papéis de '+member.email} onSubmit={submit}>
   <h2>{member.displayLabel||member.email}</h2>{member.displayLabel&&<p className="muted">{member.email}</p>}{identification}
   <p className="member-state" data-active={active}>Estado: <strong>{active?'Ativo':'Desativado'}</strong></p>
   <p className="view-hint">{active?'Acesso liberado conforme os papéis abaixo.':'Sem acesso a este espaço. Reativar conserva os papéis registrados.'}</p>
   <fieldset disabled={busy||Boolean(conflict)}><legend>{conflict?'Sua seleção desatualizada':'Papéis deste integrante'}</legend>
    <div className="team-roles">{options.map(([role,label])=><label key={role}><input type="checkbox" checked={selected.includes(role)} onChange={e=>{setError('');setNotice('');setSelected(e.target.checked?[...selected,role]:selected.filter(value=>value!==role))}}/>{label}</label>)}</div>
-   <button className="button primary" disabled={selected.length===0}>{busy?'Salvando…':'Salvar papéis'}</button>
+   <button className="button primary" disabled={busy}>{busy?'Salvando…':'Salvar papéis'}</button>
    <button type="button" className="button" onClick={()=>setConfirm(true)}>{active?'Desativar integrante':'Reativar integrante'}</button>
   </fieldset>
   {conflict&&<div><p>Papéis atuais: {options.filter(([role])=>conflict.roles.includes(role)).map(([,label])=>label).join(', ')}.</p><p>Estado atual: {conflict.active?'Ativo':'Desativado'}.</p>
    <button type="button" className="button" onClick={()=>{setSelected(conflict.roles);setRevision(conflict.revision);setActive(conflict.active);setConflict(undefined);setError('');setNotice('Revise a seleção antes de salvar.')}}>Revisar a partir dos papéis atuais</button></div>}
   {error&&<p role="alert">{error}</p>}{notice&&<p role="status">{notice}</p>}
- </form>{confirm&&<Dialog title={active?'Desativar integrante?':'Reativar integrante?'} subtitle={member.email} onClose={()=>{if(!busy)setConfirm(false)}}>
+ </WorkflowForm>{confirm&&<Dialog title={active?'Desativar integrante?':'Reativar integrante?'} subtitle={member.email} onClose={()=>{if(!busy)setConfirm(false)}}>
   <div className="dialog-body"><p>{active?'O acesso deste integrante será bloqueado somente neste espaço, inclusive nas próximas requisições de uma sessão aberta.':'O acesso a este espaço será restaurado conforme os papéis registrados.'}</p><p>A conta Auth, o histórico e os vínculos em outros espaços serão preservados. Seleções de papéis ainda não salvas serão descartadas.</p></div>
   <div className="dialog-foot"><button type="button" className="button" disabled={busy} onClick={()=>setConfirm(false)}>Cancelar</button><button type="button" className="button primary" disabled={busy} onClick={()=>void persist(true)}>{busy?'Salvando…':active?'Confirmar desativação':'Confirmar reativação'}</button></div>
  </Dialog>}</>
