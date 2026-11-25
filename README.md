@@ -129,4 +129,4 @@ Posição atual separada de fotografias completas e imutáveis, detalhes paginad
 
 ## Melhorias comerciais em homologação
 
-Cadastro por identificadores estáveis, referências IBGE, CEP opcional e preservação explícita de legados: [roteiro e contratos](docs/melhorias-comerciais.md). Pilha em rascunho; nenhuma ativação em produção nesta rodada.
+As 14 melhorias comerciais incluem classificações por identificador, municípios IBGE, CEP opcional, telefone brasileiro/internacional, verificação cadastral, presença digital com evidências e registro transacional de interações e acompanhamentos: [matriz, fluxos e publicação/recuperação](docs/melhorias-comerciais.md). Pilha #47 → #48 → #49 em rascunho; nenhuma ativação em produção nesta rodada.

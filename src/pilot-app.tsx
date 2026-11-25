@@ -1,5 +1,6 @@
+import {CommercialInteraction,interactionResults} from './commercial-interaction'
 import {TriageHistory} from './triage-history'
-import {useCommercialClassifications} from './commercial-classifications'
+import {verificationOptions,useCommercialClassifications} from './commercial-classifications'
 import {ClassificationMaintenance} from './classification-maintenance'
 import {WorkflowForm} from './workflow-form'
 import {FinancialWeek} from './financial-week'
@@ -8,7 +9,7 @@ import {GlobalSearch,type SearchRecord} from './global-search'
 import {SessionDrafts} from './session-drafts'
 import {ActivityEditor} from './activity-editor'
 import {LeadImport} from './lead-import'
-import {ContactPlanner,ProspectingQueue} from './prospecting'
+import {ProspectingQueue} from './prospecting'
 import {ProjectMeetings} from './project-meetings'
 import {DueCenter,DueDashboard,type DueRow} from './due-center'
 import {NoticeProcessing} from './notice-processing'
@@ -57,7 +58,7 @@ async function sendInviteLink(email:string,id:string){
 
 type Workspace={id:string;name:string;role:Role;roles?:Role[]}
 type Lead=PilotLead
-type Interaction={id:string;body:string;created_at:string}
+type Interaction={id:string;body:string;created_at:string;author_id:string;kind:string|null;occurred_on:string|null;result_code:string|null;reason:string|null}
 type Task={id:string;title:string;status:string;due_on:string|null;owner:string}
 const empty={name:'',segment:'',city:'',notes:''}
 
@@ -281,7 +282,7 @@ function SharedCrm(){
  useEffect(()=>{
   if(!workspace||!selected)return
   let current=true
-  const history=client!.from('hub_interactions').select('id,body,created_at').eq('workspace_id',workspace).eq('lead_id',selected).order('created_at',{ascending:false})
+  const history=client!.from('hub_interactions').select('id,body,created_at,author_id,kind,occurred_on,result_code,reason').eq('workspace_id',workspace).eq('lead_id',selected).order('created_at',{ascending:false})
   const activities=client!.from('hub_activities').select('id,title,status,due_on,owner').eq('workspace_id',workspace).eq('lead_id',selected).order('due_on')
   void Promise.all([history,activities,loadMeetings(client!,workspace,selected)]).then(([h,a,m])=>{
    if(!current)return
@@ -323,6 +324,7 @@ function SharedCrm(){
    setBusy(false)
   }
  }
+ const leadOperation=useRef({id:crypto.randomUUID(),payload:''})
  const currentLead=leads.find(lead=>lead.id===selected)
  const selectedTriage=triages.find(row=>row.lead_id===selected)
  const lead=currentLead?fullLead(currentLead):undefined
@@ -437,14 +439,14 @@ function SharedCrm(){
    {page==='ficha'&&showForm&&<>
     <div className="dossier-context"><h1 tabIndex={-1}>Ficha do estabelecimento</h1><button className="button" onClick={()=>{setShowForm(false);setSelected('');setEditor(null);go(returnPage)}}>← Voltar {returnPage==='agenda'?'à agenda':returnPage==='indicadores'?'aos indicadores':returnPage==='central'?'à Central comercial':returnPage==='reunioes'?'às reuniões':returnPage==='triagem'?'à triagem':returnPage==='dashboard'?'ao Dashboard':'à lista'}</button><span>{lead?.name??'Novo estabelecimento'} · {lead?.stage??'Cadastro'}</span></div>
     <details className="card panel op-basics" open={!selected}><summary><h2>{selected?'Editar dados do estabelecimento':'Cadastrar estabelecimento'}</h2></summary>
-     <LeadDetails classifications={classifications.items} people={people} key={workspace+':'+selected} lead={currentLead} solutions={catalog} allowed={can(role,'commercial',true)} save={async(body,expected)=>{const r=await client!.rpc('hub_save_lead',{w:workspace,l:selected||null,expected_revision:expected,body});if(r.error)return;return r.data}} onSaved={item=>{setNotice('Ficha salva.');setLeads(rows=>[...rows.filter(l=>l.id!==item.id),item]);select(item);reload(v=>v+1)}}/>
+     <LeadDetails classifications={classifications.items} people={people} key={workspace+':'+selected} lead={currentLead} solutions={catalog} allowed={can(role,'commercial',true)} save={async(body,expected)=>{const payload=JSON.stringify([workspace,selected,expected,body]);if(leadOperation.current.payload&&leadOperation.current.payload!==payload)leadOperation.current.id=crypto.randomUUID();leadOperation.current.payload=payload;const r=await client!.rpc('hub_save_commercial_lead',{w:workspace,l:selected||null,expected_revision:expected,operation_id:leadOperation.current.id,body});if(r.error)return;return r.data}} onSaved={item=>{setNotice('Ficha salva.');setLeads(rows=>[...rows.filter(l=>l.id!==item.id),item]);select(item);reload(v=>v+1)}}/>
     </details>
    {lead&&<section className="card panel">
     <div className="op-dossier-head"><div><h2>Jornada comercial de {lead.name}</h2><p>{lead.segment||'Segmento não informado'} · {lead.city||'Cidade não informada'}</p></div><div className="actions"><span className="tag">{lead.stage}</span><Priority triage={selectedTriage&&fullTriage(selectedTriage)}/></div></div>
-    <section className="next-action-card" aria-label="Próxima ação do estabelecimento"><h3>Próxima ação</h3><strong>{lead.next||'Defina a próxima ação'}</strong><p>{lead.owner||'Sem responsável'} · {lead.due?dateLabel(lead.due):'Sem prazo registrado'}</p><button className="button compact" disabled={busy||loadedLead!==selected} onClick={()=>document.querySelector<HTMLElement>('.contact-planner textarea')?.focus()}>{loadedLead!==selected?'Carregando abordagem…':'Registrar abordagem ou planejar contato'}</button></section>
+    <section className="next-action-card" aria-label="Próxima ação do estabelecimento"><h3>Próxima ação</h3><strong>{lead.next||'Defina a próxima ação'}</strong><p>{memberOwner(lead.owner,people,currentLead?.profile.owner_id)||'Sem responsável'} · {lead.due?dateLabel(lead.due):'Sem prazo registrado'}</p><button className="button compact" disabled={busy||loadedLead!==selected} onClick={()=>document.querySelector<HTMLElement>('.contact-planner textarea')?.focus()}>{loadedLead!==selected?'Carregando abordagem…':'Registrar abordagem ou planejar contato'}</button></section>
     <div className="op-journey" aria-label="Etapas da jornada">{[['Cadastro',true],['Triagem',!!selectedTriage?.completed],['Reunião',meetings.some(m=>m.state==='Realizada')],['Proposta',proposals.some(p=>p.leadId===lead.id)],['Projeto',projects.some(p=>p.lead_id===lead.id)],['Pós-venda',allActivities.some(a=>a.lead_id===lead.id&&a.support)]].map(([label,done])=><span key={String(label)} data-done={done}>{done?'✓':'○'} {label}</span>)}</div>
-    <dl className="lead-contact-summary"><div><dt>Contato no estabelecimento</dt><dd>{lead.contact||'Não informado'}{lead.contactInfo?' · '+lead.contactInfo:''}</dd></div><div><dt>Canais</dt><dd>{[lead.whatsapp,lead.instagram,lead.website,lead.other].filter(Boolean).join(' · ')||'Não informados'}</dd></div><div><dt>Localização</dt><dd>{[lead.address,lead.region,lead.city].filter(Boolean).join(' · ')||'Não informada'}</dd></div><div><dt>Origem e verificação</dt><dd>{[lead.origin,lead.verification].filter(Boolean).join(' · ')||'Não informadas'}</dd></div></dl>
-    {lead.needs&&<p>{lead.needs}</p>}
+    <dl className="lead-contact-summary"><div><dt>Contato no estabelecimento</dt><dd>{lead.contact||'Não informado'}{lead.contactInfo?' · '+lead.contactInfo:''}</dd></div><div><dt>Canais</dt><dd>{[lead.whatsapp,lead.instagram,lead.website,lead.other].filter(Boolean).join(' · ')||'Não informados'}</dd></div><div><dt>Localização</dt><dd>{[currentLead?.profile.street,currentLead?.profile.number,currentLead?.profile.complement,currentLead?.profile.district,lead.city,currentLead?.profile.uf,currentLead?.profile.postal_code].filter(Boolean).length>1?[currentLead?.profile.street,currentLead?.profile.number,currentLead?.profile.complement,currentLead?.profile.district,lead.city,currentLead?.profile.uf,currentLead?.profile.postal_code].filter(Boolean).join(' · '):[lead.address,lead.region,lead.city].filter(Boolean).join(' · ')||'Não informada'}</dd></div><div><dt>Origem e verificação</dt><dd>{[lead.origin,currentLead?.profile.origin_other,verificationOptions.find(([key])=>key===currentLead?.profile.verification_code)?.[1]??lead.verification].filter(Boolean).join(' · ')||'Não informadas'}</dd></div></dl>
+    {lead.needs&&<p>{lead.needs}</p>}<p className="view-hint">Fluxo: pesquisa e cadastro → triagem → abordagem e sondagem → reunião e proposta → decisão e acompanhamento. As etapas do funil permanecem as mesmas.</p>
 
     <div className="actions">
      <button className="button" disabled={busy||!can(role,'commercial',true)} onClick={()=>setEditor('triage')}>{selectedTriage?'Editar triagem':'Iniciar triagem'}</button>
@@ -452,12 +454,12 @@ function SharedCrm(){
      <button className="button" disabled={busy||!can(role,'commercial',true)} onClick={()=>setProposalModal({leadId:lead.id})}>Nova proposta</button>
     </div>
     <div className="op-dossier-links">{proposals.filter(p=>p.leadId===lead.id).map(p=><button className="card" key={p.id} onClick={()=>setProposalModal({id:p.id})}><small>Proposta · versão {p.version}</small><b>{p.title}</b><span>{p.status}</span></button>)}{projects.filter(p=>p.lead_id===lead.id).map(p=><button className="card" key={p.proposal_id} onClick={()=>openProject(p.proposal_id)}><small>Projeto · {p.status}</small><b>{p.approved.title}</b><span>{p.owner||'Sem responsável'} · {dateLabel(p.due_on??'')}</span><span>{allActivities.filter(a=>a.project_proposal_id===p.proposal_id&&a.support).length} chamados de pós-venda</span></button>)}</div>
-    {loadedLead===selected&&meetings.map(item=><div key={item.id} className="list-item"><div><b>{dateLabel(item.date)} · {item.state}</b><p>{item.summary||item.participants}</p></div><button className="button" disabled={busy} onClick={()=>{if(item.projectId)openProject(item.projectId,'reunioes');else{setMeeting(item);setEditor('meeting')}}}>{item.projectId?'Abrir reunião no projeto':'Editar reunião'}</button>{!item.projectId&&item.state==='Realizada'&&<button className="button" disabled={busy||!can(role,'commercial',true)} onClick={()=>setProposalModal({leadId:lead.id,meetingId:item.id})}>Criar proposta</button>}</div>)}
+    {loadedLead===selected&&meetings.map(item=><div key={item.id} className="list-item"><div><b>{dateLabel(item.date)} · {item.state}</b><p>{item.summary||item.participants}</p>{item.commercial_result&&<p>Resultado comercial: {item.commercial_result.summary} · {interactionResults.find(([k])=>k===item.commercial_result?.outcome)?.[1]}</p>}</div><button className="button" disabled={busy} onClick={()=>{if(item.projectId)openProject(item.projectId,'reunioes');else{setMeeting(item);setEditor('meeting')}}}>{item.projectId?'Abrir reunião no projeto':'Editar reunião'}</button>{!item.projectId&&item.state==='Realizada'&&<button className="button" disabled={busy||!can(role,'commercial',true)} onClick={()=>setProposalModal({leadId:lead.id,meetingId:item.id})}>Criar proposta</button>}</div>)}
    </section>}
-   {selected&&currentLead&&loadedLead===selected&&<ContactPlanner key={workspace+selected} client={client!} workspace={workspace} lead={currentLead} allowed={can(role,'commercial',true)} saved={changed}/>}
+   {selected&&currentLead&&loadedLead===selected&&<CommercialInteraction people={people} classifications={classifications.items} meetings={meetings.filter(m=>!m.projectId||can(role,'projects',true))} admin={administrator} key={workspace+selected} client={client!} workspace={workspace} lead={currentLead} allowed={can(role,'commercial',true)} saved={changed}/>}
    {selected&&loadedLead===selected&&<div className="dashboard-grid">
     <section className="card panel"><h2>Histórico</h2>
-     {interactions.length?<ul>{interactions.map(entry=><li key={entry.id}>{entry.body} · {dateLabel(entry.created_at)}</li>)}</ul>:<p>Sem interações registradas.</p>}
+     {interactions.length?<ul>{interactions.map(entry=><li key={entry.id}>{entry.body} · {entry.result_code?interactionResults.find(([k])=>k===entry.result_code)?.[1]:'Registro legado'}{entry.reason?' · Motivo: '+entry.reason:''} · {entry.occurred_on?'Ocorrido em '+dateLabel(entry.occurred_on):'Data efetiva não informada'} · registrado em {dateLabel(entry.created_at)} · {people.find(p=>p.id===entry.author_id)?.name??'Integrante (identificação indisponível)'}</li>)}</ul>:<p>Sem interações registradas.</p>}
     </section>
     <section className="card panel"><h2>Atividades</h2><fieldset disabled={!can(role,'commercial',true)}>
      <button className="button" disabled={busy} onClick={()=>setActivityEditor({leadId:selected})}>Criar atividade</button>
