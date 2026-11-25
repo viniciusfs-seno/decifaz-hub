@@ -50,6 +50,8 @@
 .shared-app .record-tabs button {min-height:44px;font-size:.875rem}
 .shared-app .record-summary dt {font-size:.8125rem}
 .shared-app .record-summary dd {font-size:.9375rem}
+.shared-app .commercial-summary{grid-template-columns:repeat(2,minmax(0,1fr));margin-block:18px}
+@media(max-width:760px){.shared-app .commercial-summary{grid-template-columns:minmax(0,1fr)}}
 .shared-app .record-panel>.panel {margin:16px}
 .shared-app .portal-disclosure {border-radius:12px}
 .shared-app .portal-disclosure>summary strong {font-size:.9375rem}
