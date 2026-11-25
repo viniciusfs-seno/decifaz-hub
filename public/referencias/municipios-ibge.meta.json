@@ -1,0 +1,7 @@
+{
+  "source": "https://servicodados.ibge.gov.br/api/v1/localidades/municipios",
+  "retrievedAt": "2026-11-25T00:04:24.932Z",
+  "count": 5571,
+  "sha256": "aa3245bb369d484d339d839c209f5c5d953001f26435f76dc2a1a087a84b25a0",
+  "usage": "Nomes, códigos e UF oficiais; não contém dados de empresas."
+}

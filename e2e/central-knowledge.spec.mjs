@@ -46,7 +46,7 @@ test('Central filtra responsável, prazo e situação, limpa e abre as fichas',a
  await expect(page.getByRole('heading',{name:'Jornada comercial de Cliente central',exact:true})).toBeVisible()
  await page.locator('summary').filter({hasText:'Editar dados do estabelecimento'}).click()
  await expect(page.getByRole('heading',{name:'Editar dados do estabelecimento',exact:true})).toBeVisible()
- await expect(page.getByLabel('Nome',{exact:true})).toHaveValue('Cliente central')
+ await expect(page.getByLabel('Nome da empresa',{exact:true})).toHaveValue('Cliente central')
 })
 
 test('Conhecimento busca conteúdo, filtra categoria e mostra estado vazio',async({page})=>{

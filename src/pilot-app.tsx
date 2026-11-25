@@ -1,3 +1,5 @@
+import {useCommercialClassifications} from './commercial-classifications'
+import {ClassificationMaintenance} from './classification-maintenance'
 import {WorkflowForm} from './workflow-form'
 import {FinancialWeek} from './financial-week'
 import {useWorkspacePeople,memberOwner} from './workspace-people'
@@ -197,6 +199,7 @@ function SharedCrm(){
  const [loadedLead,setLoadedLead]=useState('')
  const [revision,reload]=useState(0)
  const people=useWorkspacePeople(client!,workspace,revision)
+ const classifications=useCommercialClassifications(client!,workspace,revision)
  const internal=useInternalFinance(client!,workspace,can(role,'finance'),revision)
  const [billId,setBillId]=useState(''),[contractRows,setContractRows]=useState<Contract[]>([])
  useEffect(()=>{let live=true;setContractRows([]);if(workspace)void allRows(client!.from('hub_contracts').select('*').eq('workspace_id',workspace).order('id')).then(r=>{if(live&&!r.error)setContractRows(r.data as Contract[]??[])});return()=>{live=false}},[workspace,revision])
@@ -422,7 +425,7 @@ function SharedCrm(){
     openLead={openLead} openProject={openProject}/>}
    {page==='prospeccao'&&<ProspectingQueue data={commercialData} tasks={allActivities} open={openLead}/>}
    {page==='importacao'&&<LeadImport key={workspace} client={client!} workspace={workspace} allowed={can(role,'commercial',true)} saved={changed}/>}
-   {page==='catalogo'&&<SharedCatalog items={catalog} admin={administrator} save={async draft=>{const r=await client!.rpc('hub_save_solution',{w:workspace,i:draft.id??null,n:draft.name,c:draft.category,d:draft.description,items:draft.scope_items?.filter(s=>s.trim()),enabled:draft.active,expected_revision:draft.revision??null});if(r.error)return;reload(v=>v+1);return r.data}}/>}
+   {page==='catalogo'&&<><SharedCatalog items={catalog} admin={administrator} save={async draft=>{const r=await client!.rpc('hub_save_solution',{w:workspace,i:draft.id??null,n:draft.name,c:draft.category,d:draft.description,items:draft.scope_items?.filter(s=>s.trim()),enabled:draft.active,expected_revision:draft.revision??null});if(r.error)return;reload(v=>v+1);return r.data}}/>{administrator&&<ClassificationMaintenance client={client!} workspace={workspace} items={classifications.items} saved={()=>reload(v=>v+1)}/>}</>}
    {page==='conhecimento'&&<Knowledge download={false} go={()=>go('reunioes')}/>}
    {page==='financeiro'&&!can(role,'finance')&&<p role="status">Seu papel não permite acesso ao Financeiro.</p>}
    {page==='financeiro'&&can(role,'finance')&&finance&&<SharedFinance key={workspace} client={client!} workspace={workspace} projects={projects} forecasts={finance[0].data??[]} receipts={finance[1].data??[]} expenses={finance[2].data??[]} month={reportMonth} setMonth={setReportMonth} audit={finance[3].data??[]} busy={busy} write={write}/>}
@@ -433,7 +436,7 @@ function SharedCrm(){
    {page==='ficha'&&showForm&&<>
     <div className="dossier-context"><h1 tabIndex={-1}>Ficha do estabelecimento</h1><button className="button" onClick={()=>{setShowForm(false);setSelected('');setEditor(null);go(returnPage)}}>← Voltar {returnPage==='agenda'?'à agenda':returnPage==='indicadores'?'aos indicadores':returnPage==='central'?'à Central comercial':returnPage==='reunioes'?'às reuniões':returnPage==='triagem'?'à triagem':returnPage==='dashboard'?'ao Dashboard':'à lista'}</button><span>{lead?.name??'Novo estabelecimento'} · {lead?.stage??'Cadastro'}</span></div>
     <details className="card panel op-basics" open={!selected}><summary><h2>{selected?'Editar dados do estabelecimento':'Cadastrar estabelecimento'}</h2></summary>
-     <LeadDetails key={workspace+':'+selected} lead={currentLead} solutions={catalog} allowed={can(role,'commercial',true)} save={async(body,expected)=>{const r=await client!.rpc('hub_save_lead',{w:workspace,l:selected||null,expected_revision:expected,body});if(r.error)return;return r.data}} onSaved={item=>{setNotice('Ficha salva.');setLeads(rows=>[...rows.filter(l=>l.id!==item.id),item]);select(item);reload(v=>v+1)}}/>
+     <LeadDetails classifications={classifications.items} people={people} key={workspace+':'+selected} lead={currentLead} solutions={catalog} allowed={can(role,'commercial',true)} save={async(body,expected)=>{const r=await client!.rpc('hub_save_lead',{w:workspace,l:selected||null,expected_revision:expected,body});if(r.error)return;return r.data}} onSaved={item=>{setNotice('Ficha salva.');setLeads(rows=>[...rows.filter(l=>l.id!==item.id),item]);select(item);reload(v=>v+1)}}/>
     </details>
    {lead&&<section className="card panel">
     <div className="op-dossier-head"><div><h2>Jornada comercial de {lead.name}</h2><p>{lead.segment||'Segmento não informado'} · {lead.city||'Cidade não informada'}</p></div><div className="actions"><span className="tag">{lead.stage}</span><Priority triage={selectedTriage&&fullTriage(selectedTriage)}/></div></div>
