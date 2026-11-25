@@ -1,3 +1,5 @@
+import type {DigitalPresenceRecord} from './digital-assessment'
+import type {CommercialProfile} from './commercial-classifications'
 export const stages = ['Identificado','Em pesquisa','Qualificado','Contato planejado','Abordado','Reunião marcada','Diagnóstico realizado','Proposta enviada','Negociação','Ganho','Perdido','Arquivado'] as const
 export type Stage = typeof stages[number]
 export const solutions = ['Site institucional','Cardápio digital','Sistema de pedidos','NFC / QR Code','Automações','Painel de TV','Agendamento','Sistema sob medida']
@@ -17,8 +19,8 @@ export const script = [
  ['Próximos passos','O que combinamos para o próximo contato, com quem e até quando?']
 ]
 export type Event = {at:string; actor:string; text:string}
-export type Lead = {id:string; name:string; segment:string; city:string; region:string; address:string; instagram:string; website:string; whatsapp:string; other:string; contact:string; contactInfo:string; origin:string; owner:string; stage:Stage; needs:string; notes:string; verification:string; next:string; due:string; noDueReason:string; services:string[]; created:string; demo?:boolean; history:Event[]}
-export type Triage = {leadId:string; presence:Record<string,string>; observations:string; reports:string; hypotheses:string; evidence:string; services:string[]; scores:(number|null)[]; approach:string; owner:string; next:string; due:string; completed:boolean; updated:string}
+export type Lead = {revision?:number;commercial?:CommercialProfile;id:string; name:string; segment:string; city:string; region:string; address:string; instagram:string; website:string; whatsapp:string; other:string; contact:string; contactInfo:string; origin:string; owner:string; stage:Stage; needs:string; notes:string; verification:string; next:string; due:string; noDueReason:string; services:string[]; created:string; demo?:boolean; history:Event[]}
+export type Triage = {digital?:DigitalPresenceRecord;ownerId?:string;nextActionId?:string;leadId:string; presence:Record<string,string>; observations:string; reports:string; hypotheses:string; evidence:string; services:string[]; scores:(number|null)[]; approach:string; owner:string; next:string; due:string; completed:boolean; updated:string}
 export type Activity = {completedOn?:string;reviewSource?:{target:'lead'|'propostas'|'projetos'|'financeiro';id:string;title:string};id:string; leadId:string; projectId:string; title:string; description:string; kind:string; owner:string; due:string; priority:string; status:string; result:string}
 export type Meeting = {projectId?:string;contractId?:string;revision?:number;agenda?:string; selectedSolutions?:string[];callUrl?:string;id:string; leadId:string; date:string; participants:string; state:'Agendada'|'Realizada'|'Cancelada'; answers:Record<number,string>; checked:number[]; summary:string; tools:string; objections:string; budget:string; next:string; owner:string; due:string}
 export type Proposal = {id:string;leadId:string;title:string;services:string[];scope:string;setup:number;monthly:number;terms:string;validity:string;version:number;status:string;seriesId?:string;meetingId?:string;sentAt?:string;decisionAt?:string;decisionNote?:string;events?:{status:string;date:string;note:string}[]}

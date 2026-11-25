@@ -1,0 +1,35 @@
+import {test,expect} from '@playwright/test'
+import {operationalFixture,checked} from './helpers/operational-fixture.mjs'
+import {sql} from './helpers/local-db.mjs'
+import fs from 'node:fs'
+test.skip(process.env.HUB_REAL_E2E!=='1','Supabase local obrigatório')
+const record=()=>({presence:{'Cardápio digital':'Identificado · aparenta atender','Outras ferramentas':'Não verificado'},observations:'Observação fictícia',reports:'',hypotheses:'',evidence:'Fonte fictícia',services:[],approach:'',owner:'',next:'',due:'',updated:''})
+const assessment=()=>({presence:'identified',quality:'regular',url:'https://example.invalid',evidence:'Consulta fictícia',observation:'Fluxo observado com fricção fictícia',source:'observed'})
+test('Presença: API valida combinações, não pontua, preserva legado, audita e serializa duas sessões',async()=>{
+ const f=await operationalFixture()
+ try{
+  let lead=await checked(f.owner.client.from('hub_leads').select('*').eq('id',f.prospect).single())
+  const base={p_workspace:f.workspace,p_lead:f.prospect,p_scores:Array(7).fill(null),p_completed:false,p_record:record(),p_profile:{},p_name:lead.name,p_segment:lead.segment,p_city:lead.city,p_qualify:false}
+  await checked(f.owner.client.rpc('hub_save_triage',base));lead=await checked(f.owner.client.from('hub_leads').select('*').eq('id',f.prospect).single());const stored=await checked(f.owner.client.from('hub_triages').select('*').eq('lead_id',f.prospect).single());expect(stored.record.digital).toBeUndefined()
+  expect((await f.owner.client.rpc('hub_save_commercial_triage',{...base,expected_revision:lead.revision,p_record:{...record(),digital:{site:{...assessment(),presence:'not_found'}}}})).error?.code).toBe('22023')
+  expect((await f.owner.client.rpc('hub_save_commercial_triage',{...base,p_workspace:f.other,expected_revision:lead.revision})).error?.code).toBe('42501')
+  const results=await Promise.all([f.owner.client,f.second.client].map((c,i)=>checked(c.rpc('hub_save_commercial_triage',{...base,expected_revision:lead.revision,p_record:{...record(),digital:{site:{...assessment(),checked_by:f.restricted.id,observation:'Conferência fictícia '+i}}}}))))
+  expect(results.map(r=>r.status).sort()).toEqual(['conflict','saved']);const saved=results.find(r=>r.status==='saved');expect(saved.triage.scores).toEqual(Array(7).fill(null));expect(saved.triage.completed).toBe(false);expect(saved.triage.record.presence).toEqual(record().presence);expect([f.owner.id,f.second.id]).toContain(saved.triage.record.digital.site.checked_by)
+  const history=await checked(f.owner.client.from('hub_triage_audit').select('id').eq('workspace_id',f.workspace).eq('lead_id',f.prospect));expect(history).toHaveLength(2)
+  sql(`create function hub_private.fail_digital_audit_test() returns trigger language plpgsql as $$begin raise exception 'falha fictícia';end$$;create trigger fail_digital_audit_test before insert on public.hub_triage_audit for each row when(new.workspace_id='${f.workspace}'::uuid) execute function hub_private.fail_digital_audit_test();`)
+  try{expect((await f.owner.client.rpc('hub_save_commercial_triage',{...base,expected_revision:saved.current.revision,p_record:{...record(),digital:{site:{...assessment(),observation:'Não deve persistir'}}}})).error).toBeTruthy()}finally{sql('drop trigger fail_digital_audit_test on public.hub_triage_audit;drop function hub_private.fail_digital_audit_test()')}
+  expect((await checked(f.owner.client.from('hub_leads').select('revision').eq('id',f.prospect).single())).revision).toBe(saved.current.revision)
+  expect((await f.owner.client.from('hub_triage_audit').delete().eq('workspace_id',f.workspace)).error?.code).toBe('42501')
+ }finally{await f.cleanup()}
+})
+test('Triagem: presença/qualidade, rascunho condicional, evidência, conflito e visão móvel',async({page})=>{
+ const f=await operationalFixture();test.setTimeout(90000)
+ try{
+  await page.addInitScript(s=>localStorage.setItem('sb-127-auth-token',JSON.stringify(s)),f.owner.session);await page.goto('/');await page.getByRole('navigation').getByRole('button',{name:'Captação e CRM',exact:true}).click();await page.getByRole('button',{name:'Studio Aurora · fictício',exact:true}).click();await page.getByRole('button',{name:'Iniciar triagem',exact:true}).click();const dialog=page.getByRole('dialog');await dialog.getByRole('button',{name:/Presença digital/}).click()
+  await dialog.getByLabel('Presença de Site',{exact:true}).selectOption('identified');await dialog.getByLabel('Qualidade de Site',{exact:true}).selectOption('poor');await dialog.getByLabel('URL de Site',{exact:true}).fill('https://example.invalid');await dialog.getByRole('button',{name:'Salvar rascunho',exact:true}).click();await expect(dialog.getByLabel('Observações e contexto de Site',{exact:true})).toBeFocused();await dialog.getByLabel('Observações e contexto de Site',{exact:true}).fill('Limitação observada fictícia')
+  await dialog.getByLabel('Presença de Site',{exact:true}).selectOption('not_found');await expect(dialog.getByLabel('Qualidade de Site',{exact:true})).toHaveCount(0);await dialog.getByLabel('Presença de Site',{exact:true}).selectOption('identified');await expect(dialog.getByLabel('Qualidade de Site',{exact:true})).toHaveValue('poor');await dialog.getByLabel('Presença de Site',{exact:true}).selectOption('not_found')
+  await dialog.getByLabel('Sistema de agendamento',{exact:true}).check();await dialog.getByLabel('E-commerce',{exact:true}).check();await dialog.getByRole('button',{name:/Catálogo digital ·/}).click();await expect(dialog.getByLabel('Subtipo do catálogo')).toBeVisible();await dialog.getByLabel('Subtipo do catálogo').selectOption('services')
+  fs.mkdirSync('.validation/digital-triage',{recursive:true});await page.setViewportSize({width:390,height:900});await page.evaluate(()=>document.documentElement.dataset.theme='dark');await page.screenshot({path:'.validation/digital-triage/presenca-390-dark.png'});expect(await page.evaluate(()=>document.documentElement.scrollWidth<=innerWidth+1)).toBe(true)
+  await dialog.getByRole('button',{name:'Salvar rascunho',exact:true}).click();await expect(dialog).toHaveCount(0);const stored=await checked(f.owner.client.from('hub_triages').select('*').eq('lead_id',f.prospect).single());expect(stored.record.digital.site.quality).toBeNull();expect(stored.record.digital.catalog.subtype).toBe('services');expect(stored.record.digital.scheduling).toBeTruthy();expect(stored.record.digital.ecommerce).toBeTruthy();expect(stored.scores).toEqual(Array(7).fill(null))
+ }finally{await f.cleanup()}
+})

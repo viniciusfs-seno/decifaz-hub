@@ -1,3 +1,4 @@
+import {TriageHistory} from './triage-history'
 import {useCommercialClassifications} from './commercial-classifications'
 import {ClassificationMaintenance} from './classification-maintenance'
 import {WorkflowForm} from './workflow-form'
@@ -465,8 +466,9 @@ function SharedCrm(){
    </div>}
    </>}
    {activityEditor&&<ActivityEditor key={workspace+':'+(activityEditor.item?.id??activityEditor.leadId??'new')} client={client!} workspace={workspace} {...activityEditor} leads={commercialData.leads} close={()=>setActivityEditor(undefined)} saved={()=>{setNotice('Atividade salva.');changed()}}/>}
-   {can(role,'commercial',true)&&lead&&editor==='triage'&&<TriageEditor solutionOptions={catalog.filter(s=>s.active).map(s=>s.name)} lead={lead} triage={selectedTriage&&fullTriage(selectedTriage)} team={[]} close={()=>setEditor(null)}
-    save={(triage,updatedLead)=>write(()=>saveTriage(client!,workspace,triage,updatedLead),()=>setDraft({...draft,name:updatedLead.name,segment:updatedLead.segment,city:updatedLead.city}))}/>}
+   {page==='ficha'&&can(role,'commercial')&&lead&&<TriageHistory client={client!} workspace={workspace} lead={lead.id} people={people} revision={revision}/>}
+   {can(role,'commercial',true)&&lead&&editor==='triage'&&<TriageEditor classifications={classifications.items} people={people} solutionOptions={catalog.filter(s=>s.active).map(s=>s.name)} lead={lead} triage={selectedTriage&&fullTriage(selectedTriage)} team={[]} close={()=>setEditor(null)}
+    save={async(triage,updatedLead)=>{const r=await saveTriage(client!,workspace,triage,updatedLead);if(r.error){setError('Não foi possível salvar a triagem. Confira critérios, acesso e evidências.');return false}if(r.data?.status==='conflict'){const current=fullLead(r.data.current);return {status:'conflict',lead:current,triage:r.data.triage?fullTriage(r.data.triage):{...triage,completed:false}}}setDraft({...draft,name:updatedLead.name,segment:updatedLead.segment,city:updatedLead.city});changed();setNotice('Triagem salva.');return true}}/>}
    {can(role,'commercial',true)&&lead&&editor==='meeting'&&<MeetingEditor ownerSuggestions={people.filter(p=>p.active).map(p=>p.name)} solutionOptions={catalog.filter(s=>s.active).map(s=>s.name)} presentation={<ClientPresentation lead={lead} meeting={meeting} solutions={catalog} proposals={proposals} financial={can(role,'finance')}/>} data={meetingContext} item={meeting} leadId={lead.id} lockLead close={()=>setEditor(null)}
     save={(item,follow,advance)=>write(()=>saveMeeting(client!,workspace,item,follow,advance))}/>}
    {proposalModal&&<ProposalEditor catalog={catalog} readOnly={!can(role,'commercial',true)} financial={can(role,'finance')} canSetPrices={administrator} canAccept={administrator} key={proposalModal.id??proposalModal.meetingId??'new'} data={commercialData}
