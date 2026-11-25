@@ -126,3 +126,7 @@ Posição atual separada de fotografias completas e imutáveis, detalhes paginad
 ## Formulários e rotina diária
 
 [Inventário, componentes de UX, validação, acessibilidade e recuperação](docs/ux-diaria.md). Rótulos visíveis, erros junto aos campos, detalhes progressivos que preservam dados e proteção de edição nos diálogos. A recuperação de rascunho após conflito exige revisão e nova gravação; não substitui os controles do servidor. Comparativos reproduzíveis: `node scripts/ux-baseline-captures.mjs`, com Supabase local e dados fictícios. Logs, caches e capturas geradas ficam ignorados; scripts, migrações e exceções aprovadas permanecem versionados.
+
+## Melhorias comerciais em homologação
+
+Cadastro por identificadores estáveis, referências IBGE, CEP opcional e preservação explícita de legados: [roteiro e contratos](docs/melhorias-comerciais.md). Pilha em rascunho; nenhuma ativação em produção nesta rodada.

@@ -1,8 +1,9 @@
 import {allRows} from './load-all'
 import type { SupabaseClient } from '@supabase/supabase-js'
+import type {CommercialProfile} from './commercial-classifications'
 import { day, emptyLead, type Lead, type Meeting, type Proposal, type Stage, type Triage } from './domain'
 
-type Profile = Partial<Pick<Lead, 'contact' | 'contactInfo' | 'origin' | 'verification' | 'noDueReason' | 'region' | 'address' | 'instagram' | 'website' | 'whatsapp' | 'other' | 'services' | 'owner' | 'next' | 'due' | 'needs'>>
+type Profile = Partial<Pick<Lead, 'contact' | 'contactInfo' | 'origin' | 'verification' | 'noDueReason' | 'region' | 'address' | 'instagram' | 'website' | 'whatsapp' | 'other' | 'services' | 'owner' | 'next' | 'due' | 'needs'>> & CommercialProfile
 export type PilotLead = {id:string; name:string; segment:string; city:string; notes:string; stage:Stage; profile:Profile; created_at:string;revision?:number}
 export const leadColumns = 'id,name,segment,city,notes,stage,profile,created_at,revision'
 export type TriageRow = {lead_id:string; record:Omit<Triage,'leadId'|'scores'|'completed'>; scores:Triage['scores']; completed:boolean}
