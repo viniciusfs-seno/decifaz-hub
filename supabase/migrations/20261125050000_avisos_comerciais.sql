@@ -1,7 +1,7 @@
 begin;
 -- Same scheduler, preferences and inbox. No commercial email enqueueing.
 create function hub_private.notice_commercial_date(value text) returns date language plpgsql immutable set search_path='' as $$
-begin return nullif(value,'')::date;exception when invalid_datetime_format or datetime_field_overflow then return null;end $$;
+begin if value is null or value !~ '^[0-9]{4}-[0-9]{2}-[0-9]{2}$' then return null;end if;return value::date;exception when invalid_datetime_format or datetime_field_overflow then return null;end $$;
 revoke all on function hub_private.notice_commercial_date(text) from public,anon,authenticated;
 create function hub_private.commercial_due_sources(w uuid)
 returns table(source_key text,kind text,record_id uuid,title text,owner text,owner_id uuid,due_on date,category text,project_id uuid,contract_id uuid,financial boolean,amount numeric,paid numeric,state text,revision bigint,pending boolean,remind boolean)
