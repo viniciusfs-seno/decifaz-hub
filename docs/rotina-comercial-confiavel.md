@@ -48,6 +48,19 @@ Teste local com 1.025 resultados fictícios confirma paginação e exportação 
 
 Ordem futura da pilha: regularização 040000 → frontend; avisos 050000 → frontend; métricas 060000 → frontend. As funções novas são aditivas; recuperação do frontend anterior preserva eventos e revisões. A recuperação de avisos deve restaurar as funções indicadas acima, sem excluir registros ou religar e-mail. Nenhuma destas três fases está autorizada em produção nesta rodada.
 
+## Homologação e revisão
+
+- Tipagem, 40 testes unitários, builds local/compartilhado e revisão de segredos executados; nenhum arquivo de `.validation` rastreado. `.gitignore` já cobre configurações privadas, relatórios, caches e capturas geradas; nenhum código ou migração foi ocultado.
+- Suíte integrada inicial: 75 de 76 cenários passaram; houve timeout de polling no cenário de duas sessões de contratos. Repetição dirigida passou com as mesmas asserções. Os checks do head final continuam sendo a condição de revisão, sem ignorar falhas.
+- Gerador/processador existente: 12 testes passaram, incluindo pg_cron real sem navegador, atraso, repetição, concorrência, Mailpit, pagamento/cancelamento antes de envio e recuperação. Somente ambiente local com dados fictícios.
+- A jornada integrada cobre legado → confirmação explícita → interação → atividade → aviso → conclusão/follow-up → indicadores vistos por outra sessão. Resultados de reunião não duplicam ao corrigir a ata; datas anteriores ao cadastro não viram SLA.
+- Evidências desktop/celular nos artefatos dos workflows: regularização, aviso/origem e indicadores. Resumo móvel corrigido para coluna única; teclado e foco seguem componentes existentes. Não é uma declaração de conformidade WCAG completa.
+- Ganhos verificáveis: uma ação “Revisar” abre o campo correto; confirmação explícita substitui qualquer associação automática. O retorno mantém os filtros. Aviso distingue leitura de conclusão. Tela pagina 25 resultados e o CSV testado preserva 1.025; ausência de tempo comprovado aparece como indisponível.
+
+Prévia integrada: `node scripts/start-routine-preview.mjs --tunnel CAMINHO_DO_CLOUDFLARED`. Usa Supabase estritamente local e porta 4203, sem alterar a prévia do #49 em 4201. Senha aleatória em `.validation/routine-preview-access.json`, ignorada e com ACL privada. Validade máxima de 24h, dependente dos processos, da máquina e do túnel temporário. O workflow “Prévia da rotina comercial” confere SHA, proteção de API e os três fluxos por runner externo; não confundir acessibilidade externa com teste em aparelho físico. Use somente as personas fictícias da tela de revisão.
+
+O ensaio `node scripts/routine-upgrade-validation.mjs --reset-local-fixtures` é exclusivo de Supabase local descartável (CI), começando no esquema do candidato #49 e aplicando apenas 040000–060000, uma por fase. Verifica dados, contrato anterior e permissões após cada migração. **Não executar na pilha que hospeda uma prévia**: o comando reinicializa o banco local. Não aceita banco remoto.
+
 ## Limites
 
 Os catálogos continuam revisáveis; dados ambíguos não recebem conversão automática. Um texto responsável não concede acesso e não identifica uma conta por si só. Não há alteração de dados reais durante a homologação.

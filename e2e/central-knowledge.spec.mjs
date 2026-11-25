@@ -1,3 +1,4 @@
+import {commercialMetricsFixture} from './helpers/commercial-metrics-fixture.mjs'
 import {openDisclosure} from './helpers/portal-ui.mjs'
 import {test,expect} from '@playwright/test'
 
@@ -6,12 +7,13 @@ test.beforeEach(async({page})=>{
  await page.addInitScript(()=>localStorage.setItem('sb-mock-hub-auth-token',JSON.stringify({user:{id:'fake',email:'fake@example.invalid'},access_token:'fixture',refresh_token:'fixture',expires_at:Date.now()/1000+3600})))
 })
 
-async function fixtures(page,{financeError=false}={}){
+async function fixtures(page,{financeError=false,metricError=false}={}){
  await page.route('https://mock-hub.supabase.co/**',route=>{
   const path=new URL(route.request().url()).pathname
   if(financeError&&path==='/rest/v1/hub_receipts')return route.fulfill({status:403,json:{message:'Denied'}})
   const rows={
    '/functions/v1/hub-workspaces':{workspaces:[{id:'w',name:'Espaço fictício',role:'admin'}]},
+   '/rest/v1/rpc/hub_commercial_metrics':metricError?[]:commercialMetricsFixture,
    '/rest/v1/rpc/hub_dashboard':{funnel:{},priorities:{},scheduled:0,diagnosed:0,pending:0,overdue:0},
    '/rest/v1/hub_leads':[{id:'l',name:'Cliente central',segment:'Serviços',city:'Fortaleza',stage:'Qualificado',notes:'',profile:{owner:'Ana',next:'Ligar ao cliente',due:'2026-11-10'},created_at:'2026-11-01'}],
    '/rest/v1/hub_projects_visible':[{proposal_id:'p',lead_id:'l',status:'Em andamento',owner:'Bia',due_on:'2026-11-15',deliverables:'Entrega',delivery:null,approved:{title:'Projeto central',scope:'Escopo',services:[],version:1,setup:10,monthly:0}}],
@@ -71,6 +73,10 @@ test('Falha financeira preserva CRM, Central e conhecimento',async({page})=>{
  await expect(page.getByRole('button',{name:'Ligar ao cliente',exact:true})).toBeVisible()
  await page.getByRole('button',{name:'Base de conhecimento',exact:true}).click()
  await expect(page.getByLabel('Buscar na base')).toBeVisible()
+})
+
+test('Resposta comercial inválida não derruba o portal e permite recuperação',async({page})=>{
+ const errors=[];page.on('pageerror',e=>errors.push(e.message));await fixtures(page,{metricError:true});const pulse=page.getByRole('region',{name:'Acompanhamento comercial do Dashboard'});await expect(pulse.getByRole('alert')).toContainText('Acompanhamento indisponível');await expect(page.getByRole('navigation')).toBeVisible();await page.route('https://mock-hub.supabase.co/rest/v1/rpc/hub_commercial_metrics',r=>r.fulfill({json:commercialMetricsFixture}));await pulse.getByRole('button',{name:'Tentar acompanhamento',exact:true}).click();await expect(pulse).toContainText('0 resultados registrados');await page.getByRole('button',{name:'Base de conhecimento',exact:true}).click();await expect(page.getByLabel('Buscar na base')).toBeVisible();expect(errors).toEqual([])
 })
 
 test('Dashboard, financeiro e CSV mantêm o mesmo mês nas duas direções',async({page})=>{
