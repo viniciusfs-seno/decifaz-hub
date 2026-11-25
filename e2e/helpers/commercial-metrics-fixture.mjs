@@ -1,0 +1,1 @@
+export const commercialMetricsFixture={results:{},pending:0,overdue:0,resumptions:0,approach_cohort:0,approach_observed:0,approach_days:null,approach_excluded:0,response_days:null,response_reason:'Sem eventos correlacionados de envio e resposta do cliente.',coverage_since:null,legacy_uncovered:0,total:0,rows:[]}

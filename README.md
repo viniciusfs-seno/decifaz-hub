@@ -1,5 +1,7 @@
 # Decifaz Hub
 
+Rotina comercial em revisão: [regularização assistida, avisos comerciais internos e métricas verificáveis](docs/rotina-comercial-confiavel.md). A fila exige confirmação explícita; avisos usam o agendador existente; métricas distinguem dados sem cobertura de valores zero. As migrações 20261125040000–060000 ficam restritas à homologação até aprovação dos respectivos PRs. E-mail continua desligado.
+
 Portal de trabalho compartilhado da Decifaz para a rotina comercial, contratos, projetos, reuniões e obrigações internas. React, TypeScript e Vite na Vercel; Supabase Auth, PostgreSQL, RLS e Edge fornecem persistência e autorização por espaço e papéis cumulativos.
 
 Guia de operação, cobertura de auditoria, migrações e recuperação: [rotina dos sócios](docs/rotina-socios.md).
