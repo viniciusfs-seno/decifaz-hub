@@ -119,7 +119,7 @@ begin
  select n.*,coalesce(s.title,'Acompanhamento atualizado na origem') title,s.owner,s.owner_id,s.category,s.project_id,s.contract_id,greatest(n.created_at,n.stage_at) sort_at,
  case when s.source_key is null or s.due_on is distinct from n.due_on or not s.remind or (coalesce(p.watch_scope,'space')='mine' and s.owner_id is distinct from auth.uid()) or (n.kind like 'commercial-%' and not coalesce(p.internal_enabled,true)) then coalesce(n.resolved_at,now()) else n.resolved_at end effective_resolved_at
  from public.hub_notices n left join hub_private.due_sources(w) s on s.source_key=n.source_key left join public.hub_notice_preferences p on p.workspace_id=w and p.user_id=n.user_id
- where n.workspace_id=w and n.user_id=auth.uid() and (not n.financial or public.hub_can(w,'finance')) order by greatest(n.created_at,n.stage_at) desc,n.id limit 50 offset skip)x);
+ where n.workspace_id=w and n.user_id=auth.uid() and (not n.financial or public.hub_can(w,'finance')) and (n.kind not like 'commercial-%' or exists(select 1 from hub_private.notice_settings where commercial_enabled)) order by greatest(n.created_at,n.stage_at) desc,n.id limit 50 offset skip)x);
 end $$;
 notify pgrst,'reload schema';
 commit;
