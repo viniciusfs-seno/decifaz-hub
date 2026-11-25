@@ -29,8 +29,8 @@ test('Prospecção: plano e abordagem atômicos, repetição, conflito e canais 
   const popup=page.waitForEvent('popup');await page.getByRole('link',{name:'Abrir site',exact:true}).click();await(await popup).close()
   expect((await checked(f.admin.from('hub_interactions').select('id').eq('workspace_id',f.workspace).eq('lead_id',f.prospect)))).toHaveLength(1)
   await page.getByLabel(/^Resultado da abordagem/).fill('Contato fictício realizado; retorno combinado.')
-  await page.getByRole('button',{name:'Salvar abordagem e plano',exact:true}).click()
-  await expect(page.getByText('Abordagem registrada.',{exact:true})).toBeVisible()
+  await page.getByRole('button',{name:'Registrar interação e acompanhamento',exact:true}).click()
+  await expect(page.getByText('Interação e acompanhamento registrados.',{exact:true})).toBeVisible()
   await expect(page.getByText(/Contato fictício realizado; retorno combinado\./).last()).toBeVisible()
  }finally{sql(`delete from public.hub_lead_audit where workspace_id='${f.workspace}';delete from public.hub_activity_events where workspace_id='${f.workspace}';`);await f.cleanup()}
 })
