@@ -343,7 +343,7 @@ function SharedCrm(){
   if(status==='Concluída'&&item){setActivityEditor({item,initialStatus:status});return}
   void write(()=>client!.from('hub_activities').update({status}).eq('workspace_id',workspace).eq('id',entry.id).select('id').single())
  }
- function openDue(row:DueRow){setDueReturn(true);if(row.kind.startsWith('contract')){setContractId(row.record_id);go('contratos')}else if(row.kind==='bill'){setObligationId('');setBillId(row.record_id);go('obrigacoes')}else if(row.kind==='subscription'){setBillId('');setObligationId(row.record_id);go('obrigacoes')}else{setReportMonth(row.due_on.slice(0,7));go('financeiro')}}
+ function openDue(row:DueRow){if(row.kind==='commercial-activity'){const task=allActivities.find(a=>a.id===row.record_id);if(task)setActivityEditor({item:task});else setError('A atividade mudou ou não está disponível. Atualize os avisos.');return}if(row.kind==='commercial-contact'||row.kind==='commercial-resume'){openLead(row.record_id);return}setDueReturn(true);if(row.kind.startsWith('contract')){setContractId(row.record_id);go('contratos')}else if(row.kind==='bill'){setObligationId('');setBillId(row.record_id);go('obrigacoes')}else if(row.kind==='subscription'){setBillId('');setObligationId(row.record_id);go('obrigacoes')}else{setReportMonth(row.due_on.slice(0,7));go('financeiro')}}
  function openAgenda(filter:WorkFilter){go('agenda');setAgendaFilter(filter);setAgendaRequest(n=>n+1)}
  const pageLabel=page==='ficha'?'Ficha do estabelecimento':page==='convites'?'Meus convites':page==='equipe'?'Administração / Equipe':sections.find(([id])=>id===page)?.[1]
  const recordContext=useRef({page,returnPage})
