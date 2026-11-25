@@ -40,3 +40,11 @@ test('Avisos: oportunidade encerrada, retomada, preferências, atraso e rollback
   try{expect(()=>generate(f)).toThrow('Falha fictícia')}finally{sql('drop trigger fail_notices_test on hub_notices;drop function hub_private.fail_notices_test()')};expect(sql(`select md5(jsonb_agg(to_jsonb(n) order by id)::text) from hub_notices n where workspace_id='${f.workspace}'`)).toBe(before)
  }finally{await f.cleanup()}
 })
+
+test('Ativação separada: frontend anterior não recebe novas origens; recuperação invalida sem apagar',async()=>{
+ const f=await operationalFixture();try{
+  const a=(await task(f)).current;sql('update hub_private.notice_settings set commercial_enabled=false');let sources=await checked(f.owner.client.rpc('hub_dues',{w:f.workspace,period:'all'}));expect(sources.rows.some(r=>r.kind.startsWith('commercial-'))).toBe(false);generate(f);expect((await list(f)).some(n=>n.record_id===a.id)).toBe(false)
+  expect(sql("select hub_private.notice_commercial_date('today') is null and hub_private.notice_commercial_date('25/11/2026') is null and hub_private.notice_commercial_date('2026-02-30') is null")).toBe('t')
+  sql('update hub_private.notice_settings set commercial_enabled=true');generate(f);expect((await list(f)).filter(n=>n.record_id===a.id&&!n.effective_resolved_at)).toHaveLength(1);sql('update hub_private.notice_settings set commercial_enabled=false');expect((await list(f)).find(n=>n.record_id===a.id).effective_resolved_at).toBeTruthy();expect(sql(`select count(*) from hub_notices where workspace_id='${f.workspace}' and record_id='${a.id}'`)).not.toBe('0')
+ }finally{sql('update hub_private.notice_settings set commercial_enabled=true');await f.cleanup()}
+})

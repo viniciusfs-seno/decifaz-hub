@@ -12,6 +12,7 @@ const run=(bin,args,extra={})=>{const r=spawnSync(bin,args,{encoding:'utf8',shel
 const v=Object.fromEntries(run('npx',['--yes','supabase@3.0.0','status','-o','env']).split(/\r?\n/).flatMap(l=>{const m=l.match(/^([A-Z_]+)="(.*)"$/);return m?[[m[1],m[2]]]:[]}));if(v.API_URL!=='http://127.0.0.1:54321')throw Error('Local only')
 const sha=run('git',['rev-parse','HEAD'],{cwd}).trim(),password=randomBytes(24).toString('base64url'),expires=Date.now()+86400000,root=cwd+'/.validation/routine-dist'
 run('npx',['vite','build','--outDir',root],{cwd,env:{...process.env,VITE_HUB_MODE:'shared',VITE_SUPABASE_URL:origin+'/__supabase',VITE_SUPABASE_PUBLISHABLE_KEY:v.PUBLISHABLE_KEY}})
+run('node',['scripts/enable-commercial-notice-fixtures.mjs'],{env:{...process.env,HUB_REAL_E2E:'1',VITE_SUPABASE_URL:v.API_URL}})
 const fixture=await commercialFixture({VITE_SUPABASE_URL:v.API_URL,VITE_SUPABASE_PUBLISHABLE_KEY:v.PUBLISHABLE_KEY,HUB_TEST_ADMIN_KEY:v.SECRET_KEY||v.SERVICE_ROLE_KEY});await registryFixture(fixture)
 for(const [u,name] of [[fixture.owner,'Marina Fictícia'],[fixture.second,'Caio Fictício'],[fixture.restricted,'Comercial Fictício']])await fixture.admin.auth.admin.updateUserById(u.id,{user_metadata:{name}})
 // Fictitious volume makes both kinds of pagination reviewable without real data.
