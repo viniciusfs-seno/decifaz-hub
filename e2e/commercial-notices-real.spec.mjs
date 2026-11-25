@@ -28,3 +28,15 @@ test('Aviso comercial: origem editável, leitura sem conclusão e contexto prese
   fs.mkdirSync('.validation/commercial-routine',{recursive:true});await page.screenshot({path:'.validation/commercial-routine/avisos-1440-light.png'});await page.setViewportSize({width:390,height:900});await page.evaluate(()=>document.documentElement.dataset.theme='dark');await page.screenshot({path:'.validation/commercial-routine/avisos-390-dark.png'});expect(await page.evaluate(()=>document.documentElement.scrollWidth<=innerWidth+1)).toBe(true)
  }finally{await f.cleanup()}
 })
+
+test('Avisos: oportunidade encerrada, retomada, preferências, atraso e rollback do gerador',async()=>{
+ const f=await operationalFixture();try{
+  const a=(await task(f)).current;generate(f);const own=()=>list(f).then(rows=>rows.find(n=>n.record_id===a.id));expect((await own()).effective_resolved_at).toBeNull()
+  for(const stage of ['Perdido','Ganho']){await checked(f.admin.from('hub_leads').update({stage}).eq('id',f.prospect));expect((await own()).effective_resolved_at).toBeTruthy();generate(f)}
+  await checked(f.admin.from('hub_leads').update({stage:'Qualificado'}).eq('id',f.prospect));generate(f);expect((await own()).effective_resolved_at).toBeNull()
+  await checked(f.owner.client.rpc('hub_notice_prefs',{w:f.workspace,expected_revision:0,body:{...prefs,email_enabled:false,internal_enabled:false}}));expect((await own()).effective_resolved_at).toBeTruthy();generate(f)
+  const pref=await checked(f.owner.client.rpc('hub_notice_prefs',{w:f.workspace}));await checked(f.owner.client.rpc('hub_notice_prefs',{w:f.workspace,expected_revision:pref.revision,body:{...prefs,email_enabled:false}}));sql(`select hub_private.generate_notices('${f.workspace}','${f.today}T12:00:00Z'::timestamptz+interval '10 days')`);expect((await own()).effective_resolved_at).toBeNull();expect(sql(`select count(*) from hub_notices where workspace_id='${f.workspace}' and user_id='${f.owner.id}' and record_id='${a.id}'`)).toBe('1')
+  const before=sql(`select md5(jsonb_agg(to_jsonb(n) order by id)::text) from hub_notices n where workspace_id='${f.workspace}'`);sql(`create function hub_private.fail_notices_test() returns trigger language plpgsql as $$begin raise exception 'Falha fictícia';end$$;create trigger fail_notices_test before update on hub_notices for each row when(new.workspace_id='${f.workspace}'::uuid) execute function hub_private.fail_notices_test();`)
+  try{expect(()=>generate(f)).toThrow('Falha fictícia')}finally{sql('drop trigger fail_notices_test on hub_notices;drop function hub_private.fail_notices_test()')};expect(sql(`select md5(jsonb_agg(to_jsonb(n) order by id)::text) from hub_notices n where workspace_id='${f.workspace}'`)).toBe(before)
+ }finally{await f.cleanup()}
+})

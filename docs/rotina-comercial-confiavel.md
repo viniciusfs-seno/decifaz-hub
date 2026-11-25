@@ -30,6 +30,24 @@ Publicação futura: aplicar 040000 e seu frontend; aplicar 050000 antes do fron
 
 Teste: `node scripts/local-validation.mjs commercial-notices-real.spec.mjs due-center-real.spec.mjs --workers=1` — cinco cenários passaram, incluindo duas conexões SQL sem navegador, reexecução, troca de responsável, reagendamento, leitura, conclusão, isolamento, desativação, permissões e navegação móvel. Capturas em `.validation/commercial-routine` (artefato privado/local ou CI).
 
+## Indicadores comerciais verificáveis
+
+Migração `20261125060000_indicadores_comerciais.sql`; Indicadores → Acompanhamento comercial verificável usa os filtros existentes. As RPCs `hub_commercial_metrics` e `hub_commercial_metrics_csv` calculam o recorte completo no servidor, antes da paginação de 25 resultados. CSV inclui todas as linhas, cobertura e denominadores. Nenhuma origem financeira é consultada. Isolamento e vínculo ativo são verificados antes dos resultados.
+
+| Indicador | Evento/data e denominador | Exclusões e interpretação |
+|---|---|---|
+| Resultados | Data efetiva de interação estruturada ou resultado referenciado de reunião; contagem de resultados por código | Legados sem tipo/data/resultado ficam fora; editar ata não duplica um resultado já registrado |
+| Pendentes e vencidos | Posição atual das fontes comerciais da Central, por vencimento no período; vencido antes de hoje em Fortaleza | Concluídas/canceladas e oportunidades Ganho/Perdido/Arquivado ficam fora; tarefa substitui contato equivalente |
+| Retomadas | Oportunidades abertas com resultado Retomar e data de retomada no período | Unidade é oportunidade, pode ter atividade; não somar com pendências |
+| Cadastro até abordagem | Coorte de cadastros criados no período; primeiro evento explícito Abordagem realizada/avançar com data efetiva até o fim do período | Média em dias, somente observados no denominador. Evento anterior ao cadastro é excluído e contado separadamente. Ausência é indisponível, não zero |
+| Resposta do cliente | Indisponível | Não há eventos de envio e resposta correlacionados; não confundir com uma ação da Decifaz |
+
+Responsável/etapa são os atuais da ficha, não sua atribuição histórica. O início da cobertura exibido é o primeiro evento estruturado efetivamente registrado no espaço; implantação sem eventos não cria uma cobertura fictícia. Interações legadas sem cobertura aparecem em contagem separada (todo o espaço/filtros, sem fingir uma data efetiva). As consultas atuais não são snapshots imutáveis de um fechamento. Não reconstruímos eventos antigos nem tempos passados.
+
+Teste local com 1.025 resultados fictícios confirma paginação e exportação acima de mil, ausência distinta de zero, denominação explícita, Comercial sem preços, isolamento, desativação, origem e celular. Comando: `node scripts/local-validation.mjs commercial-metrics-real.spec.mjs --workers=1`.
+
+Ordem futura da pilha: regularização 040000 → frontend; avisos 050000 → frontend; métricas 060000 → frontend. As funções novas são aditivas; recuperação do frontend anterior preserva eventos e revisões. A recuperação de avisos deve restaurar as funções indicadas acima, sem excluir registros ou religar e-mail. Nenhuma destas três fases está autorizada em produção nesta rodada.
+
 ## Limites
 
 Os catálogos continuam revisáveis; dados ambíguos não recebem conversão automática. Um texto responsável não concede acesso e não identifica uma conta por si só. Não há alteração de dados reais durante a homologação.
