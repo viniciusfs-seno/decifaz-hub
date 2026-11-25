@@ -1,5 +1,6 @@
 begin;
 -- Same scheduler, preferences and inbox. No commercial email enqueueing.
+alter table hub_private.notice_settings add column commercial_enabled boolean not null default false;
 create function hub_private.notice_commercial_date(value text) returns date language plpgsql immutable set search_path='' as $$
 begin if value is null or value !~ '^[0-9]{4}-[0-9]{2}-[0-9]{2}$' then return null;end if;return value::date;exception when invalid_datetime_format or datetime_field_overflow then return null;end $$;
 revoke all on function hub_private.notice_commercial_date(text) from public,anon,authenticated;
@@ -45,7 +46,7 @@ language sql stable security definer set search_path='' as $$
  select 'forecast:'||r.proposal_id||':'||r.kind||':'||r.period,'forecast',r.proposal_id,coalesce(p.approved->>'title','Projeto')||' · '||r.kind,p.owner,null::uuid,r.due_on,'Receita prevista',r.proposal_id,null::uuid,true,r.amount,coalesce(x.received,0),case when coalesce(x.received,0)>=r.amount then 'Recebida' else 'Prevista' end,0::bigint,coalesce(x.received,0)<r.amount,coalesce(x.received,0)<r.amount
  from public.hub_receivables r join public.hub_projects p on (p.workspace_id,p.proposal_id)=(r.workspace_id,r.proposal_id)
  left join lateral(select sum(t.amount) received from public.hub_receipts t where (t.workspace_id,t.proposal_id,t.kind,t.period)=(r.workspace_id,r.proposal_id,r.kind,r.period) and t.reversed_at is null)x on true where r.workspace_id=w
- union all select * from hub_private.commercial_due_sources(w)
+ union all select * from hub_private.commercial_due_sources(w) where exists(select 1 from hub_private.notice_settings where commercial_enabled)
 $$;
 create or replace function hub_private.generate_notices(w uuid,at_time timestamptz) returns integer language plpgsql security definer set search_path='' as $$
 declare today date:=(at_time at time zone 'America/Fortaleza')::date;h integer:=extract(hour from at_time at time zone 'America/Fortaleza');m record;s record;p record;n public.hub_notices;threshold integer;processed integer:=0;o uuid;run_id bigint;
