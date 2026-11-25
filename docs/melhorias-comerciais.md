@@ -91,18 +91,18 @@ CRM permite filtrar pelo identificador do integrante e mantém os textos antigos
 | 06 Origem | Implementado | Contexto comercial, #47 | Nove opções por ID; Outros exige detalhe; texto antigo não convertido | cadastro API e edição UI |
 | 07 Verificação | Implementado | Contexto comercial, #47 | Critérios objetivos, autor/data; não qualifica nem pontua | validação permitida/negada e etapa intacta |
 | 08 Necessidades | Implementado | Contexto comercial, #47 | Mesmo textarea, altura adequada e expansão | captura móvel e preservação de edição |
-| 09 Responsável | Implementado | Ficha/triagem/interação, #47–terceira frente | ID ativo; nome legado e vínculo desativado conservados | associação negada/preservação, duas sessões |
-| 10 Próxima ação | Implementado | Ficha/interação, #47–terceira frente | Tipo estável, detalhes, prazo e atividade compartilhada | reenvio único, Agenda em outra sessão |
+| 09 Responsável | Implementado | Ficha/triagem/interação, #47/#49 | ID ativo; nome legado e vínculo desativado conservados | associação negada/preservação, duas sessões |
+| 10 Próxima ação | Implementado | Ficha/interação, #47/#49 | Tipo estável, detalhes, prazo e atividade compartilhada | reenvio único, Agenda em outra sessão |
 | 11 Presença/qualidade | Implementado | Triagem, #48 | Dois eixos, fontes/contexto; rascunho preservado, payload aplicável | combinações API, foco/rascunho UI, rollback auditoria |
 | 12 Ferramentas | Implementado | Triagem, #48 | Seleção múltipla; outras exige descrição; não são produtos | UI recursos múltiplos e payload |
 | 13 Catálogo digital | Implementado | Triagem, #48 | Subtipo opcional; produtos e rótulos antigos preservados | unidade e persistência de subtipo |
-| 14 Jornada/interação | Implementado | Ficha/Central/Agenda, terceira frente | Fases orientativas e matriz acima; reunião por referência | jornada CSV até triagem/contato/follow-up; aceite/projeto; concorrência/RLS |
+| 14 Jornada/interação | Implementado | Ficha/Central/Agenda, #49 | Fases orientativas e matriz acima; reunião por referência | jornada CSV até triagem/contato/follow-up; aceite/projeto; concorrência/RLS |
 
 “Implementado” descreve o candidato de homologação, não uma publicação. A qualidade do diagnóstico continua sendo responsabilidade humana; os catálogos iniciais não são política definitiva. O componente de triagem da demo recebe presença digital; os novos IDs e referências compartilhadas dependem do Supabase e não migram a base privada da demo.
 
 ## Roteiro único de futura integração e recuperação
 
-1. Conferir main, heads, diffs e checks do SHA candidato. A pilha é #47 → #48 → frente `feat/interacoes-comerciais`; não publicar nesta rodada.
+1. Conferir main, heads, diffs e checks do SHA candidato. A pilha é #47 → #48 →  #49 (`feat/interacoes-comerciais`); não publicar nesta rodada.
 2. Ensaio reproduzível em banco **descartável exclusivo**: `node scripts/commercial-upgrade-validation.mjs --reset-local-fixtures`. O script parte de main `935d42a`, faz dry-run exclusivo a cada fase, verifica hash de dados anteriores, RPC legada e leitura financeira negada; ao terminar recompõe a pilha local. Não executar contra o banco de uma prévia em uso.
 3. Após aprovação futura, aplicar somente `20261125010000`, conferir referências/grants/RLS e integrar o frontend do #47. Após cada integração, atualizar a base do próximo PR para main; se squash reaplicar apenas os commits próprios, preservar branch remota e usar lease verificado se houver reescrita. Conferir diff e aguardar os checks do novo SHA.
 4. Aplicar `20261125020000`, verificar trigger/auditoria/RPC e depois integrar o frontend #48.
@@ -126,3 +126,5 @@ Para reproduzir a prévia no Windows com a pilha local preparada: `node scripts/
 
 Impeccable doctor: preservadas as exceções Inter já versionadas. DESIGN.md extenso e sidecar gerado antes da última edição permanecem como recomendações documentais herdadas; esta frente não altera tokens nem usa o sidecar para gerar CSS. O hook local não acompanha o worktree porque a configuração `.codex` do usuário não está rastreada; ela foi preservada na raiz, sem copiar configurações privadas para o PR. Revisão de componentes React, teclado, foco e reflow feita nos testes desta pilha. Não foi introduzida supressão nova.
 
+
+Revisão final: reabrir uma pesquisa “não encontrado” e passar a “identificado” inicia qualidade como Não avaliado, sem restaurar uma conclusão descartada. Coberto por unidade e navegador. O resumo da ficha também lê os campos estruturados de endereço/verificação e resolve o responsável pelo ID autorizado, preservando o texto antigo no editor. A prévia usa locale pt-BR para controles nativos de data.

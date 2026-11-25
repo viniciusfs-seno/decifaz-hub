@@ -24,7 +24,7 @@ export function CommercialInteraction({client,workspace,lead,allowed,admin,peopl
   const payload=JSON.stringify([entry.revision,body]);if(operation.current.payload&&operation.current.payload!==payload)operation.current.id=crypto.randomUUID();operation.current.payload=payload
   try{
    const r=await client.rpc('hub_record_commercial_interaction',{w:workspace,l:lead.id,expected_revision:entry.revision,operation_id:operation.current.id,body})
-   if(r.error||!r.data){setMessage('Não foi possível registrar. Confira os campos, reunião realizada, aceite e seu acesso; a edição foi mantida.');return}
+   if(r.error?.code==='55P03'||r.error?.code==='40P01'){setMessage('Outra sessão está alterando a atividade. Nenhuma parte foi gravada; sua edição foi mantida. Aguarde e tente novamente.');return}if(r.error||!r.data){setMessage('Não foi possível registrar. Confira os campos, reunião realizada, aceite e seu acesso; a edição foi mantida.');return}
    if(r.data.status==='conflict'){setPrevious(entry);setEntry({...entry,revision:r.data.current.revision,next:r.data.current.profile.next??'',owner_id:r.data.current.profile.owner_id??'',due:r.data.current.profile.due??'',next_action_id:r.data.current.profile.next_action_id??''});setMessage('A ficha ou reunião mudou. Dados atuais carregados; revise o plano antes de salvar.');operation.current={id:crypto.randomUUID(),payload:''};saved();return}
    setEntry(initial(r.data.current));setPrevious(undefined);operation.current={id:crypto.randomUUID(),payload:''};setMessage('Interação e acompanhamento registrados.');saved()
   }catch{setMessage('Conexão indisponível. Sua edição foi preservada; repetir a mesma operação não duplica o registro.')}finally{setBusy(false)}

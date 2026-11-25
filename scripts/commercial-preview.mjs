@@ -4,7 +4,7 @@ const origin=process.env.HUB_HML_PREVIEW_URL,password=process.env.HUB_HML_REVIEW
 if(!/^https:\/\/[a-z0-9-]+\.trycloudflare\.com$/.test(origin??'')||!password||!sha)throw Error('Prévia isolada protegida obrigatória')
 const browser=await chromium.launch();fs.mkdirSync('.validation/commercial-external',{recursive:true})
 try{for(const [persona,width,theme] of [['admin',1440,'light'],['admin',390,'dark'],['comercial',390,'light']]){
- const context=await browser.newContext({viewport:{width,height:900},timezoneId:'America/Fortaleza'}),page=await context.newPage();try{
+ const context=await browser.newContext({locale:'pt-BR',viewport:{width,height:900},timezoneId:'America/Fortaleza'}),page=await context.newPage();try{
   expect((await context.request.get(origin+'/__supabase/rest/v1/hub_leads')).status()).toBe(401)
   await page.goto(origin);await page.getByLabel('Senha de revisão').fill(password);await page.getByRole('button',{name:'Entrar na homologação',exact:true}).click();const health=await(await context.request.get(origin+'/__health')).json();if(health.candidate!==sha||!health.isolated)throw Error('SHA ou isolamento divergente')
   await page.goto(origin+'/__review/persona/'+persona);await expect(page.getByRole('heading',{name:'Fila de ações',exact:true})).toBeVisible();await page.evaluate(t=>document.documentElement.dataset.theme=t,theme)
