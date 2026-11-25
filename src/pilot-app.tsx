@@ -1,3 +1,4 @@
+import type {RegularizationField} from './regularization'
 import {CommercialInteraction,interactionResults} from './commercial-interaction'
 import {TriageHistory} from './triage-history'
 import {verificationOptions,useCommercialClassifications} from './commercial-classifications'
@@ -294,7 +295,8 @@ function SharedCrm(){
   })
   return ()=>{current=false}
  },[workspace,selected,revision])
- function select(lead?:Lead){
+ function select(lead?:Lead,field?:RegularizationField){
+  setRegularizationTarget(lead&&field?{lead:lead.id,field}:undefined)
   const target='#estabelecimento/'+(lead?.id??'novo')
   if(location.hash!==target)history[page==='ficha'?'replaceState':'pushState']({hubRecord:true},'',target)
   setPage('ficha');window.scrollTo(0,0)
@@ -324,6 +326,7 @@ function SharedCrm(){
    setBusy(false)
   }
  }
+ const [regularizationTarget,setRegularizationTarget]=useState<{lead:string;field:RegularizationField}>()
  const leadOperation=useRef({id:crypto.randomUUID(),payload:''})
  const currentLead=leads.find(lead=>lead.id===selected)
  const selectedTriage=triages.find(row=>row.lead_id===selected)
@@ -435,11 +438,11 @@ function SharedCrm(){
    {(page==='agenda'||page==='reunioes')&&<OperationalAgenda key={workspace+page} request={agendaRequest} entries={entries} leads={commercialData.leads} initial={page==='reunioes'?{kind:'meeting',state:'all'}:agendaFilter} title={page==='reunioes'?'Reuniões e diagnósticos':'Agenda operacional'} activities={page==='agenda'?{user:currentUser,edit:id=>setActivityEditor({item:allActivities.find(a=>a.id===id)}),add:can(role,'commercial',true)?()=>setActivityEditor({}):undefined}:undefined} open={openEntry} busy={busy} canChange={entry=>can(role,entry.projectId?'projects':'commercial',true)} change={changeActivity}/>}
    {page==='projetos'&&<SharedProjects projects={projects} leads={commercialData.leads} open={id=>{setProjectSection('resumo');setProjectReturn('projetos');setProjectId(id)}}/>}
    {page==='propostas'&&<Proposals data={commercialData} add={()=>setProposalModal({})} open={id=>void openCurrentProposal(id)}/>}
-   {(page==='crm'||page==='triagem')&&!showForm&&<SharedCrmList key={workspace+page} client={client!} workspace={workspace} revision={revision} data={commercialData} triage={page==='triagem'} open={item=>{setReturnPage(page);setLeads(rows=>[...rows.filter(l=>l.id!==item.id),item]);select(item)}} add={()=>{setReturnPage(page);select()}} start={item=>{setReturnPage(page);setLeads(rows=>[...rows.filter(l=>l.id!==item.id),item]);select(item);setEditor('triage')}}/>}
+   {(page==='crm'||page==='triagem')&&!showForm&&<SharedCrmList key={workspace+page} client={client!} workspace={workspace} revision={revision} data={commercialData} triage={page==='triagem'} open={(item,field)=>{setReturnPage(page);setLeads(rows=>[...rows.filter(l=>l.id!==item.id),item]);select(item,field)}} add={()=>{setReturnPage(page);select()}} start={item=>{setReturnPage(page);setLeads(rows=>[...rows.filter(l=>l.id!==item.id),item]);select(item);setEditor('triage')}}/>}
    {page==='ficha'&&showForm&&<>
     <div className="dossier-context"><h1 tabIndex={-1}>Ficha do estabelecimento</h1><button className="button" onClick={()=>{setShowForm(false);setSelected('');setEditor(null);go(returnPage)}}>← Voltar {returnPage==='agenda'?'à agenda':returnPage==='indicadores'?'aos indicadores':returnPage==='central'?'à Central comercial':returnPage==='reunioes'?'às reuniões':returnPage==='triagem'?'à triagem':returnPage==='dashboard'?'ao Dashboard':'à lista'}</button><span>{lead?.name??'Novo estabelecimento'} · {lead?.stage??'Cadastro'}</span></div>
     <details className="card panel op-basics" open={!selected}><summary><h2>{selected?'Editar dados do estabelecimento':'Cadastrar estabelecimento'}</h2></summary>
-     <LeadDetails classifications={classifications.items} people={people} key={workspace+':'+selected} lead={currentLead} solutions={catalog} allowed={can(role,'commercial',true)} save={async(body,expected)=>{const payload=JSON.stringify([workspace,selected,expected,body]);if(leadOperation.current.payload&&leadOperation.current.payload!==payload)leadOperation.current.id=crypto.randomUUID();leadOperation.current.payload=payload;const r=await client!.rpc('hub_save_commercial_lead',{w:workspace,l:selected||null,expected_revision:expected,operation_id:leadOperation.current.id,body});if(r.error)return;return r.data}} onSaved={item=>{setNotice('Ficha salva.');setLeads(rows=>[...rows.filter(l=>l.id!==item.id),item]);select(item);reload(v=>v+1)}}/>
+     <LeadDetails reviewField={regularizationTarget?.lead===selected?regularizationTarget.field:undefined} classifications={classifications.items} people={people} key={workspace+':'+selected} lead={currentLead} solutions={catalog} allowed={can(role,'commercial',true)} save={async(body,expected,review)=>{const payload=JSON.stringify([workspace,selected,expected,body,review]);if(leadOperation.current.payload&&leadOperation.current.payload!==payload)leadOperation.current.id=crypto.randomUUID();leadOperation.current.payload=payload;const r=await client!.rpc(review?'hub_regularize_lead':'hub_save_commercial_lead',{w:workspace,l:selected||null,expected_revision:expected,operation_id:leadOperation.current.id,body,...(review?{field:review.field,confirmed:review.confirmed}:{})});if(r.error)return;return r.data}} onSaved={item=>{setRegularizationTarget(undefined);setNotice('Ficha salva.');setLeads(rows=>[...rows.filter(l=>l.id!==item.id),item]);select(item);reload(v=>v+1)}}/>
     </details>
    {lead&&<section className="card panel">
     <div className="op-dossier-head"><div><h2>Jornada comercial de {lead.name}</h2><p>{lead.segment||'Segmento não informado'} · {lead.city||'Cidade não informada'}</p></div><div className="actions"><span className="tag">{lead.stage}</span><Priority triage={selectedTriage&&fullTriage(selectedTriage)}/></div></div>

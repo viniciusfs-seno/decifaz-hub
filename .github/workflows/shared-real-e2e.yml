@@ -52,7 +52,7 @@ jobs:
           docker exec -i supabase_db_decifaz-hub-e2e psql -U postgres -v ON_ERROR_STOP=1 < supabase/tests/fechamentos.sql
           docker exec -i supabase_db_decifaz-hub-e2e psql -U postgres -v ON_ERROR_STOP=1 < supabase/tests/identificacao_integrantes.sql
           docker exec -i supabase_db_decifaz-hub-e2e psql -U postgres -v ON_ERROR_STOP=1 < supabase/tests/nomes_no_espaco.sql
-          npm run test:e2e -- --workers=1 shared-real.spec.mjs roles-real.spec.mjs concurrency-real.spec.mjs team-real.spec.mjs team-concurrency-real.spec.mjs role-history-real.spec.mjs invites-real.spec.mjs invite-auth-real.spec.mjs member-state-real.spec.mjs operational-real.spec.mjs catalog-real.spec.mjs meeting-studio-real.spec.mjs management-real.spec.mjs commercial-management-real.spec.mjs experience-real.spec.mjs lead-details-real.spec.mjs crm-pagination-real.spec.mjs metric-history-real.spec.mjs contracts-real.spec.mjs internal-finance-real.spec.mjs project-meetings-real.spec.mjs hierarchy-real.spec.mjs record-work-real.spec.mjs global-search-real.spec.mjs prospecting-real.spec.mjs productivity-real.spec.mjs activity-work-real.spec.mjs activity-clock-real.spec.mjs workspace-refresh-real.spec.mjs import-real.spec.mjs workbench-real.spec.mjs daily-use-real.spec.mjs member-labels-real.spec.mjs due-center-real.spec.mjs notice-processing-real.spec.mjs financial-week-real.spec.mjs ux-daily-real.spec.mjs commercial-registration-real.spec.mjs digital-triage-real.spec.mjs commercial-interactions-real.spec.mjs screen-link-real.spec.mjs
+          npm run test:e2e -- --workers=1 shared-real.spec.mjs roles-real.spec.mjs concurrency-real.spec.mjs team-real.spec.mjs team-concurrency-real.spec.mjs role-history-real.spec.mjs invites-real.spec.mjs invite-auth-real.spec.mjs member-state-real.spec.mjs operational-real.spec.mjs catalog-real.spec.mjs meeting-studio-real.spec.mjs management-real.spec.mjs commercial-management-real.spec.mjs experience-real.spec.mjs lead-details-real.spec.mjs crm-pagination-real.spec.mjs metric-history-real.spec.mjs contracts-real.spec.mjs internal-finance-real.spec.mjs project-meetings-real.spec.mjs hierarchy-real.spec.mjs record-work-real.spec.mjs global-search-real.spec.mjs prospecting-real.spec.mjs productivity-real.spec.mjs activity-work-real.spec.mjs activity-clock-real.spec.mjs workspace-refresh-real.spec.mjs import-real.spec.mjs workbench-real.spec.mjs daily-use-real.spec.mjs member-labels-real.spec.mjs due-center-real.spec.mjs notice-processing-real.spec.mjs financial-week-real.spec.mjs ux-daily-real.spec.mjs commercial-registration-real.spec.mjs digital-triage-real.spec.mjs commercial-interactions-real.spec.mjs regularization-real.spec.mjs screen-link-real.spec.mjs
       - name: Homologar avisos sem navegador e captura no Mailpit
         run: node scripts/notice-validation.mjs
       - name: Comparar UX com frontend publicado do PR 44
@@ -68,6 +68,7 @@ jobs:
             .validation/member-label-captures
             .validation/dues-captures
             .validation/financial-week
+            .validation/commercial-routine
             .validation/commercial-interactions
             .validation/digital-triage
             .validation/commercial-registration
