@@ -128,3 +128,5 @@ Impeccable doctor: preservadas as exceções Inter já versionadas. DESIGN.md ex
 
 
 Revisão final: reabrir uma pesquisa “não encontrado” e passar a “identificado” inicia qualidade como Não avaliado, sem restaurar uma conclusão descartada. Coberto por unidade e navegador. O resumo da ficha também lê os campos estruturados de endereço/verificação e resolve o responsável pelo ID autorizado, preservando o texto antigo no editor. A prévia usa locale pt-BR para controles nativos de data.
+
+Reuniões vinculadas a projeto exigem também escrita em Projetos para registrar resultado comercial, inclusive pela API. O acompanhamento conserva o projeto da reunião. Comercial sem Operação/Administração não recebe essa opção de alteração na ficha. A auditoria de reuniões continua sendo a existente e cobre a nova coluna de resultado.

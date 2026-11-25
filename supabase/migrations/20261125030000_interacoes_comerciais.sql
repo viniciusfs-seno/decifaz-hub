@@ -11,12 +11,13 @@ create table hub_private.commercial_followups(
 revoke all on hub_private.commercial_followups from public,anon,authenticated;
 create function hub_private.sync_commercial_followup(w uuid,l uuid,m uuid default null) returns uuid
 language plpgsql security definer set search_path='' as $$
-declare lead public.hub_leads;prior hub_private.commercial_followups;task public.hub_activities;meeting_task public.hub_activities;plan jsonb;assigned uuid;label text;matches integer;link_meeting uuid:=m;
+declare lead public.hub_leads;prior hub_private.commercial_followups;task public.hub_activities;meeting_task public.hub_activities;plan jsonb;assigned uuid;label text;matches integer;link_meeting uuid:=m;project uuid;
 begin
  select * into lead from public.hub_leads where workspace_id=w and id=l for update;
  if not found then raise exception 'Estabelecimento indisponível' using errcode='42501';end if;
  plan:=jsonb_build_object('type',coalesce(lead.profile->>'next_action_id',''),'title',coalesce(lead.profile->>'next',''),'details',coalesce(lead.profile->>'next_details',''),'owner',coalesce(lead.profile->>'owner_id',''),'due',coalesce(lead.profile->>'due',''));
  select * into prior from hub_private.commercial_followups where workspace_id=w and lead_id=l;
+ plan:=plan||jsonb_build_object('meeting_id',coalesce(m::text,prior.plan->>'meeting_id',''));
  if prior.plan=plan then return prior.activity_id;end if;
  if prior.activity_id is not null then select * into task from public.hub_activities where workspace_id=w and id=prior.activity_id for update nowait;end if;
  if plan->>'type'='' or plan->>'title'='' or plan->>'due'='' then
@@ -33,16 +34,18 @@ begin
  -- Reuse an existing meeting follow-up or a uniquely matching action created by
  -- the legacy completion command; never clone that command's follow-up.
  if m is not null then
+  select project_id into project from public.hub_meetings where workspace_id=w and lead_id=l and id=m;
+  if project is not null and not public.hub_can(w,'projects',true) then raise exception 'Acesso ao projeto negado' using errcode='42501';end if;
   select * into meeting_task from public.hub_activities where workspace_id=w and lead_id=l and meeting_id=m for update nowait;
-  if found and meeting_task.status in ('Pendente','Em andamento') then task:=meeting_task;elsif found then link_meeting:=null;end if;
+  task:=null;if found and meeting_task.status in ('Pendente','Em andamento') then task:=meeting_task;elsif found then link_meeting:=null;end if;
  end if;
  if task.id is null or task.status not in ('Pendente','Em andamento') then
-  select count(*) into matches from public.hub_activities where workspace_id=w and lead_id=l and title=plan->>'title' and due_on=(plan->>'due')::date and assigned_user_id=assigned and status in ('Pendente','Em andamento');
-  if matches=1 then select * into task from public.hub_activities where workspace_id=w and lead_id=l and title=plan->>'title' and due_on=(plan->>'due')::date and assigned_user_id=assigned and status in ('Pendente','Em andamento') for update nowait;else task:=null;end if;
+  select count(*) into matches from public.hub_activities where workspace_id=w and lead_id=l and title=plan->>'title' and due_on=(plan->>'due')::date and assigned_user_id=assigned and (m is null or meeting_id=m) and status in ('Pendente','Em andamento');
+  if matches=1 then select * into task from public.hub_activities where workspace_id=w and lead_id=l and title=plan->>'title' and due_on=(plan->>'due')::date and assigned_user_id=assigned and (m is null or meeting_id=m) and status in ('Pendente','Em andamento') for update nowait;else task:=null;end if;
  end if;
  if task.id is null then
-  insert into public.hub_activities(workspace_id,lead_id,title,owner,assigned_user_id,due_on,meeting_id)
-  values(w,l,plan->>'title',label,assigned,(plan->>'due')::date,link_meeting) returning * into task;
+  insert into public.hub_activities(workspace_id,lead_id,title,owner,assigned_user_id,due_on,meeting_id,project_proposal_id)
+  values(w,l,plan->>'title',label,assigned,(plan->>'due')::date,link_meeting,project) returning * into task;
  else update public.hub_activities set title=plan->>'title',owner=label,assigned_user_id=assigned,due_on=(plan->>'due')::date where workspace_id=w and id=task.id returning * into task;end if;
  insert into hub_private.commercial_followups values(w,l,task.id,plan) on conflict(workspace_id,lead_id) do update set activity_id=excluded.activity_id,plan=excluded.plan;
  return task.id;
@@ -85,6 +88,7 @@ begin
  if body->>'kind'='meeting' then
   m:=nullif(body->>'meeting_id','')::uuid;select * into meeting from public.hub_meetings where workspace_id=w and lead_id=l and id=m for update;
   if not found or meeting.state<>'Realizada' then raise exception 'Selecione uma reunião realizada deste estabelecimento' using errcode='22023';end if;
+  if meeting.project_id is not null and not public.hub_can(w,'projects',true) then raise exception 'Acesso ao projeto negado' using errcode='42501';end if;
   if nullif(body->>'meeting_revision','')::bigint is distinct from meeting.revision then return jsonb_build_object('status','conflict','current',to_jsonb(lead),'meeting_conflict',true);end if;
   if recorded_on<>meeting.meeting_on then raise exception 'Use a data da reunião selecionada' using errcode='22023';end if;
   update public.hub_meetings set commercial_result=jsonb_build_object('summary',body->>'summary','outcome',outcome,'reason',coalesce(body->>'reason',''),'occurred_on',recorded_on,'actor_id',auth.uid(),'recorded_at',clock_timestamp()) where workspace_id=w and lead_id=l and id=m;
