@@ -49,7 +49,7 @@ test('membros compartilham chamados e lançamentos financeiros com isolamento',a
  for(const [index,label] of criteria.entries())await quote.getByLabel(new RegExp(label)).selectOption(String([3,3,2,2,2,2,1][index]))
  await quote.getByRole('button',{name:/Encaminhamento/}).click()
  await quote.getByLabel('Abordagem sugerida').fill('Apresentar automação.')
- await quote.getByLabel('Responsável',{exact:true}).fill('Equipe E2E')
+ await quote.getByLabel('Responsável',{exact:true}).selectOption(first.session.user.id)
  await quote.getByLabel('Próxima ação',{exact:true}).fill('Agendar diagnóstico')
  const today=new Intl.DateTimeFormat('sv-SE',{timeZone:'America/Fortaleza'}).format(new Date())
  await quote.getByLabel('Prazo',{exact:true}).fill(today)

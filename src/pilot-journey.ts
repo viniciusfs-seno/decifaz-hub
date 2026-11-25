@@ -1,3 +1,5 @@
+import {digitalPayload} from './digital-assessment'
+import {commercialProfileKeys} from './commercial-classifications'
 import {allRows} from './load-all'
 import type { SupabaseClient } from '@supabase/supabase-js'
 import type {CommercialProfile} from './commercial-classifications'
@@ -12,7 +14,7 @@ export type PilotMetrics = {funnel:Partial<Record<Stage,number>>; priorities:Par
 
 export function fullLead({profile,created_at,...lead}:PilotLead):Lead {
  const {contact,contactInfo,origin,verification,noDueReason,region,address,instagram,website,whatsapp,other,services,owner,next,due,needs}=profile
- return {...emptyLead(owner),...lead,contact:contact??'',contactInfo:contactInfo??'',origin:origin??'',verification:verification??'',noDueReason:noDueReason??'',created:created_at,region:region??'',address:address??'',instagram:instagram??'',website:website??'',
+ return {...emptyLead(owner),...lead,commercial:profile,contact:contact??'',contactInfo:contactInfo??'',origin:origin??'',verification:verification??'',noDueReason:noDueReason??'',created:created_at,region:region??'',address:address??'',instagram:instagram??'',website:website??'',
   whatsapp:whatsapp??'',other:other??'',services:services??[],next:next??'',due:due??'',needs:needs??''}
 }
 
@@ -35,10 +37,10 @@ export async function loadMetrics(client:SupabaseClient, workspace:string) {
 export function saveTriage(client:SupabaseClient, workspace:string, triage:Triage, lead:Lead) {
  const {leadId,scores,completed,...record}=triage
  const {region,address,instagram,website,whatsapp,other,services,owner,next,due}=lead
- return client.rpc('hub_save_triage',{
-  p_workspace:workspace,p_lead:leadId,p_scores:scores,p_completed:completed,p_record:record,
+ return client.rpc('hub_save_commercial_triage',{
+  p_workspace:workspace,p_lead:leadId,p_scores:scores,p_completed:completed,p_record:{...record,...(record.digital?{digital:digitalPayload(record.digital)}:{})},expected_revision:lead.revision??0,
   p_name:lead.name.trim(),p_segment:lead.segment.trim(),p_city:lead.city.trim(),p_qualify:lead.stage==='Qualificado',
-  p_profile:{region,address,instagram,website,whatsapp,other,services,...(completed?{owner,next,due}:{})},
+  p_profile:{...Object.fromEntries(Object.entries(lead.commercial??{}).filter(([key])=>commercialProfileKeys.includes(key as typeof commercialProfileKeys[number]))),region,address,instagram,website,whatsapp,other,services,...(completed?{owner,next,due}:{})},
  })
 }
 
